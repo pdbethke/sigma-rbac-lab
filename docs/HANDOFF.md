@@ -317,11 +317,19 @@ case is in the fixture on purpose.
   is byte-identical, so every fixture and count still holds. **The platform constant
   `sigma.public+viewer0000000000@sigmacomputing.com` is deliberately left alone throughout the docs** —
   it's a Sigma-side fact, not sample data.
-  **Note:** the published workbook still carries the original `@sigmacomputing.com` sample emails, since
-  its CSVs were uploaded before the swap. Re-upload `data/users.csv` if repo and workbook should match.
-- **Rename the workbook.** "Test - Pls do not use" is what a reader lands on.
-- **Git history** still contains two pseudonymous account handles, redacted from the working tree
-  but present in earlier commits. Low risk; decide whether to squash before flipping public.
+- **⭐ The published workbook still serves the original `@sigmacomputing.com` sample emails**, because
+  its CSVs were uploaded before the swap above. The repo is clean; the public artifact is not. Five
+  hundred invented employees with fabricated addresses at a real company's domain, carrying job titles
+  and access grants, is the one thing here most likely to draw an objection — and it is the page a
+  reader lands on. **Fix: `Replace CSV` on the `Users` input table with `data/users.csv`.** A menu
+  operation, so it drives cleanly. GUIDs are untouched by the swap, so every fixture and count holds.
+- **Rename the workbook.** "Test - Pls do not use" is the page title, the browser tab, and the link
+  preview anywhere it gets shared.
+- ~~**Git history** contains two pseudonymous account handles.~~ **DONE** 2026-07-29. Squashed 99
+  commits to a single day-zero commit and force-pushed; the tree was verified byte-identical first.
+  Note that orphaned objects stay reachable by direct SHA on GitHub after a force-push, and forks
+  outlive it — squashing is not erasure. Full history is preserved locally on `pre-squash-backup`,
+  which must not be pushed.
 - Fill remaining doc gaps: warehouse views (`SIGDS_` schemas aren't directly queryable), the
   proxy doctrine, automation notes.
 
