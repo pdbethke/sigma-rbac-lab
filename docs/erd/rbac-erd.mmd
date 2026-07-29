@@ -1,0 +1,79 @@
+erDiagram
+    DEPARTMENTS ||--o{ JOB_TITLES : "department_id"
+    JOB_TITLES ||--o{ USERS : "job_title_id"
+    PLATFORM_ROLES ||--o{ USERS : "platform_role_id"
+    USERS ||--o{ ASSIGNMENTS : "user_id"
+    ROLES ||--o{ ASSIGNMENTS : "role_id"
+    SCOPES |o--o{ ASSIGNMENTS : "scope_id"
+    USERS ||--o{ ASSIGNMENTS : "granted_by"
+    ROLES ||--o{ PERMISSIONS : "role_id"
+    RESOURCES ||--o{ PERMISSIONS : "resource_id"
+    USERS ||--o{ SESSIONS : "acting_as"
+
+    DEPARTMENTS {
+        string department_id PK
+        string department_key
+        string department_name
+    }
+    JOB_TITLES {
+        string job_title_id PK
+        string job_title_key
+        string job_title_name
+        string department_id FK
+    }
+    PLATFORM_ROLES {
+        string platform_role_id PK
+        string platform_role_key
+        string platform_role_name
+    }
+    USERS {
+        string user_id PK
+        string user_name
+        string email  "nullable"
+        string job_title_id FK
+        string platform_role_id FK
+    }
+    ROLES {
+        string role_id PK
+        string role_key
+        string role_name
+        string description  "nullable"
+    }
+    RESOURCES {
+        string resource_id PK
+        string resource_key
+        string resource_name
+        string resource_type
+        integer sort_order  "nullable"
+        boolean universal
+        string description  "nullable"
+    }
+    SCOPES {
+        string scope_id PK
+        string scope_key
+        string scope_name
+        string scope_type
+    }
+    ASSIGNMENTS {
+        string assignment_id PK
+        string user_id FK
+        string role_id FK
+        string scope_id FK "null = global"
+        string granted_by FK
+        datetime granted_at
+        string status
+    }
+    PERMISSIONS {
+        string permission_id PK
+        string role_id FK
+        string resource_id FK
+        boolean can_view
+        boolean can_edit
+    }
+    SESSIONS {
+        string session_event_id PK
+        string session_key
+        string acting_as FK
+        string current_page  "nullable"
+        datetime updated_at
+    }

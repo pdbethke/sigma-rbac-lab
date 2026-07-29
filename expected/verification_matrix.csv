@@ -1,0 +1,6 @@
+user_name,nav_items,resolution_rows,my_inventory,current_inventory,needs_attention,write_gate,store_options,audit_gate
+Public User,2,1,0,0,0,0,0,0
+Aaliyah Kowalski,3,1,31500,150,0,0,0,0
+Priya Cohen,4,2,94500,450,16,0,0,0
+Mateo Boateng,5,3,31500,150,15,1,1,0
+Kwame Bianchi,6,4,31500,150,0,1,1,1

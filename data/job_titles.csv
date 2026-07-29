@@ -1,0 +1,52 @@
+Job Title Id,Job Title Key,Job Title Name,Department Id
+c106baf2-30b4-4e0e-86f1-cc5a13ef390a,account-executive,Account Executive,41a12fd5-f99d-48a7-a4c2-d3ba4c84dbf8
+92a3a80c-a849-400f-af09-583f77539f44,accountant,Accountant,1156b2a9-9c0e-4cd6-9ca3-2023a0d4c0de
+079fdeb3-1809-4a93-af57-c79279a588db,analytics-engineer,Analytics Engineer,9be4c13b-2de3-4ce0-a80f-0ff4c3642dee
+627296d5-9796-466d-896b-03b066446030,business-operations-lead,Business Operations Lead,02f56939-9e6d-4f21-9896-187b5b81bd96
+58c88a08-1afe-456e-802e-ee824151bac7,coo,COO,02f56939-9e6d-4f21-9896-187b5b81bd96
+e62a3f06-ef11-46f4-be18-2d4c6bea66d1,content-marketing-specialist,Content Marketing Specialist,f0c008a1-a598-4fb4-859e-6be7dcda86a3
+247b4f90-a788-42db-aa4b-a6971c97276a,controller,Controller,1156b2a9-9c0e-4cd6-9ca3-2023a0d4c0de
+c7288f27-5e2d-4127-bd5c-4f5d689818d6,creative-director,Creative Director,65c554ec-bcb0-4710-a822-d497d41bc806
+73c95403-e79d-4977-81ab-61fb0990b476,customer-success-manager,Customer Success Manager,fe38a0a4-b844-42ff-b8b1-7fa1d20e55e7
+ab074628-2616-43c7-b1c0-65ddb8663f82,data-analyst,Data Analyst,9be4c13b-2de3-4ce0-a80f-0ff4c3642dee
+d6bc34b5-23b3-4f72-9d16-0919e21b2a64,data-scientist,Data Scientist,9be4c13b-2de3-4ce0-a80f-0ff4c3642dee
+85fa7775-0bed-40d7-b3a9-f2d5e11f4d39,design-lead,Design Lead,65c554ec-bcb0-4710-a822-d497d41bc806
+ffeacc1a-d6b1-4c18-9e27-4ad0d78d0529,director-of-analytics,Director of Analytics,9be4c13b-2de3-4ce0-a80f-0ff4c3642dee
+9aef9125-80c7-46b9-b89c-caba1839cdf4,director-of-customer-success,Director of Customer Success,fe38a0a4-b844-42ff-b8b1-7fa1d20e55e7
+e4b7cbd1-c915-4592-abfa-3952bf689595,director-of-it-security,Director of IT & Security,701d6e57-3f8b-4783-984c-c3a5e26bea5f
+1dce92dd-f39e-4803-a093-80ac3b834af4,director-of-operations,Director of Operations,02f56939-9e6d-4f21-9896-187b5b81bd96
+92e4c07a-2828-4756-a08f-ed11f523b7cb,director-of-product,Director of Product,c6fc454f-772c-476e-ade0-58c6ebbee7e0
+b801f3a7-adcd-4582-85d6-bed0b987cdbe,engineering-manager,Engineering Manager,7451dbe2-f8ad-49fc-8f95-63b123da6a08
+a7a27cb4-954c-4a66-9bc4-e791a340cd5c,fp-a-manager,FP&A Manager,1156b2a9-9c0e-4cd6-9ca3-2023a0d4c0de
+fefcb0a9-5e35-41a7-baa7-2be57bddf02d,financial-analyst,Financial Analyst,1156b2a9-9c0e-4cd6-9ca3-2023a0d4c0de
+5c8eff8b-2bae-4a21-8a27-bc6aa66297df,growth-marketer,Growth Marketer,f0c008a1-a598-4fb4-859e-6be7dcda86a3
+3813af36-62d5-4ace-ab6e-8ac947a5d950,it-administrator,IT Administrator,701d6e57-3f8b-4783-984c-c3a5e26bea5f
+fe9197ff-a58b-4123-848e-4d0707fdd322,it-manager,IT Manager,701d6e57-3f8b-4783-984c-c3a5e26bea5f
+2b3d6db6-ac3c-483e-9c32-dd06f62de0de,marketing-director,Marketing Director,f0c008a1-a598-4fb4-859e-6be7dcda86a3
+46619af7-bee0-435c-80eb-35907d9cf170,marketing-manager,Marketing Manager,f0c008a1-a598-4fb4-859e-6be7dcda86a3
+94d9153d-1b13-4e2b-95d5-8311ea3d15ad,onboarding-specialist,Onboarding Specialist,fe38a0a4-b844-42ff-b8b1-7fa1d20e55e7
+f9b6641f-c902-4b47-944b-e2e5f714a16c,operations-analyst,Operations Analyst,02f56939-9e6d-4f21-9896-187b5b81bd96
+4bd88819-8aff-46ad-8e23-b0bb7e9699b0,operations-manager,Operations Manager,02f56939-9e6d-4f21-9896-187b5b81bd96
+fda02fc4-8023-40bc-8ae9-961a4f962d62,product-designer-design,Product Designer,65c554ec-bcb0-4710-a822-d497d41bc806
+82854fc1-d670-4a59-9616-c99acdd8b951,product-designer-product,Product Designer,c6fc454f-772c-476e-ade0-58c6ebbee7e0
+4bc6ede8-15b2-451c-b0a6-1bb3c2c87519,product-manager,Product Manager,c6fc454f-772c-476e-ade0-58c6ebbee7e0
+b4d362be-acea-442a-a5e1-5c4f49e7eaa2,regional-sales-director,Regional Sales Director,41a12fd5-f99d-48a7-a4c2-d3ba4c84dbf8
+295aa200-dc36-4b74-b4b7-40b2d3582b44,sales-development-rep,Sales Development Rep,41a12fd5-f99d-48a7-a4c2-d3ba4c84dbf8
+5db77c3e-b5f4-42b6-9e9e-c8cff6105516,sales-manager,Sales Manager,41a12fd5-f99d-48a7-a4c2-d3ba4c84dbf8
+b9990e62-40be-462e-b80b-dbf8e367e6be,security-analyst,Security Analyst,701d6e57-3f8b-4783-984c-c3a5e26bea5f
+b93e9286-f295-4ec5-8793-86eb6fead1c8,security-engineer,Security Engineer,701d6e57-3f8b-4783-984c-c3a5e26bea5f
+674671b6-8bb3-46b4-89d8-fd2d3ced8f51,senior-data-scientist,Senior Data Scientist,9be4c13b-2de3-4ce0-a80f-0ff4c3642dee
+d318bf37-a704-4e8c-be2c-71d22e727a18,senior-product-manager,Senior Product Manager,c6fc454f-772c-476e-ade0-58c6ebbee7e0
+97c68fc9-8476-4fba-8383-fa958bb1f3ea,senior-software-engineer,Senior Software Engineer,7451dbe2-f8ad-49fc-8f95-63b123da6a08
+32ca69fb-18c7-4af7-96b9-5d72782fa123,software-engineer,Software Engineer,7451dbe2-f8ad-49fc-8f95-63b123da6a08
+ab3f693b-d022-480a-a3a0-13755d5e21fd,staff-engineer,Staff Engineer,7451dbe2-f8ad-49fc-8f95-63b123da6a08
+03659020-6917-439f-83c1-148d9b8099e7,support-engineer,Support Engineer,fe38a0a4-b844-42ff-b8b1-7fa1d20e55e7
+16b3fed4-6271-46f6-8204-f7961c952cbd,ux-designer,UX Designer,65c554ec-bcb0-4710-a822-d497d41bc806
+098ca275-9396-4f6b-bdb1-426a1f058a5b,vp-of-customer-success,VP of Customer Success,fe38a0a4-b844-42ff-b8b1-7fa1d20e55e7
+799eaba1-80f2-4a16-8881-5050c30408a2,vp-of-design,VP of Design,65c554ec-bcb0-4710-a822-d497d41bc806
+8c9d050b-7093-4e26-944e-20c0adc8f22d,vp-of-engineering,VP of Engineering,7451dbe2-f8ad-49fc-8f95-63b123da6a08
+9c1d11c3-daaf-4297-a342-6f7499a430f3,vp-of-finance,VP of Finance,1156b2a9-9c0e-4cd6-9ca3-2023a0d4c0de
+79cf8452-fece-4aac-844f-a9f241620cc0,vp-of-marketing,VP of Marketing,f0c008a1-a598-4fb4-859e-6be7dcda86a3
+7f5112d2-ea89-40fd-8906-1e292d58acd7,vp-of-product,VP of Product,c6fc454f-772c-476e-ade0-58c6ebbee7e0
+dabb5a8c-efbb-4070-a75f-b8870ee8861a,vp-of-sales,VP of Sales,41a12fd5-f99d-48a7-a4c2-d3ba4c84dbf8
+74f0ffd6-2649-4196-b9b5-4d0a39ac76b0,system-account,System Account,b195348a-d442-42b2-b915-1299b266a398

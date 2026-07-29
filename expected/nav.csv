@@ -1,0 +1,21 @@
+user_name,user_id,resource_key,resource_name,sort_order,scope,can_view,can_edit,grant_source
+Public User,00000000-0000-0000-0000-000000000000,home,Home,0,ALL SCOPES,1,0,universal
+Public User,00000000-0000-0000-0000-000000000000,profile,Profile,99,ALL SCOPES,1,0,universal
+Priya Cohen,1b6a666e-3629-4217-9534-3b4ca8aab1bf,home,Home,0,ALL SCOPES,1,0,universal
+Priya Cohen,1b6a666e-3629-4217-9534-3b4ca8aab1bf,inventory,Inventory,1,ALL SCOPES,1,0,granted
+Priya Cohen,1b6a666e-3629-4217-9534-3b4ca8aab1bf,reports,Reports,2,ALL SCOPES,1,1,granted
+Priya Cohen,1b6a666e-3629-4217-9534-3b4ca8aab1bf,profile,Profile,99,ALL SCOPES,1,0,universal
+Kwame Bianchi,43a5625d-5a0a-4e68-b37f-6400604e0fc3,home,Home,0,ALL SCOPES,1,0,universal
+Kwame Bianchi,43a5625d-5a0a-4e68-b37f-6400604e0fc3,inventory,Inventory,1,Big Buys Flagship - Abilene,1,1,granted
+Kwame Bianchi,43a5625d-5a0a-4e68-b37f-6400604e0fc3,reports,Reports,2,Big Buys Flagship - Abilene,1,0,granted
+Kwame Bianchi,43a5625d-5a0a-4e68-b37f-6400604e0fc3,data-entry,Data Entry,3,Big Buys Flagship - Abilene,1,1,granted
+Kwame Bianchi,43a5625d-5a0a-4e68-b37f-6400604e0fc3,audit-access,Audit & Access,5,ALL SCOPES,1,1,granted
+Kwame Bianchi,43a5625d-5a0a-4e68-b37f-6400604e0fc3,profile,Profile,99,ALL SCOPES,1,0,universal
+Mateo Boateng,4563477f-33fb-472e-90b8-8c95da705ac8,home,Home,0,ALL SCOPES,1,0,universal
+Mateo Boateng,4563477f-33fb-472e-90b8-8c95da705ac8,inventory,Inventory,1,Big Buys Flagship - Alhambra,1,1,granted
+Mateo Boateng,4563477f-33fb-472e-90b8-8c95da705ac8,reports,Reports,2,Big Buys Flagship - Alhambra,1,0,granted
+Mateo Boateng,4563477f-33fb-472e-90b8-8c95da705ac8,data-entry,Data Entry,3,Big Buys Flagship - Alhambra,1,1,granted
+Mateo Boateng,4563477f-33fb-472e-90b8-8c95da705ac8,profile,Profile,99,ALL SCOPES,1,0,universal
+Aaliyah Kowalski,4885130b-2503-4e3a-8c94-4cff13f9861e,home,Home,0,ALL SCOPES,1,0,universal
+Aaliyah Kowalski,4885130b-2503-4e3a-8c94-4cff13f9861e,inventory,Inventory,1,Big Buys Flagship - Abilene,1,0,granted
+Aaliyah Kowalski,4885130b-2503-4e3a-8c94-4cff13f9861e,profile,Profile,99,ALL SCOPES,1,0,universal

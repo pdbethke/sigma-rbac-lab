@@ -1,0 +1,68 @@
+sku_number,brand_name,product_line_name,pattern,hint,rule_source
+CO-AS-0000000137,ASUS,Business Desktops,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+NE-AS-0000001891,ASUS,Wi-Fi 6 Routers,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+NE-AS-0000001986,ASUS,WiFi Extenders,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+NE-AS-0000001987,ASUS,WiFi Extenders,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+NE-AS-0000002000,ASUS,WiFi Adapters,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+NE-AS-0000002002,ASUS,WiFi Adapters,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+NE-AS-0000002050,ASUS,VPN Routers,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+AU-AP-0000000590,Apple,Wireless Earbuds,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+AU-AP-0000000682,Apple,Smart Speakers,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+AU-AP-0000000683,Apple,Smart Speakers,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+AU-AP-0000000684,Apple,Smart Speakers,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+CO-AP-0000000142,Apple,All-in-One,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+CO-AP-0000000172,Apple,Pro Tablets,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+MO-AP-0000000351,Apple,Flagship Phones,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+MO-AP-0000000354,Apple,Flagship Phones,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+MO-AP-0000000366,Apple,Mid-range Phones,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+MO-AP-0000000415,Apple,Luxury Smartwatches,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+MO-AP-0000000541,Apple,Wall Chargers,^[A-Z0-9]{12}$,"12 letters or numbers, e.g. C02XK1ZQJGH5",brand
+CO-DE-0000000068,Dell,Workstations,^[A-Z0-9]{7}$,"7 letters or numbers, e.g. 8XKN2Q1",brand
+CO-DE-0000000151,Dell,All-in-One,^[A-Z0-9]{7}$,"7 letters or numbers, e.g. 8XKN2Q1",brand
+CO-DE-0000000153,Dell,All-in-One,^[A-Z0-9]{7}$,"7 letters or numbers, e.g. 8XKN2Q1",brand
+CO-DE-0000000227,Dell,Professional Monitors,^[A-Z0-9]{7}$,"7 letters or numbers, e.g. 8XKN2Q1",brand
+CO-LE-0000000079,Lenovo,Workstations,^[A-Z]{2}-[A-Z0-9]{8}$,"two letters, a dash, then 8 letters or numbers, e.g. PF-0GHT29XK",brand
+CO-LE-0000000135,Lenovo,Business Desktops,^[A-Z]{2}-[A-Z0-9]{8}$,"two letters, a dash, then 8 letters or numbers, e.g. PF-0GHT29XK",brand
+CO-LE-0000000136,Lenovo,Business Desktops,^[A-Z]{2}-[A-Z0-9]{8}$,"two letters, a dash, then 8 letters or numbers, e.g. PF-0GHT29XK",brand
+CO-LE-0000000150,Lenovo,All-in-One,^[A-Z]{2}-[A-Z0-9]{8}$,"two letters, a dash, then 8 letters or numbers, e.g. PF-0GHT29XK",brand
+CO-LE-0000000166,Lenovo,Mini PCs,^[A-Z]{2}-[A-Z0-9]{8}$,"two letters, a dash, then 8 letters or numbers, e.g. PF-0GHT29XK",brand
+CO-LE-0000000194,Lenovo,Entertainment Tablets,^[A-Z]{2}-[A-Z0-9]{8}$,"two letters, a dash, then 8 letters or numbers, e.g. PF-0GHT29XK",brand
+AC-LO-0000001816,Logitech,Webcams,^\d{10}[A-Z]{2}$,"10 digits then 2 letters, e.g. 2417883095QT",brand
+MO-LO-0000000502,Logitech,Tablet Cases,^\d{10}[A-Z]{2}$,"10 digits then 2 letters, e.g. 2417883095QT",brand
+MO-LO-0000000505,Logitech,Tablet Cases,^\d{10}[A-Z]{2}$,"10 digits then 2 letters, e.g. 2417883095QT",brand
+SM-LO-0000001292,Logitech,Security Cameras,^\d{10}[A-Z]{2}$,"10 digits then 2 letters, e.g. 2417883095QT",brand
+SM-LO-0000001332,Logitech,Video Doorbells,^\d{10}[A-Z]{2}$,"10 digits then 2 letters, e.g. 2417883095QT",brand
+SM-LO-0000001334,Logitech,Video Doorbells,^\d{10}[A-Z]{2}$,"10 digits then 2 letters, e.g. 2417883095QT",brand
+VI-LO-0000001068,Logitech,Security Cameras,^\d{10}[A-Z]{2}$,"10 digits then 2 letters, e.g. 2417883095QT",brand
+CO-MS-0000000111,MSI,Gaming Desktops,^MSI-\d{8}$,"MSI- followed by 8 digits, e.g. MSI-40218837",brand
+CO-MS-0000000112,MSI,Gaming Desktops,^MSI-\d{8}$,"MSI- followed by 8 digits, e.g. MSI-40218837",brand
+GA-MS-0000001146,MSI,Gaming PCs,^MSI-\d{8}$,"MSI- followed by 8 digits, e.g. MSI-40218837",brand
+GA-MS-0000001264,MSI,VR-Ready PCs,^MSI-\d{8}$,"MSI- followed by 8 digits, e.g. MSI-40218837",brand
+GA-MS-0000001268,MSI,VR-Ready PCs,^MSI-\d{8}$,"MSI- followed by 8 digits, e.g. MSI-40218837",brand
+AC-SA-0000001514,Samsung,External Hard Drives,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+AC-SA-0000001532,Samsung,SSDs,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+AC-SA-0000001561,Samsung,USB Flash Drives,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+AC-SA-0000001583,Samsung,Memory Cards,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+AU-SA-0000000593,Samsung,Wireless Earbuds,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+AU-SA-0000000752,Samsung,Surround Sound Systems,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+AU-SA-0000000755,Samsung,Surround Sound Systems,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+CO-SA-0000000178,Samsung,Pro Tablets,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+MO-SA-0000000355,Samsung,Flagship Phones,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+MO-SA-0000000369,Samsung,Mid-range Phones,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+MO-SA-0000000429,Samsung,Luxury Smartwatches,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+MO-SA-0000000545,Samsung,Wall Chargers,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+MO-SA-0000000561,Samsung,Wireless Chargers,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+MO-SA-0000000562,Samsung,Wireless Chargers,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+VI-SA-0000000901,Samsung,Smart TVs,^[A-Z0-9]{11}$,"11 letters or numbers, e.g. R58M902KLTY",brand
+CO-AS-0000000101,ASUS,Ultrabooks,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+CO-AS-0000000102,ASUS,Ultrabooks,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+GA-AS-0000001156,ASUS ROG,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+CO-AC-0000000019,Acer Predator,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+GA-AC-0000001173,Acer Predator,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+CO-AL-0000000001,Alienware,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+GA-AL-0000001155,Alienware,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+CO-LE-0000000024,Lenovo Legion,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+GA-MS-0000001160,MSI,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+GA-MS-0000001164,MSI,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+CO-RA-0000000012,Razer,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line
+CO-RA-0000000013,Razer,Gaming Laptops,^LAP-\d{5}$,"asset tag: LAP- followed by 5 digits, e.g. LAP-00123",line

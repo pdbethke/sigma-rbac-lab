@@ -1,0 +1,4 @@
+Adjustment Id,Store Id,Product Id,Adjusted By,Adjusted At,Units Delta,Reason,Serial Number
+f06ffdad-daeb-587e-ba53-a65385961781,faa1cde9-cfe0-506a-b028-9c08245fc32c,f3c38b64-3c37-5aab-be2a-dc0f2d6ac1f4,43a5625d-5a0a-4e68-b37f-6400604e0fc3,2026-07-21 09:00:00,-3,cycle count variance,
+59a3b359-0136-524c-b6b9-ff3e1618c5f1,faa1cde9-cfe0-506a-b028-9c08245fc32c,ac51a9a3-eb0e-56fc-b673-1c41ad73b98a,43a5625d-5a0a-4e68-b37f-6400604e0fc3,2026-07-22 09:00:00,-1,damaged in handling,SN-4471-99B
+9a99f64b-bafa-54d8-a77e-7d24e2b30dc1,e5925a5c-41fa-5ae0-828e-1a144854c9aa,f42c5beb-c0a9-50cb-b91b-a109be41ef8d,4563477f-33fb-472e-90b8-8c95da705ac8,2026-07-23 09:00:00,12,"received, not on snapshot",

@@ -1,0 +1,10 @@
+user_name,role_key,resource_name,can_view,can_edit
+Public User,public,Home,True,False
+Priya Cohen,dops,Rulebook,True,True
+Aaliyah Kowalski,clerk,Entry,True,True
+Mateo Boateng,builder,Rulebook,True,False
+Mateo Boateng,builder,Composer,True,True
+Kwame Bianchi,supervisor,Entry,True,False
+Kwame Bianchi,supervisor,Review Queue,True,True
+Kwame Bianchi,it,Audit & Access,True,True
+Liam Patel,clerk,Entry,True,True

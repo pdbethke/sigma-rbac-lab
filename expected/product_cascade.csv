@@ -1,0 +1,32 @@
+product_type,product_family,lines_offered,products_offered,brands_offered
+Accessories,Cables,4,19,12
+Accessories,Peripherals,4,19,13
+Accessories,Power,4,21,10
+Accessories,Storage,4,21,9
+Audio,Car Audio,4,12,8
+Audio,Headphones,4,10,8
+Audio,Home Theater,3,13,11
+Audio,Speakers,4,16,11
+Computers,Desktops,4,14,8
+Computers,Laptops,5,16,10
+Computers,Monitors,3,12,6
+Computers,Printers,4,18,9
+Computers,Tablets,3,6,5
+Gaming,Consoles,3,5,4
+Gaming,PC Gaming,4,15,12
+Gaming,VR,3,13,10
+Mobile Devices,Cases,3,13,9
+Mobile Devices,Chargers,3,13,7
+Mobile Devices,Smartphones,3,10,6
+Mobile Devices,Smartwatches,3,8,8
+Networking,Network Security,3,12,9
+Networking,Routers,4,10,7
+Networking,Switches,3,8,6
+Networking,WiFi,3,10,4
+Smart Home,Automation,4,25,16
+Smart Home,Climate Control,4,18,11
+Smart Home,Security,4,14,7
+Video,Cameras,4,17,10
+Video,Projectors,3,16,7
+Video,Streaming Devices,3,7,6
+Video,TVs,4,12,7

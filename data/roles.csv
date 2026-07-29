@@ -1,0 +1,6 @@
+Role Id,Role Key,Role Name,Description
+b507671c-4d38-4838-912e-02c2f1b4510b,store-associate,Store Associate,Read stock for the store they are assigned to
+c7daa58c-cf4c-488d-bdf6-2e89a9562061,store-manager,Store Manager,Read and adjust stock for their store
+81cae530-5b13-4ba7-97f3-71b4889ee63a,regional-manager,Regional Manager,Read inventory and reports across all stores
+9aa5245e-f560-44b7-bfa4-5c3c8aa04196,auditor,Auditor,Read the audit trail and access grants
+1f018be3-c1c1-472d-945c-dbd466af8f1b,public,Public,The anonymous principal - home only

@@ -1,0 +1,32 @@
+Product Family Id,Product Family Name,Product Type Id
+3fc430f0-acc7-58d2-9d92-8ba11e484b19,Cables,e01261ad-9326-5868-bbdd-baf383bd438e
+b67bf9ee-e2d0-5487-8f68-05b1b54b82cd,Peripherals,e01261ad-9326-5868-bbdd-baf383bd438e
+8ebf0663-59ff-5013-aabb-885a927d7689,Power,e01261ad-9326-5868-bbdd-baf383bd438e
+c8d7bd2e-6a45-595f-ae8a-6b7709344c98,Storage,e01261ad-9326-5868-bbdd-baf383bd438e
+31df6bb3-f2f2-5819-af67-e6a1c5e4e795,Car Audio,6de9c6be-35d9-5427-ab8d-1cfbe2e40474
+c227aadb-5ad7-5fc6-8ca8-4da6c7d26c9c,Headphones,6de9c6be-35d9-5427-ab8d-1cfbe2e40474
+9b6013bc-ab76-5359-b8be-a925d68fe07d,Home Theater,6de9c6be-35d9-5427-ab8d-1cfbe2e40474
+28c8d152-62bd-51fa-81d9-cd755261a006,Speakers,6de9c6be-35d9-5427-ab8d-1cfbe2e40474
+9a74fea3-b226-5a01-bbc4-b9d0ee96f0d4,Desktops,ce497fd3-f5ac-57ed-a7d4-993ae4fe027e
+56745baa-349a-5a60-89cd-671fc9f5e92b,Laptops,ce497fd3-f5ac-57ed-a7d4-993ae4fe027e
+d5348ba8-8cb6-5460-b541-578e3e691219,Monitors,ce497fd3-f5ac-57ed-a7d4-993ae4fe027e
+85c0d91f-7bf1-5f2b-bc6a-734fc2a53dbc,Printers,ce497fd3-f5ac-57ed-a7d4-993ae4fe027e
+53538782-0d5c-5fda-97df-9a9ce4bcf503,Tablets,ce497fd3-f5ac-57ed-a7d4-993ae4fe027e
+7b51bafb-b5e0-5f04-a057-7c188dce334c,Consoles,db4e1aa8-9fae-5f94-a0f0-39db1872f33b
+0565c1dd-d4e1-5d69-a6e3-88f9a29de6c7,PC Gaming,db4e1aa8-9fae-5f94-a0f0-39db1872f33b
+86343ab6-2003-59f0-b134-ba4a5431aa50,VR,db4e1aa8-9fae-5f94-a0f0-39db1872f33b
+8303f5ba-d24d-5025-b6a3-01f163ca00ad,Cases,bb5ab53c-ab92-55cf-8534-d21bfef7dd4d
+ba962424-641e-5f45-a819-28bddf4aec92,Chargers,bb5ab53c-ab92-55cf-8534-d21bfef7dd4d
+d8e1a98c-023a-51c1-a8e9-331719958ceb,Smartphones,bb5ab53c-ab92-55cf-8534-d21bfef7dd4d
+4a7516fb-3aff-5ccf-9c61-ee3af4273b56,Smartwatches,bb5ab53c-ab92-55cf-8534-d21bfef7dd4d
+98928e36-005e-5b68-a0b9-ceb804074e02,Network Security,7567064a-92f0-5a75-a771-fda46272cc0b
+f1e59cd0-60e4-5469-9dc5-439ceb296492,Routers,7567064a-92f0-5a75-a771-fda46272cc0b
+8145200b-1c65-51db-a1a7-ac9e7932141d,Switches,7567064a-92f0-5a75-a771-fda46272cc0b
+5de7b51f-29da-5147-9944-d9def46ed4b4,WiFi,7567064a-92f0-5a75-a771-fda46272cc0b
+6bdb0794-5209-51c0-8406-7c69e00ecace,Automation,63c18f3e-f034-5573-a2bd-4fd19a4e8686
+a17d3786-c6c9-5de3-92d3-9bb63215043e,Climate Control,63c18f3e-f034-5573-a2bd-4fd19a4e8686
+86008bb3-b2c6-5fe8-8a62-9155b6b3755e,Security,63c18f3e-f034-5573-a2bd-4fd19a4e8686
+a1bd12b0-eac9-52e8-b231-560de0232158,Cameras,08bdc0cf-5cc5-568b-8ef0-cfde6eac34be
+95a60ec0-fae1-5bd3-89fe-f8b111a248ee,Projectors,08bdc0cf-5cc5-568b-8ef0-cfde6eac34be
+c947e2ba-9261-53ac-acbf-98d24d56ffce,Streaming Devices,08bdc0cf-5cc5-568b-8ef0-cfde6eac34be
+fc01ab5b-1ce4-5f18-ac63-dbb984fabade,TVs,08bdc0cf-5cc5-568b-8ef0-cfde6eac34be

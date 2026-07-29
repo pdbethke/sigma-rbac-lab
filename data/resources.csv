@@ -1,0 +1,7 @@
+Resource Id,Resource Key,Resource Name,Resource Type,Sort Order,Universal,Description
+933b1398-b033-423c-8d29-a2a558c83a56,home,Home,page,0,TRUE,Your dashboard - what needs your attention
+a2a80561-f26c-4a0a-a5bf-81127355f6e1,inventory,Inventory,page,1,FALSE,Stock on hand for the stores you are assigned to
+61a8a5aa-1ebc-4315-b4a1-91becf32cc9a,reports,Reports,page,2,FALSE,Inventory analysis for the stores you are assigned to
+53041f3d-dbc4-5a66-a23c-8c0f31684c8f,data-entry,Data Entry,page,3,FALSE,"The adjustment form. A page like any other, so reaching it is governed by a grant rather than by which tab is visible."
+2554d52b-d96e-401c-b8de-a8b88e800e93,audit-access,Audit & Access,page,5,FALSE,Manage users roles and the audit trail
+8dab1fdf-334c-4985-863d-acde0abb9f57,profile,Profile,page,99,TRUE,Who you are - your roles scopes and activity

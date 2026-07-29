@@ -1,0 +1,988 @@
+{
+  "profile": "tabular-data-package",
+  "name": "sigma-rbac-lab",
+  "title": "Application-level RBAC model",
+  "description": "A GUID-keyed authorization model expressed as tabular data: subjects, roles, permissions, resources, scopes, and the junction that ties them together. Scopes are retail stores, keyed to Store Key in the inventory data, so the model gates a real multi-tenant dataset. Generated from oracle/schema.sql; field names match the CSV headers exactly.",
+  "licenses": [
+    {
+      "name": "CC0-1.0",
+      "title": "CC0 1.0 Universal"
+    }
+  ],
+  "resources": [
+    {
+      "name": "departments",
+      "path": "data/departments.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "schema": {
+        "fields": [
+          {
+            "name": "Department Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Department Key",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Department Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Department Id"
+      }
+    },
+    {
+      "name": "job_titles",
+      "path": "data/job_titles.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "schema": {
+        "fields": [
+          {
+            "name": "Job Title Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Job Title Key",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Job Title Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Department Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Job Title Id",
+        "foreignKeys": [
+          {
+            "fields": "Department Id",
+            "reference": {
+              "resource": "departments",
+              "fields": "Department Id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "platform_roles",
+      "path": "data/platform_roles.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "schema": {
+        "fields": [
+          {
+            "name": "Platform Role Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Platform Role Key",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Platform Role Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Platform Role Id"
+      }
+    },
+    {
+      "name": "users",
+      "path": "data/users.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "Subjects. Includes the nil-UUID Public User, the anonymous principal.",
+      "schema": {
+        "fields": [
+          {
+            "name": "User Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "User Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Email",
+            "type": "string",
+            "format": "email"
+          },
+          {
+            "name": "Job Title Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Platform Role Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "User Id",
+        "foreignKeys": [
+          {
+            "fields": "Job Title Id",
+            "reference": {
+              "resource": "job_titles",
+              "fields": "Job Title Id"
+            }
+          },
+          {
+            "fields": "Platform Role Id",
+            "reference": {
+              "resource": "platform_roles",
+              "fields": "Platform Role Id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "roles",
+      "path": "data/roles.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "Application roles. Distinct from platform_roles, which are the host platform's own account types.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Role Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Role Key",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Role Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Description",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "Role Id"
+      }
+    },
+    {
+      "name": "resources",
+      "path": "data/resources.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "Anything gated: a page, a dataset, a button. Universal marks a resource every subject may see without a grant.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Resource Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Resource Key",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Resource Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Resource Type",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Sort Order",
+            "type": "integer"
+          },
+          {
+            "name": "Universal",
+            "type": "boolean",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Description",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "Resource Id"
+      }
+    },
+    {
+      "name": "scopes",
+      "path": "data/scopes.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "The dimension a grant is limited to - here a retail store. Scope Key is the Store Key in the inventory data, which is what makes the tenant boundary real: a grant scoped to a store resolves to that store's rows and no others. A null Scope Id on an assignment means the grant is global.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Scope Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Scope Key",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            },
+            "description": "The scoped entity's UUID. For scope_type \"store\" this is stores.Store Id."
+          },
+          {
+            "name": "Scope Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Scope Type",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Scope Id"
+      }
+    },
+    {
+      "name": "assignments",
+      "path": "data/assignments.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "The many-to-many junction, modelled as an entity rather than a link table: a grant is issued by someone, at a time, and can be revoked. Scope Id is nullable and null means global \u2014 which is why every resolution join to scopes must be LEFT.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Assignment Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "User Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Role Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Scope Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": false
+            }
+          },
+          {
+            "name": "Granted By",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Granted At",
+            "type": "datetime",
+            "format": "%Y-%m-%d %H:%M:%S",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Status",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "enum": [
+                "active",
+                "revoked"
+              ]
+            }
+          }
+        ],
+        "primaryKey": "Assignment Id",
+        "foreignKeys": [
+          {
+            "fields": "User Id",
+            "reference": {
+              "resource": "users",
+              "fields": "User Id"
+            }
+          },
+          {
+            "fields": "Role Id",
+            "reference": {
+              "resource": "roles",
+              "fields": "Role Id"
+            }
+          },
+          {
+            "fields": "Scope Id",
+            "reference": {
+              "resource": "scopes",
+              "fields": "Scope Id"
+            }
+          },
+          {
+            "fields": "Granted By",
+            "reference": {
+              "resource": "users",
+              "fields": "User Id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "permissions",
+      "path": "data/permissions.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "What a role may do to a resource. Can Edit implies Can View; that implication is enforced in the resolution query, not by a constraint here.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Permission Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Role Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Resource Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Can View",
+            "type": "boolean",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Can Edit",
+            "type": "boolean",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Permission Id",
+        "foreignKeys": [
+          {
+            "fields": "Role Id",
+            "reference": {
+              "resource": "roles",
+              "fields": "Role Id"
+            }
+          },
+          {
+            "fields": "Resource Id",
+            "reference": {
+              "resource": "resources",
+              "fields": "Resource Id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "sessions",
+      "path": "data/sessions.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "Runtime session store, append-only. NOT part of the nine-table authorization model and not present in oracle/schema.sql: it records who a session is acting as, so identity can persist across page loads. Session Key is not unique \u2014 the latest row per key is the current state.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Session Event Id",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Session Key",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Acting As",
+            "type": "string",
+            "format": "uuid",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Current Page",
+            "type": "string"
+          },
+          {
+            "name": "Updated At",
+            "type": "datetime",
+            "format": "%Y-%m-%d %H:%M:%S",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Session Event Id",
+        "foreignKeys": [
+          {
+            "fields": "Acting As",
+            "reference": {
+              "resource": "users",
+              "fields": "User Id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "stores",
+      "path": "data/stores.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "The tenant boundary. scopes.scope_key = stores.store_id, so a grant scoped to a store resolves to that store's inventory and no other's. Joined on the UUID, never on Store Key -- renaming or renumbering a store must not be able to move the boundary.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Store Id",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Store Key",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Store Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Store Region",
+            "type": "string"
+          },
+          {
+            "name": "Store State",
+            "type": "string"
+          },
+          {
+            "name": "Store City",
+            "type": "string"
+          },
+          {
+            "name": "Store Zip Code",
+            "type": "string"
+          },
+          {
+            "name": "Store Latitude",
+            "type": "number"
+          },
+          {
+            "name": "Store Longitude",
+            "type": "number"
+          },
+          {
+            "name": "Store Tier",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "Store Id"
+      }
+    },
+    {
+      "name": "product_types",
+      "path": "data/product_types.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "Root of the product tree. Level 1 of the cascading dropdowns in the asset entry form.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Product Type Id",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Product Type Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Product Type Id"
+      }
+    },
+    {
+      "name": "product_families",
+      "path": "data/product_families.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "Level 2. Family -> Type is a true functional dependency in the source data.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Product Family Id",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Product Family Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Product Type Id",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Product Family Id",
+        "foreignKeys": [
+          {
+            "fields": "Product Type Id",
+            "reference": {
+              "resource": "product_types",
+              "fields": "Product Type Id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "product_lines",
+      "path": "data/product_lines.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "Level 3, the leaf of the tree. 111 rows for 109 distinct names: \"Security Cameras\" and \"Gaming Laptops\" each exist under two different families. Keyed on the label they would collide into one; keyed on a UUID they are correctly two lines.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Product Line Id",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Product Line Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Product Family Id",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Product Line Id",
+        "foreignKeys": [
+          {
+            "fields": "Product Family Id",
+            "reference": {
+              "resource": "product_families",
+              "fields": "Product Family Id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "brands",
+      "path": "data/brands.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "NOT a level of the product tree. 63 of 178 brands span more than one line -- Apple sells phones and speakers -- so brand hangs off the product independently and its dropdown does not cascade from type/family/line.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Brand Id",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Brand Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Brand Id"
+      }
+    },
+    {
+      "name": "products",
+      "path": "data/products.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "A SKU. Carries the leaf of the product tree plus the orthogonal brand; type and family reach it through product_lines -> product_families, never denormalised here.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Product Id",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Sku Number",
+            "type": "string",
+            "constraints": {
+              "required": true,
+              "unique": true
+            }
+          },
+          {
+            "name": "Product Name",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Product Line Id",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Brand Id",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          }
+        ],
+        "primaryKey": "Product Id",
+        "foreignKeys": [
+          {
+            "fields": "Product Line Id",
+            "reference": {
+              "resource": "product_lines",
+              "fields": "Product Line Id"
+            }
+          },
+          {
+            "fields": "Brand Id",
+            "reference": {
+              "resource": "brands",
+              "fields": "Brand Id"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "inventory_daily",
+      "path": "data/inventory_daily.csv",
+      "profile": "tabular-data-resource",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "encoding": "utf-8",
+      "description": "One row per store per SKU per day. 94,500 rows. Gated by store_id via scopes.",
+      "schema": {
+        "fields": [
+          {
+            "name": "Snapshot Date",
+            "type": "date",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Store Id",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Product Id",
+            "type": "string",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "Cost per Unit",
+            "type": "number"
+          },
+          {
+            "name": "Units on Hand",
+            "type": "number"
+          },
+          {
+            "name": "Units on Order",
+            "type": "number"
+          },
+          {
+            "name": "Units in Transit",
+            "type": "number"
+          },
+          {
+            "name": "Units Received",
+            "type": "number"
+          },
+          {
+            "name": "Units Shrunk",
+            "type": "number"
+          },
+          {
+            "name": "Reorder Point",
+            "type": "number"
+          },
+          {
+            "name": "Max Stock Level",
+            "type": "number"
+          },
+          {
+            "name": "Days of Supply",
+            "type": "number"
+          },
+          {
+            "name": "Inventory Value",
+            "type": "number"
+          },
+          {
+            "name": "Is Stockout",
+            "type": "boolean"
+          },
+          {
+            "name": "Is Low Stock",
+            "type": "boolean"
+          },
+          {
+            "name": "Lost Sales Units",
+            "type": "number"
+          },
+          {
+            "name": "Lost Sales Value",
+            "type": "number"
+          },
+          {
+            "name": "Lead Time Days",
+            "type": "number"
+          },
+          {
+            "name": "Merchant Id",
+            "type": "string"
+          }
+        ],
+        "primaryKey": [
+          "Snapshot Date",
+          "Store Id",
+          "Product Id"
+        ],
+        "foreignKeys": [
+          {
+            "fields": "Store Id",
+            "reference": {
+              "resource": "stores",
+              "fields": "Store Id"
+            }
+          },
+          {
+            "fields": "Product Id",
+            "reference": {
+              "resource": "products",
+              "fields": "Product Id"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
