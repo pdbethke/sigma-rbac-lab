@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-07-26 (updated: gated page shipped)
+# Handoff — state as of 2026-07-29 (updated: published, repo public, announced)
 
 Where the build stands, what's verified, what's next, and what will bite whoever picks this up.
 
@@ -8,7 +8,14 @@ Where the build stands, what's verified, what's next, and what will bite whoever
 
 **Workbook:** `Test - Pls do not use - Multi-User/Role System Public debugging`
 Published on Sigma Public, listed in its browsable gallery.
-**Repo:** `sigma-rbac-lab` — **private** on GitHub.
+**Repo:** `sigma-rbac-lab` — **public** on GitHub, history squashed to a single day-zero commit
+(2026-07-29). Full pre-squash history is preserved locally on `pre-squash-backup`, which must not be
+pushed. Note that a force-push does not erase: orphaned objects stay reachable by direct SHA and
+forks outlive the rewrite.
+
+**Announced 2026-07-29** — the demo and two LinkedIn posts are live: the RBAC post (the Priya/Kwame
+contrast, and gated options as the takeaway) and the rules-as-data post (serial patterns per brand,
+overridden per line). Written up in `docs/POSTS.md`.
 
 **Two workbook IDs — they are different objects:**
 
@@ -310,7 +317,11 @@ case is in the fixture on purpose.
 | **Session read side** | `Persisted As` = latest row per session key, untested against the seeded fixture (`seed+example@example.com` → should resolve to Kwame / audit-access) |
 | **`Current Page`** | column exists in `Sessions`, never wired |
 
-### Before making the repo public
+### Publication checklist — the demo and both posts went live 2026-07-29
+
+**Confirm the first item below actually shipped.** It was open when the announcement went out, and it
+is the only one a reader can see.
+
 
 - ~~**Swap the 500 sample emails to `example.com`.**~~ **DONE.** Swapped in `data/users.csv` (500) and
   `docs/evidence/2026-07-25-step4-join-output.csv` (8). GUIDs untouched; oracle rebuilt and `expected/`

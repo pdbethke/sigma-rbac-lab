@@ -215,6 +215,35 @@ reachable, and the filter applies to source rows *before* any grouping collapses
 
 ---
 
+### "My control offers no values, and its source element clearly has rows"
+
+**Cause, most often.** The filter feeding the source element is a **list filter with nothing
+selected**. Open it: if the value picker shows counts (`store 3 / global 1 / none 1`) the column
+binding was right all along and only the selection is missing. An empty list filter and a wrong
+column binding present identically from the outside.
+
+**Cause, when several filters are stacked.** They intersect to zero and the count tells you nothing
+about which one is responsible.
+
+**Fix.** Disable them all, then re-enable **one at a time**, reading the row count after each.
+
+    no filters                      10
+    Is Visible                      10    unchanged - see below
+    + Resource Key = "inventory"     5
+    + Scope Type = "store"           3
+
+> A filter that changes nothing for the user you are testing is not inert. Test each predicate
+> against the identity it is supposed to *exclude*. `Is Visible` moves nothing for a global user and
+> is the entire gate for everyone else.
+
+**The related trap: two columns with nearly the same name.** A joined element can carry both the
+row's own attribute and the acting user's resolved one — `Scope Type` beside
+`Scope Type (Resolution)`. They mean different things and the picker matches on display name. Rename
+one of them at the point of joining; `Grant Scope Type` for the resolution copy costs nothing and
+makes the confusion impossible.
+
+---
+
 ## Identity and choosers
 
 ### "My login list only shows the person who's already selected"

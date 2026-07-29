@@ -1885,3 +1885,112 @@ The general shape is familiar from this build: **topology tells you what is conn
 finished.** The same reasoning error deleted `Is Visible` from the dropdown predicate, where a
 cumulative test showed the output had stopped changing and was read as proof the condition was
 inert.
+
+---
+
+## Step 23 — the Inventory tab rebuilt, and a scope that isn't a store
+
+**Built:** `My Inventory` (94,500 rows for Priya, 31,500 for a store manager), a sample time-series
+chart, `My Stores`, the map re-sourced from it, and a `Store Name` filter control.
+
+### The chart is the demonstration
+
+`Sample Graph - Inventory over time for stores assigned to current user`, sourced from `My Inventory`:
+
+    X-AXIS   Snapshot Date
+    Y-AXIS   Sum([Inventory Value])
+    COLOUR   Store
+
+The colour encoding is what turns a chart into evidence. Priya gets three lines, a store manager
+gets one, and nothing on the page explains why. Left on `Single color` it is just a chart; the
+series count is the entire point, and it is a consequence of the grant rather than of anything
+authored per user.
+
+### `My Stores`, and the correction worth keeping
+
+The element was empty for Priya, and the first diagnosis was wrong in a way that would have damaged
+the model.
+
+Priya holds a **global** grant. `My Stores` filters `Scope Type = "store"`. The inference — that a
+global user has no store-typed scope and therefore the filter must be wrong for her — led to a
+proposal to assign her three explicit store grants. That is a real trap and it is worth naming,
+because the fix would have worked immediately and rotted quietly.
+
+**It rests on conflating two columns.** `Visible Scopes` carries both:
+
+    Scope Type               the scope row's OWN type      store / global / none
+    Scope Type (Resolution)  the acting user's GRANT type  global, for Priya
+
+Filtering on the first is correct for everyone. Abilene is a `store` scope regardless of who is
+looking at it. The filter needed no change, and neither did Priya.
+
+Assigning her three stores would also have broken the property `normalize.py` exists to provide: a
+new store is additive. The chart resolves global through `Is In Scope` and would have picked up a
+fourth store automatically, while three hand-written grants would silently not. **Global has to mean
+all, or it isn't global** — the moment it is enumerated it is a list that can fall behind.
+
+### The actual cause, and the diagnostic that found it
+
+Three filters were enabled together and the result was 0. Enabled one at a time:
+
+    no filters                      10    5 scopes x 2 of Priya's assignments
+    Is Visible                      10    no change; she is global
+    + Resource Key = "inventory"     5    also collapses the assignment duplication
+    + Scope Type = "store"           3
+
+The `Scope Type` filter had **no values selected** in its list. The picker showed
+`store 3 / global 1 / none 1`, so the column binding had been right all along. Ticking `store` was
+the whole fix.
+
+**Leave-one-out again.** Three filters intersecting to zero says nothing about which one did it, and
+`Is Visible` is the one that looks inert on Priya precisely because she is global — it changes
+nothing for her and does all the work for everyone else.
+
+    Priya   3 stores   via global
+    Kwame   1 store    Abilene
+
+Same predicate, two users. Kwame is the test; Priya's 3 would look identical with the gate removed.
+
+### Two things that fell out of it
+
+`My Stores` carries the store latitude and longitude by lookup, so the map sources from it directly
+and follows the grant. The sentinel rows are filtered out by `Scope Type = "store"`, which also
+cleared the trailing `null` on the map's point labels.
+
+The `Store Name` control sources from `My Stores` rather than from `Stores`. A filter whose options
+are themselves gated cannot offer a tenant you may not see — the same doctrine as the entry form's
+store dropdown, applied to a filter. A dropdown listing three stores to someone who may read one has
+already disclosed the other two, whether or not selecting them returns rows.
+
+### The agent prints a GUID
+
+The `User Oracle` renders `Job Title ID: 32ca69fb-…` in its profile answer. It is grounded on `Users`,
+so it narrates what it holds. **Not fixable by instruction** — see the grounding doctrine in
+`FIELD_GUIDE.md`; telling it not to mention identifiers is cover, not control.
+
+The `User Profile` proxy, still to build, filtered to the acting identity and carrying names only:
+
+    Job Title Id (hidden)   the key, kept for the lookups, out of the display grain
+    Job Title               Lookup([Job Titles/Job Title Name],     [Job Title Id],      [Job Titles/Job Title Id])
+    Department Id (hidden)  Lookup([Job Titles/Department Id],      [Job Title Id],      [Job Titles/Job Title Id])
+    Department              Lookup([Departments/Department Name],   [Department Id],     [Departments/Department Id])
+    Platform Role           Lookup([Platform Roles/Platform Role Name], [Platform Role Id], [Platform Roles/Platform Role Id])
+
+Department must resolve through the job title's **id**. One job title spans two departments in the
+fixture, which is the case that exists to prove this: resolved on the label it picks one of them and
+reads perfectly plausibly, which is worse than reading wrong.
+
+### Publication
+
+Repo history squashed to a single day-zero commit and force-pushed, tree verified byte-identical
+first. Orphaned objects remain reachable by direct SHA on GitHub after a force-push and forks outlive
+it, so a squash is not erasure.
+
+**The blocking item is not in the repo.** The published workbook still serves the original
+`@sigmacomputing.com` sample emails, because its CSVs were uploaded before the swap to `example.com`.
+The `User Oracle` now renders one of them into its own answer. Five hundred invented employees with
+fabricated addresses at a real company's domain, carrying job titles and access grants, is the page a
+reader currently lands on. `Replace CSV` on the `Users` input table fixes it; GUIDs are untouched by
+the swap, so every fixture and count holds.
+
+The workbook title is still `Test - Pls do not use - Multi-User/Role System Public debugging`.
