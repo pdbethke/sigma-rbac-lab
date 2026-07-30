@@ -1,0 +1,21 @@
+Prompt injection is an attack on instruction-following. That's why it keeps working.
+
+If your boundary is an instruction — a system prompt listing which users the model may discuss — then injection is a conversation with the boundary, and conversations can be won. If the boundary is what's in context at all, there is nothing to talk to. You cannot talk your way into data that was never in the query.
+
+That's the principle behind the access-control model I published on Sigma last month. An agent grounded on a scoped view doesn't decline questions about other people's data. It has no idea the rows exist. Nothing is refused, because nothing is there.
+
+Sigma has now announced agents that run outside the workbook, over an API and MCP, so they work from Claude or Codex. For this pattern that's genuinely good news: a governed model stops being somewhere you visit and becomes something your tools can reach.
+
+It also handed me a piece of homework, and it's the useful kind.
+
+Every boundary in my demo is a workbook element — a join I authored in the presentation layer. That was the right way to build a demonstration and the wrong place to leave it. An agent that reaches data without opening the page doesn't pass through those joins. Not because anything is broken, but because they were never on its route. That's a fact about where I put the boundary, not about the platform.
+
+The fix is the one the architecture was already pointing at. Express the same rule as a governed view in the warehouse, and every consumer inherits it: the workbook, the API, an agent in someone's editor, whatever ships next year. My repo already carries that rule as SQL, which is the proof it ports. Authorization in the presentation layer was always a convenience, and agents are simply what makes the bill arrive.
+
+The next thing I want to test is identity. If an external agent carries the calling user through, per-user scoping works at the data layer and the whole pattern extends cleanly. That's the interesting question, and I'd rather ask it than assume an answer.
+
+When I get to it, the test is one number: ask for inventory as a store manager and see whether 31,500 comes back.
+
+Workbook: <public URL>
+
+#AIAgents #DataGovernance #PromptInjection #SigmaComputing

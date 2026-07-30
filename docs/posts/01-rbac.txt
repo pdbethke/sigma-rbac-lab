@@ -1,0 +1,23 @@
+Thirty years of building multi-user systems has left me with one question I ask of every new platform: can it build an RBAC?
+
+It's a good test, because role-based access control exercises everything at once. A data model that expresses many-to-many honestly. Joins that behave predictably when a foreign key is null. Somewhere to hold identity, and a way to resolve it into effective permissions. Writes, and a story about who may make them. And a UI that reflects authority without being the authority.
+
+So I built one on Sigma, and published it.
+
+Open it and act as Priya. She sees three stores. Switch to Kwame and the same page, running the same formula, shows one. There is no filter on screen to explain the difference. Nothing was hidden from him. The rows were never in his result set.
+
+The part I'd point out to anyone building this kind of thing is smaller than that, and easier to get wrong. The store dropdown on the entry form offers only the stores you are allowed to write to. Not validated on submit, gated at the point of offer, so an illegal choice is never representable.
+
+That distinction matters more than it looks. A dropdown that lists three stores to someone who may only touch one has already disclosed the other two. Most authorization work I've reviewed guards the result set and leaves the option lists wide open.
+
+What makes this an application-level model rather than a platform feature: Sigma knows nothing about it. My roles, my scopes, my grant semantics. The same tables run unchanged in SQLite, and that SQL model computes the expected answer for every count in the app, independently.
+
+Sigma passed, and the exercise left me confident in the platform.
+
+It's a demo, not a product. The build log, the SQL oracle and a Flask-to-Sigma translation guide are all in the repo.
+
+Workbook: <public URL>
+
+Code: github.com/pdbethke/sigma-rbac-lab
+
+#RBAC #DataGovernance #AnalyticsEngineering #SigmaComputing

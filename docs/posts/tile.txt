@@ -1,0 +1,5 @@
+RBAC Lab: application-level access control in Sigma
+
+A working demonstration of application-level role-based access control, built entirely in Sigma. Use the identity switcher to act as any of five users and watch the app change around you: the navigation, the inventory rows, the store options in the entry form, and what the AI assistant is able to answer. Nothing is hidden from anyone. Each identity's data is scoped, so what you cannot see was never in the result set. Every count is verified against an independent SQL model.
+
+Application-level role-based access control, built in Sigma. Switch identities and watch the navigation, the data, the form options and the AI assistant all change. Nothing is hidden, it is scoped.

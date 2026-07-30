@@ -1,0 +1,11 @@
+Most people who simulate a competitor with AI give it everything they know. That's why it tells them nothing.
+
+An agent grounded on your internals just reasons like you with a different logo on. Ground it only on what an outside analyst could actually assemble about you and the constraint stops being a limitation. It becomes the experiment: not what would they do, but what can they conclude.
+
+Then run it backwards, which is where it earns its keep. Point the same scrapers at yourself and what comes back is your own observable surface, exactly as an outsider assembles it. Not a guess about what you're leaking. A capture of it. Five Rust job postings announce a rewrite. A quietly retired pricing tier announces a segment exit. A support-doc edit announces a deprecation before your roadmap does.
+
+The failure mode is worth more attention than the technique. A competitor redesigns a page, the collection quietly returns nothing, and nothing is not an error. The agent fills the gap from assumption and confidently reports a hiring freeze that is really a page redesign. Its only trace is an absence, which makes it the hardest thing to catch by looking.
+
+I wrote up the whole method — the collection stack, why the corpus lives in the warehouse, what the external agent is and isn't allowed to see, and the checks that keep it from generating strategy memos.
+
+#CompetitiveIntelligence #AIAgents #RedTeaming #AnalyticsEngineering

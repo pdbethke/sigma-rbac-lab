@@ -1,0 +1,21 @@
+Every validation you hardcode is a deploy waiting to happen.
+
+The last post was about who may write. This one is about what they may write.
+
+The entry form in my Sigma RBAC demo takes a serial number. Serial formats vary by brand, and some product lines override their brand's format. That is the kind of requirement that usually ends up as a regex in application code, which means every new brand is a pull request, a review and a release.
+
+So I put the patterns in the data instead. Brands carry a serial pattern. Product lines carry one too, and when both exist the more specific wins. Resolution is a single COALESCE: line first, then brand. Adding a rule for a new brand is inserting a row.
+
+Two details turned out to matter more than the pattern matching.
+
+The first is that an empty pattern is not a missing rule. It is the absence of a constraint, and I had to decide that deliberately rather than let a null decide it for me. Products exist that no one has written a format for yet, and the right behaviour is to accept anything, not to block the user out of a rule that was never authored.
+
+The second is the one I'd keep. The hint shown under the field lives in the same row as the pattern that enforces it. Change the rule and the help text changes with it, because they are the same fact. Documentation cannot drift from enforcement when there is only one of them.
+
+Worth naming what stacks up by the time someone hits submit. Whether you may post at all is one question, answered by your grant. Aaliyah reads every row of her store and can post nothing. Which store you may post to is a second, answered by a dropdown that offers only your own, so an illegal choice is never representable. Kwame stands in the same store as Aaliyah, reads the same 31,500 rows, and differs from her in one boolean, and even he can only choose Abilene. Whether the serial is well formed is the third. Three independent questions, none of them answered by hiding a button.
+
+A SQL model checks every stored serial against its resolved pattern independently. That check has been made to fail on purpose, so an empty result means it works rather than that it was never exercised.
+
+Code: github.com/pdbethke/sigma-rbac-lab
+
+#DataModeling #DataQuality #AnalyticsEngineering #SigmaComputing

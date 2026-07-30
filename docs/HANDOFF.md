@@ -15,7 +15,8 @@ forks outlive the rewrite.
 
 **Announced 2026-07-29** — the demo and two LinkedIn posts are live: the RBAC post (the Priya/Kwame
 contrast, and gated options as the takeaway) and the rules-as-data post (serial patterns per brand,
-overridden per line). Written up in `docs/POSTS.md`.
+overridden per line). Written up in `docs/posts/` — one file per piece, with the reasoning in
+`docs/posts/README.md`.
 
 **Two workbook IDs — they are different objects:**
 
