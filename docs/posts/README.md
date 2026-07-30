@@ -12,7 +12,8 @@ error the rest of this repo exists to catch.
     03-containment.txt                    next        where the boundary lives
     04-competitive-intelligence-post.txt  after       the connecting post
     04-competitive-intelligence-article.txt  after     the article it points to
-    05-corpus-supply-chain.txt            drafted    give the agent less than you want to
+    05-corpus-supply-chain-post.txt       drafted    the connecting post
+    05-corpus-supply-chain.txt            drafted    the article it points to
     personas.md                                       who is who, and which pair proves what
     held-back.md                                      ideas not yet spent
 

@@ -1,0 +1,11 @@
+When an agent gives a bad answer, the instinct is to give it more data. That instinct is usually what caused the bad answer.
+
+Point an agent at your governed revenue table and also at a year-old export of the same numbers sitting in a shared folder. It has no way to know which one is right. It won't raise an error. It will pick one, or blend them, and explain the result in exactly the same confident voice either way. Nothing in a pile of data says which source wins — you know which table is authoritative because you know your company, and none of that is written down anywhere the model can see.
+
+Narrowing usually helps. In a demo I published last month, one agent grounded on a single governed view resolved to 31,500 rows for a store manager and 94,500 for a regional director. Same agent, same configuration, a different set of facts per person — because the boundary lived in the data rather than in a prompt asking the model to be discreet. Nothing was ever refused. The rows were not there to refuse.
+
+There's a harder problem behind it. An agent that can reach everything cannot be tested, because you cannot list what it might have drawn on. You end up judging whether the model seems sensible instead of whether the system is correct, and that does not survive contact with an auditor.
+
+I wrote up the whole thing: the three ways breadth fails, what it takes to actually bound what an agent knows, who in your company is quietly allowed to write to it, and a test that settles the question in an afternoon.
+
+#AIAgents #DataGovernance #RAG #SigmaComputing
