@@ -12,6 +12,7 @@ error the rest of this repo exists to catch.
     03-containment.txt                    next        where the boundary lives
     04-competitive-intelligence-post.txt  after       the connecting post
     04-competitive-intelligence-article.rtf  after    the article it points to
+    05-corpus-supply-chain.rtf            drafted    give the agent less than you want to
     tortf.py                                          .txt -> .rtf, generated never hand-edited
     personas.md                                       who is who, and which pair proves what
     held-back.md                                      ideas not yet spent
@@ -154,6 +155,36 @@ self-report. This repo computes expected answers in an independent SQL oracle an
 editor's own reading. Same principle in two domains — *nemo iudex in causa sua*.
 
 ---
+
+### 05-corpus-supply-chain
+
+Article, builder-facing. The piece where the two projects merge: the RBAC work supplies "scoping made
+it correct", corralai supplies the worked answer.
+
+Opens on **the temptation** — connecting one more source — because that is the reader's current
+behaviour, so they are implicated by paragraph two rather than lectured from paragraph one. Then three
+distinct harms, deliberately separated: security is listed first and dismissed as the least
+interesting, because everyone already knows it and it isn't what costs them. Silent precedence is the
+one nobody discusses. Unfalsifiability is the one that matters to anyone signing off.
+
+**The load-bearing distinction is retrieved versus injected context.** Evidence versus authority.
+Stored in the same place, in the same format, managed by the same process — which is the whole problem
+in one sentence. corralai's tiering is the worked answer, and the promotion step is the design, not the
+storage or the search.
+
+**The supply-chain section is hedged on purpose.** It describes the shape of the question rather than
+any tool's current behaviour, and says so in the text: *check your own tooling rather than taking my
+description of it.* Same discipline that stripped the Assistant claims from `04` — a claim about
+someone else's product, made in public, that will still be sitting on the profile after the product
+changes.
+
+**It ends with a test, not an opinion.** Plant an instruction in a retrievable-but-not-authoritative
+document and see whether it reaches the instructions. That converts the whole argument from
+architecture diagram to something an afternoon can settle, which is the corralai thesis applied to
+itself.
+
+**Still needed:** a real result from that test. If one has been run, it is the strongest paragraph
+available and it belongs right after the test description.
 
 ## Accuracy constraints
 
