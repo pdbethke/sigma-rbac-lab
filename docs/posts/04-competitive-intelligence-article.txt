@@ -1,5 +1,15 @@
 Build your competitor as an agent — then find out what you told them
 
+EXECUTIVE SUMMARY
+
+Build an AI agent that models a competitor using only publicly observable information — filings, pricing pages, job postings, product announcements — and nothing an insider would know. The constraint is what makes the result mean anything: you stop guessing what a competitor would do and start measuring what they can conclude.
+
+Then point the same collection at your own company. The output is your observable surface as an outsider assembles it, with every conclusion traced to the specific published thing that permitted it. That turns "what do they know about us" from a standing debate into a list of findings with owners attached.
+
+Two requirements make it trustworthy rather than merely impressive. The collected material lives in the warehouse as ordinary data, so it can be audited with the same tools you point at revenue, and only public material ever reaches an outside AI assistant — internal numbers never leave. And every collection run is counted against an expected volume before anything reasons over it, because an empty collection reads exactly like a quiet quarter.
+
+Without that last check, the output is not intelligence. It is a strategy memo with no evidence underneath it, written in a confident voice.
+
 Most people who simulate a competitor with AI give it everything they know. That's why it tells them nothing.
 
 An agent grounded on your own internals reasons like you with a different logo on. It has your assumptions, your numbers, your read on the market, and it hands them back with the confidence of an outside opinion. You've built a mirror and called it intelligence.
@@ -25,6 +35,16 @@ TWO RULES THAT MAKE IT AN INSTRUMENT
 First: every conclusion must cite something that was actually captured. Collected records carry a source and a timestamp, so this is checkable rather than honour-system. If a claim cannot be traced to something in the corpus, the model reasoned from general assumptions about your industry rather than from evidence about this company. Those two outputs read identically. Only one is safe to act on.
 
 Second: the definition of the corpus is itself data, not an instruction. Which sources, how often, what to collect — written down in a table that can be reviewed, versioned and compared against last month's. Adding a source is a row. What the agent is allowed to know becomes something a colleague can audit, rather than a paragraph of guidance everyone hopes the model is honouring.
+
+THE ASSISTANT IS NOT THE AGENT
+
+Worth separating two things that both look like asking an AI a question, because confusing them undoes everything above.
+
+Sigma's Assistant is an authoring tool. It has broad reach across your model by design, it lives in edit mode, and it reads the draft you are working on rather than what your colleagues actually see. All of that is correct for the job it does — helping the person building the thing. Ours volunteered its own reach unprompted: it offered to query across departments, users, roles, permissions, assignments, resources and scopes, and to say who had access to what and who granted it. That is a helpful assistant behaving as intended.
+
+An agent is a different object. It is grounded on a defined, named set of data and it cannot reach past it, which is the entire property this method depends on. Ask your competitor questions of a general assistant and the corpus discipline evaporates — it can see across everything you have, so it will answer from everything you have, and you will not be able to tell which parts of the answer came from where.
+
+So build the constrained agent, and keep the assistant for building. The mistake isn't using either one. It is using the author's tool where you meant the bounded one, and then treating what comes back as though it had a boundary.
 
 WHERE THE INFERENCE RUNS
 

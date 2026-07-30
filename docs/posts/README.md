@@ -136,6 +136,16 @@ was. RUN IT BACKWARDS is about detecting your own emissions; this is about a fab
 surviving review. Different claims, and the second is the more useful slot — a self-critical example
 from the author's own tooling carries more than a hypothetical about a competitor.
 
+**The Assistant/agent section was added 2026-07-30**, placed directly after the corpus rules because
+that is where a reader raises the obvious objection: why not just ask the built-in assistant? The
+answer matters to the whole method — Sigma's Assistant is an authoring tool with broad reach across the
+model by design, and it reads the draft rather than what colleagues see. Ask it competitor questions
+and the corpus discipline evaporates, because it can see everything you have. Framed as *the mistake
+isn't using either one, it's using the author's tool where you meant the bounded one* — which keeps it
+a distinction rather than a complaint. Evidence is in `../FIELD_GUIDE.md`: ours volunteered its own
+reach unprompted, offering to query across departments, users, roles, permissions, assignments,
+resources and scopes.
+
 **The through-line worth using deliberately.** corralai certifies by execution and never accepts a
 self-report. This repo computes expected answers in an independent SQL oracle and never trusts the
 editor's own reading. Same principle in two domains — *nemo iudex in causa sua*.
