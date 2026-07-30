@@ -24,7 +24,23 @@ The second is the one that costs the most and gets discussed the least. Point an
 
 The third matters most to anyone who has to sign off on the thing. An agent whose reachable world is unbounded cannot be evaluated, because you cannot enumerate what it might have used. You end up assessing whether the model seems sensible rather than whether the system is correct. That is a vibe, not a test, and it does not survive contact with an auditor.
 
-Which leads somewhere counterintuitive. Narrowing a corpus usually improves the answers. I spent last month building an access-control model where every agent was deliberately grounded on a narrow, permission-scoped view of the data, and the constraint did not degrade it. It made it correct, and it made it possible to state precisely what it could and could not know. A wide corpus does not make an agent smarter. It makes it unfalsifiable.
+Which leads somewhere counterintuitive. Narrowing a corpus usually improves the answers. I spent last month building an application-level access-control model on Sigma, where every agent was deliberately grounded on a narrow, permission-scoped view of the data, and the constraint did not degrade anything. It made the agent correct, and it made it possible to state precisely what it could and could not know. A wide corpus does not make an agent smarter. It makes it unfalsifiable.
+
+GIVE THE CORPUS A NAME
+
+All of which raises the practical question the advice usually skips. Bounding a corpus sounds like discipline, and discipline does not survive a quarter. What does it actually look like to build?
+
+The move that worked for me was to stop pointing agents at data and start pointing them at a named, governed view of it. In Sigma that view is an object — a defined set of rows and columns, with visible lineage back to the tables underneath, that a person can open and read. The agent is grounded on that, and only that.
+
+Three things follow from the corpus being an object rather than a list of connections.
+
+Precedence gets settled before the model is involved. The view is derived from the table you declared canonical, so the question of which source wins is answered upstream by whoever owns the model, not silently at inference time by a system with no way to know.
+
+The corpus becomes countable. It has a row count, and a row count can be asserted. Every claim in that project is checked against a SQL model computing the expected answer independently, so "the agent can see 31,500 rows" is a test rather than a belief. You cannot do that with a folder.
+
+And scope can vary by identity, which is the part that surprised me. The same view, grounded once, resolved to 31,500 rows for a store manager and 94,500 for a regional director. One agent, one configuration, a different corpus per person — because the boundary is expressed in the data rather than in a prompt asking the model to be discreet. Nothing was ever refused. The rows were not there to refuse.
+
+That is the difference between bounding a corpus and intending to. Adding a source becomes a modelling change with a review trail attached, rather than a connector somebody switched on during a sprint.
 
 RETRIEVED IS NOT INJECTED
 

@@ -177,6 +177,17 @@ Stored in the same place, in the same format, managed by the same process — wh
 in one sentence. corralai's tiering is the worked answer, and the promotion step is the design, not the
 storage or the search.
 
+**GIVE THE CORPUS A NAME was added 2026-07-30**, because the article raised a question it then walked
+past: bounding a corpus sounds like discipline, and discipline does not survive a quarter. The section
+answers it concretely — stop pointing agents at data, point them at a named governed view, which in
+Sigma is an object with lineage that a person can open and read. Three consequences follow, and each
+one closes a harm named earlier in the piece: precedence gets settled upstream, the corpus becomes
+countable and therefore assertable against the SQL oracle, and scope varies by identity so the same
+grounding resolves to 31,500 rows for a store manager and 94,500 for a regional director.
+
+That last one is the strongest Sigma argument available and it is drawn straight from `../VERIFY.md`
+rather than invented for the article.
+
 **The supply-chain section is hedged on purpose.** It describes the shape of the question rather than
 any tool's current behaviour, and says so in the text: *check your own tooling rather than taking my
 description of it.* Same discipline that stripped the Assistant claims from `04` — a claim about
