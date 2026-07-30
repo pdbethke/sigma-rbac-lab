@@ -31,6 +31,15 @@ paste into an article editor:
     python3 docs/posts/tortf.py docs/posts/04-competitive-intelligence-article.txt \
         -o docs/posts/04-competitive-intelligence-article.rtf
 
+**RTF lines are wrapped at 200 characters, and that is not cosmetic.** The first version emitted one
+long line per paragraph, and LinkedIn's article editor silently ate runs of roughly 30 characters out
+of them — "assessing whether the model seems sensible" pasted in as "assessensible". The file was
+clean; the parser was not. RTF readers have historically assumed lines under 255 characters, and a
+newline inside RTF is ignored by the renderer, so wrapping changes nothing about what displays.
+
+**If a paste still comes out mangled, don't debug it in the editor.** Paste the `.txt` instead and
+apply headings with the editor's own style control. The RTF is a convenience, not the source.
+
 Never hand-edit the RTF. The escaping is exactly the part a human gets wrong — these bodies are full
 of em dashes and curly quotes, and a byte-for-byte copy mangles them silently.
 

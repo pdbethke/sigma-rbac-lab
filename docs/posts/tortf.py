@@ -66,14 +66,34 @@ def paragraphs(text):
             yield block
 
 
+def wrap(line, width=200):
+    """Break an RTF line on spaces, under the 255-character convention.
+
+    Readers have historically assumed short lines, and at least one editor
+    silently eats ~30-character runs out of long ones. A newline inside RTF is
+    ignored by the renderer, so wrapping changes nothing about the output --
+    break only at spaces, never inside a control word like \\u8212?.
+    """
+    out, cur = [], ""
+    for word in line.split(" "):
+        if cur and len(cur) + 1 + len(word) > width:
+            out.append(cur)
+            cur = word
+        else:
+            cur = f"{cur} {word}" if cur else word
+    if cur:
+        out.append(cur)
+    return "\n".join(out)
+
+
 def convert(text):
     body = []
     for para in paragraphs(text):
         esc = escape(para)
         if is_heading(para):
-            body.append("\\sb360\\sa120\\b " + esc + "\\b0\\par")
+            body.append(wrap("\\sb360\\sa120\\b " + esc + "\\b0\\par"))
         else:
-            body.append("\\sb0\\sa180 " + esc + "\\par")
+            body.append(wrap("\\sb0\\sa180 " + esc + "\\par"))
     return HEADER + "\n".join(body) + "\n}\n"
 
 
