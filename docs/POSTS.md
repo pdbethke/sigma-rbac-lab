@@ -202,7 +202,11 @@ This is the question anyone sensible asks first, and it deserves a real answer r
 
 Inference inside the warehouse — Snowflake Cortex, Databricks model serving. The prompt and the rows are evaluated within the governance boundary you already audit. This is the only setup where "the data never leaves" is literally true, and it's worth confirming which models are in-boundary for your region and whether cross-region inference is enabled, because cross-region routing crosses the line the story assumes it doesn't.
 
-Inference mediated by the platform — Sigma's own agent. Results leave the warehouse to a model provider under Sigma's contractual terms. Governed, but not local.
+Inference mediated by the platform — Sigma's own agent. You pick the model, and there are several to pick from; Claude and Gemini among them. That choice matters more than it first appears, because it lets you route inference to a provider whose terms you already hold and have already had reviewed, rather than inheriting whatever default someone else chose.
+
+Mechanically it's an external fetch. The prompt and the query result go out to the model endpoint, the answer comes back. That is the same shape as the AI features in every SaaS tool your company already runs, over a contracted path with terms you can read. The distinction from in-warehouse inference isn't safe versus unsafe — it's that the boundary sits somewhere different, and the only real mistake is not knowing which side of it a given workload is on.
+
+Two things make it comfortable in practice. What leaves is the result set rather than the table, so a well-scoped element means a small payload — the scoping work pays off twice. And because you choose the provider, this is a decision you can take to whoever owns vendor review, with a named counterparty and terms attached, instead of a property of the tool you have to accept.
 
 Inference in a third-party client — Sigma's MCP interface consumed by Claude or Codex. Those results land in someone else's context under whatever agreement you happen to have, and an individual on a consumer plan is in a very different posture from an enterprise with zero-retention terms.
 
