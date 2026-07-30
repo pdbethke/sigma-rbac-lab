@@ -11,37 +11,33 @@ error the rest of this repo exists to catch.
     02-rules-as-data.txt                  PUBLISHED   what they may write
     03-containment.txt                    next        where the boundary lives
     04-competitive-intelligence-post.txt  after       the connecting post
-    04-competitive-intelligence-article.rtf  after    the article it points to
-    05-corpus-supply-chain.rtf            drafted    give the agent less than you want to
-    tortf.py                                          .txt -> .rtf, generated never hand-edited
+    04-competitive-intelligence-article.txt  after     the article it points to
+    05-corpus-supply-chain.txt            drafted    give the agent less than you want to
     personas.md                                       who is who, and which pair proves what
     held-back.md                                      ideas not yet spent
 
-## Formats, which are not preferences
+## Format, which is not a preference
 
-**Short native posts are `.txt`. Long-form articles are `.rtf`. Never Markdown.**
+**Everything is `.txt`. Posts and articles alike. Never Markdown.**
 
 Markdown is a formatting language for a renderer that isn't there. Pasting it into LinkedIn carries
 `**`, `#` and `>` through as literal characters, and indented or fenced blocks paste with their
 leading whitespace. A post body is a deliverable to be copied, not a document to be rendered.
 
-`.txt` is the editable source in every case. The `.rtf` is generated so section headings survive the
-paste into an article editor:
+**RTF was tried for the long-form articles and abandoned.** The theory was reasonable — carry the
+section headings across as real bold instead of re-applying them by hand. In practice LinkedIn's
+article editor silently ate runs of roughly thirty characters out of the paste: *"assessing whether
+the model seems sensible"* arrived as *"assessensible"*, *"something relevant, reads"* as
+*"somethreats"*. The generated file was clean every time; the parser was not. Wrapping the RTF at 200
+characters (readers have long assumed sub-255-character lines) was the right fix on paper and not
+worth the risk on something that ships.
 
-    python3 docs/posts/tortf.py docs/posts/04-competitive-intelligence-article.txt \
-        -o docs/posts/04-competitive-intelligence-article.rtf
+Plain text pastes clean. Apply the headings with the editor's own style control — it takes a minute
+and nothing gets eaten.
 
-**RTF lines are wrapped at 200 characters, and that is not cosmetic.** The first version emitted one
-long line per paragraph, and LinkedIn's article editor silently ate runs of roughly 30 characters out
-of them — "assessing whether the model seems sensible" pasted in as "assessensible". The file was
-clean; the parser was not. RTF readers have historically assumed lines under 255 characters, and a
-newline inside RTF is ignored by the renderer, so wrapping changes nothing about what displays.
-
-**If a paste still comes out mangled, don't debug it in the editor.** Paste the `.txt` instead and
-apply headings with the editor's own style control. The RTF is a convenience, not the source.
-
-Never hand-edit the RTF. The escaping is exactly the part a human gets wrong — these bodies are full
-of em dashes and curly quotes, and a byte-for-byte copy mangles them silently.
+The general lesson is worth keeping: **a silent, partial corruption is worse than a failed paste.**
+Fused words like `weighedagainst` hide comfortably inside fluent prose, which is the same failure the
+articles themselves are about.
 
 **Bodies are unindented, one line per paragraph, no hard wraps.** If a body ever needs two short lines
 together — a sign-off, a pair of links — separate them with a blank line, or an unwrapper will read
