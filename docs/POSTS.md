@@ -156,7 +156,7 @@ An agent grounded on your internals just reasons like you with a different logo 
 
 Then run it backwards, which is where it earns its keep. Point the same scrapers at yourself and what comes back is your own observable surface, exactly as an outsider assembles it. Not a guess about what you're leaking. A capture of it. Five Rust job postings announce a rewrite. A quietly retired pricing tier announces a segment exit. A support-doc edit announces a deprecation before your roadmap does.
 
-The failure mode is worth more attention than the technique. A changed selector returns zero rows, zero rows doesn't raise an error, and the agent confidently narrates a hiring freeze that is actually a CSS change. Its only artifact is absence, which makes it the hardest thing to catch by looking.
+The failure mode is worth more attention than the technique. A competitor redesigns a page, the collection quietly returns nothing, and nothing is not an error. The agent fills the gap from assumption and confidently reports a hiring freeze that is really a page redesign. Its only trace is an absence, which makes it the hardest thing to catch by looking.
 
 I wrote up the whole method — the scraping stack, why the corpus lives in the warehouse, what the external agent is and isn't allowed to see, and the checks that keep it from generating strategy memos.
 
@@ -182,7 +182,7 @@ Which means the discipline is source selection. What could a competent analyst a
 
 HOW IT'S ACTUALLY BUILT
 
-Apify actors on a schedule handle the structured sources — job boards, changelogs, review sites. Bright Data covers what needs residential egress, and that matters more than it sounds. Pricing pages that vary by region only reveal that if you can request them from those regions. A competitor's US and EU price points diverging is a segmentation decision you can read months before anyone announces it, and you cannot see it at all from a single datacenter IP.
+Apify runs on a schedule against the predictable sources — job boards, product announcements, review sites. Bright Data handles the pages that have to be requested from a particular country to show what a local customer actually sees, and that matters more than it sounds. A price page that quietly differs between the US and Europe is a segmentation decision, and you can read it months before anyone announces it. From one location you cannot see it at all.
 
 Each run appends to a table rather than overwriting one. This is the detail that turns collection into intelligence, because the signal is almost never in the current state — it's in the diff. What the careers page said in March, what it says now, and which team grew in between. A pricing tier that existed in Q1 and doesn't now. A support article that changed its recommended migration path. Overwrite the table and you've thrown away the only part that was worth having.
 
@@ -193,7 +193,7 @@ TWO RULES THAT MAKE IT AN INSTRUMENT
 
 First: every conclusion must cite a captured artifact. Scraped records carry a URL and a timestamp, so this is mechanically checkable rather than honor-system. If a claim can't be traced to something in the corpus, the model reasoned from priors about your industry rather than from evidence about this company. Those two outputs read identically. Only one is safe to act on.
 
-Second: the corpus definition is data, not a prompt. Which sources, which cadence, which selectors — declared in a table, versioned, diffable. Adding a source is a row. What the agent is permitted to know becomes a reviewable artifact instead of a paragraph of instructions someone hopes the model respects.
+Second: the definition of the corpus is itself data, not an instruction. Which sources, how often, what to collect — written down in a table that can be reviewed, versioned and compared against last month's. Adding a source is a row. What the agent is allowed to know becomes something a colleague can audit, rather than a paragraph of guidance everyone hopes the model is honouring.
 
 
 WHERE THE INFERENCE RUNS
@@ -233,13 +233,13 @@ A strategy offsite produces an opinion. This produces a delta you can point at.
 
 THE FAILURE MODE, WHICH DESERVES MORE ATTENTION THAN THE TECHNIQUE
 
-A selector changes. The actor returns zero rows. Zero rows does not raise an error.
+A competitor redesigns a page. The collection returns nothing. Nothing is not an error.
 
 The agent reasons from priors and confidently narrates a hiring freeze that is actually a CSS change. Nothing in the output looks wrong, because the output is articulate, plausible and internally consistent. Its only artifact is absence, which makes it the hardest class of failure to catch by inspection — you cannot review your way to noticing something that isn't there.
 
-I've been on the wrong end of this in my own tooling, which is how I learned to take it seriously. I build a mutation-testing audit gate — it grades a test suite by how many deliberate code mutations the tests catch, and the entire premise is that a separate agent does the grading, because no one may be judge in their own cause. So I pointed it at its own scorer. It reported killing 20 of 20 mutants, with a kill rate of 0.00.
+I learned to take this seriously the hard way, in my own tooling. Nemo iudex in causa sua — no one may be judge in their own cause. It's a principle from law, and it is the whole premise of a tool I build: the thing being assessed must never be the thing doing the assessing.
 
-Mathematically impossible, and that one fabricated number was sitting on top of six distinct bugs: a baseline build failure reported as success, a toolchain version mismatch against the offline jail's compiler, dependencies that couldn't be fetched, a shell-injection path through regex metacharacters in a test command, a scope check failing on unrelated bindings, and a retry loop with no termination. Every one of them was hidden behind a value that looked like a result. Nothing in the output announced a problem, because the output was a number.
+So I turned it on itself. It gave itself a perfect score and a zero score in the same report — two numbers that cannot both be true. Underneath that single impossible figure sat six separate faults, and not one of them announced itself. The report was formatted, articulate and confident throughout. The only reason I caught it is that the two numbers happened to contradict each other. Had they agreed, I would have believed the whole thing and moved on.
 
 So the corpus gets a row count and an expected value before anything reasons over it. Forty job postings yesterday and zero today is an alert, not a finding. The scrape history is an append-only table you can query, so a collapse in volume is visible as data rather than inferred from a strange conclusion three steps downstream.
 
