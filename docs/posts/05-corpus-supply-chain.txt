@@ -60,7 +60,7 @@ In one of my projects I built an audit gate where a herd of AI models shares one
 
 Lessons the herd discovered and a human then promoted are marked shared and injected into new instructions. They have been read by a person who decided they should carry authority. Humans hold the gate. Once a human has approved a lesson, it's merged back into the shared corpus.
 
-The other tier never gets that far. Documentation ingested from a source we don't control is tagged to where it came from and stays advisory — agents can find it by searching, and it is injected into nothing, however useful it looks. Which means a source you don't control cannot smuggle trusted guidance into your agents merely by shipping a file, and that property is structural rather than a matter of anyone being careful.
+The other tier stops short of that. Anything from a source we don't control is labeled with where it came from and stays in the reference pile. Agents can read it if they go looking. It never becomes an instruction, however sensible it sounds. So an outside document can inform an answer, but it cannot change how the agent behaves — and that holds because of how the system is built, not because someone remembered to be careful.
 
 The promotion step is the entire design. Not the storage, not the search, not the model. Something moves from findable to authoritative only because a person decided it should, and that decision is recorded. Knowledge grows the way code grows: through review. Code review is the trust gate for knowledge exactly as it is for code.
 
