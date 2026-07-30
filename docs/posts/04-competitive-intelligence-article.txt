@@ -38,13 +38,15 @@ Second: the definition of the corpus is itself data, not an instruction. Which s
 
 THE ASSISTANT IS NOT THE AGENT
 
-Worth separating two things that both look like asking an AI a question, because confusing them undoes everything above.
+Two things look alike — asking an AI a question — and confusing them undoes everything above.
 
-Sigma's Assistant is an authoring tool. It has broad reach across your model by design, it lives in edit mode, and it reads the draft you are working on rather than what your colleagues actually see. All of that is correct for the job it does — helping the person building the thing. Ours volunteered its own reach unprompted: it offered to query across departments, users, roles, permissions, assignments, resources and scopes, and to say who had access to what and who granted it. That is a helpful assistant behaving as intended.
+A general assistant built into a tool exists to help whoever is doing the building, and broad reach across the model is the right design for that job. While I was building on Sigma, its assistant volunteered its own reach unprompted: it offered to query across departments, users, roles, permissions, assignments, resources and scopes, and to tell me who had access to what and who had granted it. That is a helpful authoring assistant behaving exactly as intended.
 
-An agent is a different object. It is grounded on a defined, named set of data and it cannot reach past it, which is the entire property this method depends on. Ask your competitor questions of a general assistant and the corpus discipline evaporates — it can see across everything you have, so it will answer from everything you have, and you will not be able to tell which parts of the answer came from where.
+An agent is a different object. It is grounded on a defined, named set of data and it cannot reach past it — and that is the entire property this method depends on.
 
-So build the constrained agent, and keep the assistant for building. The mistake isn't using either one. It is using the author's tool where you meant the bounded one, and then treating what comes back as though it had a boundary.
+So the mistake isn't using either one. It is putting your competitor questions to a broad-reach assistant, getting back a fluent answer drawn from everything you happen to have access to rather than from the corpus you defined, and then treating it as though it came from the instrument. You will have no way to tell which parts of it came from where.
+
+Know which surface you are on before you trust the answer. They are not interchangeable, and only one of them has a boundary.
 
 WHERE THE INFERENCE RUNS
 

@@ -137,14 +137,17 @@ surviving review. Different claims, and the second is the more useful slot — a
 from the author's own tooling carries more than a hypothetical about a competitor.
 
 **The Assistant/agent section was added 2026-07-30**, placed directly after the corpus rules because
-that is where a reader raises the obvious objection: why not just ask the built-in assistant? The
-answer matters to the whole method — Sigma's Assistant is an authoring tool with broad reach across the
-model by design, and it reads the draft rather than what colleagues see. Ask it competitor questions
-and the corpus discipline evaporates, because it can see everything you have. Framed as *the mistake
-isn't using either one, it's using the author's tool where you meant the bounded one* — which keeps it
-a distinction rather than a complaint. Evidence is in `../FIELD_GUIDE.md`: ours volunteered its own
-reach unprompted, offering to query across departments, users, roles, permissions, assignments,
-resources and scopes.
+that is where a reader raises the obvious objection: why not just ask the built-in assistant?
+
+**It makes no claim about what the assistant can or cannot do.** A first pass asserted that it is
+edit-mode only, reads the draft, and is unreachable by viewers — all true of what was tested here on
+Sigma Public, none of it safe to state flatly in public about someone else's product. Paid tiers have
+viewer-facing natural-language features that are licence-gated, and their current reach is unknown to
+us. So the section rests on one observation actually made — the assistant volunteering its own reach,
+verbatim in `../FIELD_GUIDE.md` — and otherwise argues from the principle: an agent has a boundary, a
+general assistant has access, and the error is asking the second and trusting it like the first.
+
+Framed as *the mistake isn't using either one*, which keeps it a distinction rather than a complaint.
 
 **The through-line worth using deliberately.** corralai certifies by execution and never accepts a
 self-report. This repo computes expected answers in an independent SQL oracle and never trusts the
