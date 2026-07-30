@@ -221,8 +221,6 @@ Point the same scrapers at yourself. What comes back is your own observable surf
 
 Five Rust job postings announce a rewrite. A quietly retired pricing tier announces a segment exit. A support-doc edit announces a deprecation before your roadmap does. A conference talk abstract announces a partnership that hasn't been signed.
 
-[ONE CONCRETE EXAMPLE FROM YOUR OWN WORK GOES HERE — a real inference this surfaced that human review had missed. One paragraph of specifics is worth more than the rest of this article. If it can't be disclosed, use an illustrative case and label it as illustrative.]
-
 That converts "what do they know about us" from a recurring conversation into a finding with an owner and a decision attached: stop emitting it, or emit it deliberately.
 
 
@@ -238,6 +236,10 @@ THE FAILURE MODE, WHICH DESERVES MORE ATTENTION THAN THE TECHNIQUE
 A selector changes. The actor returns zero rows. Zero rows does not raise an error.
 
 The agent reasons from priors and confidently narrates a hiring freeze that is actually a CSS change. Nothing in the output looks wrong, because the output is articulate, plausible and internally consistent. Its only artifact is absence, which makes it the hardest class of failure to catch by inspection — you cannot review your way to noticing something that isn't there.
+
+I've been on the wrong end of this in my own tooling, which is how I learned to take it seriously. I build a mutation-testing audit gate — it grades a test suite by how many deliberate code mutations the tests catch, and the entire premise is that a separate agent does the grading, because no one may be judge in their own cause. So I pointed it at its own scorer. It reported killing 20 of 20 mutants, with a kill rate of 0.00.
+
+Mathematically impossible, and that one fabricated number was sitting on top of six distinct bugs: a baseline build failure reported as success, a toolchain version mismatch against the offline jail's compiler, dependencies that couldn't be fetched, a shell-injection path through regex metacharacters in a test command, a scope check failing on unrelated bindings, and a retry loop with no termination. Every one of them was hidden behind a value that looked like a result. Nothing in the output announced a problem, because the output was a number.
 
 So the corpus gets a row count and an expected value before anything reasons over it. Forty job postings yesterday and zero today is an alert, not a finding. The scrape history is an append-only table you can query, so a collapse in volume is visible as data rather than inferred from a strange conclusion three steps downstream.
 
@@ -291,10 +293,38 @@ in.
 whether cross-region inference is enabled; and Sigma's current published data-handling terms for their
 own agent, so the middle tier is described the way they describe it.
 
-### The one thing still missing
+### The concrete example, and where it came from
 
-The bracketed paragraph in RUN IT BACKWARDS. Everything else in the article is method; that paragraph
-is evidence. A reader deciding whether this was run or merely designed will decide there.
+The failure-mode section's example is the Corral field note — pointing the mutation-testing audit gate
+at its own kill-rate scorer and getting "20 of 20 mutants killed" alongside a 0.00 kill rate, one
+impossible number masking six bugs. Published at
+`corralai.dev/field-notes/a-judge-in-her-own-cause/`, so it is disclosable and already public.
+
+It sits in the failure-mode section rather than in RUN IT BACKWARDS, where the placeholder originally
+was. RUN IT BACKWARDS is about detecting your own emissions; this is about a fabricated value
+surviving review. Different claims, and the second one is the more useful slot — a self-critical
+example from the author's own tooling carries more than a hypothetical about a competitor.
+
+**The through-line worth using deliberately.** Corral certifies by execution and never accepts a
+self-report. This repo computes expected answers in an independent SQL oracle and never trusts the
+editor's own reading. Same principle in two domains — *nemo iudex in causa sua*.
+
+### The framing decision still open
+
+The competitor pipeline is a **design**, not a report. Corral is an audit gate for code, not
+competitive intelligence, so no engagement of this shape has been run. Several sentences currently
+read as description of something operating — "in this design the external agent only ever sees the
+competitor corpus" is the clearest. Either move those to the conditional ("here is how I would build
+it, and why each constraint is there"), or don't publish until it has been run once.
+
+The middle position is the one thing the piece cannot survive, because it is precisely the failure it
+warns about: present tense with nothing behind it, reading identically to a report.
+
+### Still open
+
+Confirm which models are in-boundary for Cortex in the relevant region and whether cross-region
+inference is enabled, before publishing anything about where inference runs. And decide the framing
+question above.
 
 ---
 
