@@ -64,42 +64,36 @@ A repository's own developer documentation is ingested too, but tagged to that r
 
 The promotion step is the entire design. Not the storage, not the search, not the model. Something moves from findable to authoritative only because a person decided it should, and that decision is recorded. Knowledge grows the way code grows: through review. Code review is the trust gate for knowledge exactly as it is for code.
 
-THE SUPPLY CHAIN NOBODY IS REVIEWING
+WHO IS ALLOWED TO WRITE TO IT
 
-Now apply that lens to how most of us actually work.
+Which turns a question that sounds administrative into a governance one. Who can add to what your agent reads?
 
-Coding agents read instruction files out of the repository you have open. Conventions vary by tool, but the pattern is consistent: a file at the project root carrying standing guidance, a directory of packaged capabilities the agent can pick up, declarations of external tools it may call. All of it plain text. All of it arriving with the clone.
+In most organisations the answer is "rather a lot of people, and nobody decided that." A shared drive anyone can drop a file into. A wiki page anyone can edit. A document a supplier emailed over. None of that is unreasonable on its own — it is simply how companies work. It becomes a different question the moment those documents start shaping what an automated system tells your staff, in a confident voice, at scale.
 
-Cloning a repository that ships agent instructions is running a stranger's standing orders inside your agent, with your credentials and your file access. It is the same shape as piping a script from the internet into a shell, and almost nobody treats it that way, because it is a markdown file and markdown files feel like documentation.
-
-Packaged capabilities are the more interesting case. A skill is a standing instruction with a trigger, and the trigger is judged by the model against the task at hand. So the boundary is not a permission — it is a relevance decision. An attacker does not need to get their instruction loaded. They need to make it look applicable.
-
-I want to be careful here, because this is a claim about tools I did not build and the details change. Check your own tooling rather than taking my description of it. But the shape of the question is stable no matter what the current behaviour is, and it is worth asking out loud: which of these files load automatically, which load conditionally, who can write them, and does anyone review that content the way they would review a dependency?
-
-We built an entire discipline around not running unreviewed code. Then we invented a way to ship unreviewed instructions, and put it in a file format that looks like a README.
+The distinction above is what makes it manageable rather than alarming. Anyone may contribute to what the agent can look up, because look-up is evidence and evidence gets weighed. Adding to what the agent is instructed by should carry someone's name, the way a policy change does. Most organisations already have that review process. They have not yet noticed that a document can now behave like one.
 
 YOU CAN TEST THIS
 
 The part I care about most is that none of the above has to be a matter of opinion.
 
-Take a document your agent can retrieve but that should never carry authority — a repository's own docs, a scraped page, a wiki entry anyone can edit. Put an instruction inside it. Something unambiguous and harmless, phrased the way a real injection would be: an assertion about how the agent should behave, framed as guidance rather than as content.
+Take a document your agent can look up but that should never carry authority. A wiki page, a supplier's file, something collected from a public website. Put a sentence in it that instructs rather than informs — harmless, unmistakable, and written the way a real attempt would be: guidance about how the agent ought to behave, dressed as ordinary content.
 
-Then run the system and look at what actually reached the instructions.
+Then ask the agent something unrelated, and watch whether it behaves differently.
 
-If the planted line shows up there, you do not have two tiers. You have one tier and a naming convention. If it stays retrievable and never injects, the boundary is real, and now you can say so with evidence rather than with architecture diagrams.
+If it does, you do not have two tiers. You have one tier and a naming convention. If the planted sentence stays look-up-able and never changes the agent's behaviour, the boundary is real — and you can now say so with evidence instead of with an architecture diagram.
 
-Run it again whenever the plumbing changes, because this is precisely the kind of boundary that degrades silently. Nothing breaks when it stops working. The agent just becomes slightly more agreeable to documents it happens to read.
+Run it again whenever the plumbing changes, because this is exactly the sort of boundary that degrades quietly. Nothing breaks when it stops working. The agent simply becomes a little more agreeable to whatever it happens to read.
 
-That test is cheap, it takes an afternoon, and I have not met many teams who have run it.
+The test is cheap. It takes an afternoon. I have not met many teams who have run it.
 
 WHAT TO ACTUALLY DO
 
-Give the agent less than you want to. Start from the smallest corpus that answers the question you are actually being asked, and add sources when a specific question fails rather than in anticipation of questions nobody has asked.
+Give the agent less than you want to. Start from the smallest set of data that answers the question you are actually being asked, and add a source when a specific question fails — not in anticipation of questions nobody has asked yet.
 
-Say which source wins, in the data. Precedence that lives only in your head is not available to the model.
+Say which source wins, and say it in the data rather than in a meeting. That is what a governed view is for: it derives from the table you have declared canonical, so precedence is settled by the person who owns the model instead of silently by a system that has no way to know.
 
-Separate what can be retrieved from what gets injected, and make the second require a human act with a name attached to it.
+Separate what the agent can look up from what instructs it, and make the second require a human decision with a name attached.
 
-And test the separation rather than trusting it, because a boundary you have never tried to cross is not a boundary. It is an intention.
+And test that separation rather than trusting it, because a boundary nobody has tried to cross is not a boundary. It is an intention.
 
-None of this is exotic. It is the same discipline as least privilege, code review and dependency management, applied to a new kind of input that happens to look like prose. The reason it feels novel is only that the payload is a paragraph instead of a package.
+None of this is exotic, and none of it is really about AI. It is the same discipline your organisation already applies to who may approve an invoice, change a price, or sign off a policy — applied to a new kind of input that happens to arrive looking like prose. The reason it feels unfamiliar is only that the thing carrying the authority is a paragraph.

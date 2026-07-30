@@ -188,11 +188,19 @@ grounding resolves to 31,500 rows for a store manager and 94,500 for a regional 
 That last one is the strongest Sigma argument available and it is drawn straight from `../VERIFY.md`
 rather than invented for the article.
 
-**The supply-chain section is hedged on purpose.** It describes the shape of the question rather than
-any tool's current behaviour, and says so in the text: *check your own tooling rather than taking my
-description of it.* Same discipline that stripped the Assistant claims from `04` — a claim about
-someone else's product, made in public, that will still be sitting on the profile after the product
-changes.
+**The developer-facing back half was cut on 2026-07-30.** The original closed with a section on agent
+instruction files arriving with a cloned repository — genuinely the strongest builder material in the
+set, and written at a completely different reader. It lost every non-technical person for the last
+thousand words, and Sigma disappeared along with them. Moved whole to `held-back.md` as its own piece.
+
+What replaced it keeps the same argument in the audience's own terms: **who is allowed to write to it.**
+A shared drive anyone can drop a file into, a wiki page anyone can edit, a document a supplier emailed
+over. The point lands harder, because it describes the reader's actual company rather than a
+development workflow — and the review process it asks for is one they already have for policy changes.
+
+The injection test survived the rewrite with the vocabulary changed: a wiki page or a supplier's file
+rather than a repository's docs, and *watch whether the agent behaves differently* rather than *look at
+what reached the instructions*.
 
 **It ends with a test, not an opinion.** Plant an instruction in a retrievable-but-not-authoritative
 document and see whether it reaches the instructions. That converts the whole argument from
