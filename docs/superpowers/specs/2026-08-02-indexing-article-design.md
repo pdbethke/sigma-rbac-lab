@@ -159,9 +159,15 @@ The hook:
 - `compact` is the load-bearing one. After a compaction, the specific reasoning — "we decided to
   prefetch here" — is exactly what is gone, so re-running the scan rebuilds state the context window
   dropped.
-- **Claude Code has no `PostCompact` hook.** The post-compaction hook is `SessionStart` with matcher
-  `compact`. `PreCompact` exists but fires before, when a re-scan is least useful. A reader who copies
-  a `PostCompact` block gets silence rather than an error, so the name must be exact.
+- **Correction (verified against Claude Code 2.1.220, see `docs/hook-verification.md`): `PostCompact`
+  does exist as its own hook event** — it fires after a compaction completes and cannot block
+  (exit code ignored). The article's original claim that no such event exists was wrong. What
+  remains true, and what this repo's hook actually uses, is that `SessionStart` also accepts a
+  `compact` matcher, and that is the one wired here — chosen because it re-enters the same
+  SessionStart plumbing (additionalContext) already used for `startup`, rather than because
+  `PostCompact` doesn't exist. `PreCompact` also exists, firing before compaction, which is too
+  early for a re-scan. A reader who copies a `PostCompact` block will NOT get silence — it is a
+  real, working event name — but it is not the one this article's hook configuration uses.
 
 ## The article
 
