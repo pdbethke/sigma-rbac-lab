@@ -1878,3 +1878,49 @@ Either outcome is publishable and neither is the one to hope for.
 - [ ] **Step 5: State the limits**
 
 Still one domain, one baseline lineage, one model, four increments. And note the asymmetry: a stripped schema is not the same as a schema that never had indexes — the column choices, relations and naming still reflect a project that was designed with them.
+
+---
+
+### Task 17: The isolation check — did our own instrumentation contaminate the trials?
+
+Added 2026-08-02, from the user's question: *was the indexing skill a factor in this?*
+
+**The hole.** `.claude/skills/performance/SKILL.md` and the `SessionStart` hook were committed at 12:19. The cross-model run (13:42-15:02), the drift run (15:28+) and Task 16 all executed **inside the worktree**, and a session in a trial subdirectory can see the project skill. Its description — "Use when writing or reviewing ORM query code… or when asked to scan for N+1 queries" — sat in every one of those sessions' available-skills list while they were asked to write ORM query code. The experiment's own instrumentation became part of the experiment.
+
+**What was already established, by direct test:**
+
+- The hook injects nothing into a trial session (`NONE` when asked to repeat prior context).
+- The skill was never invoked — no cross-model or drift transcript references the skill, the scanner, or N+1 at all.
+- The visible description mentions N+1 and ORM code but **never mentions indexes**, and index declaration is the primary measure.
+- The pilot (10:47-11:23) predates the skill entirely and shows the same behaviour, 8 of 10 declaring explicit indexes.
+- A session outside the repository sees no project skill.
+- Tasks 15 and 16 had identical exposure, so the comparison between them stays internally valid.
+
+That is an argument. This task replaces it with a measurement.
+
+- [ ] **Step 1: Wait for Task 16's runner to exit**
+
+Do not run concurrently. Every comparator ran serially and alone; a session competing with another for the machine is not the same condition.
+
+- [ ] **Step 2: Replicate one cell exactly, from outside the repository**
+
+Reproduce **Task 15 arm B, trials 1 and 2** — 8 sessions, four increments each, fresh session per increment, the arm where contamination would bite hardest because each increment is an independent exposure.
+
+Identical in every respect: same well-indexed baseline (`runs-crossmodel/claude/arm1-trial5`), same `experiments/drift/prompts/`, same model `claude-opus-4-8`, same order, serial.
+
+Changed in exactly one respect: the working directory is under `/tmp`, outside any git repository carrying `.claude/`. **Verify isolation before spending sessions** — run `claude -p "Do you have a project skill named 'performance'? Answer only YES or NO."` in that directory and confirm `NO`. If it says YES, the isolation failed and nothing else in this task means anything.
+
+- [ ] **Step 3: Grade against the unchanged pre-registered EXPECTED.md**
+
+Same four outcomes. Do not rewrite expectations.
+
+- [ ] **Step 4: Compare, and state the consequence for every affected claim**
+
+    Task 15 arm B trials 1-2, inside repo   (skill visible)     ?/8 correct
+    Task 17 arm B trials 1-2, outside repo  (no skill visible)  ?/8 correct
+
+**If they match**, contamination is empirically ruled out for the index measure and Tasks 14-16 stand as reported. **If the isolated run degrades**, the skill was priming the models, and every index number from 13:42 onward is inflated — the pilot becomes the only clean index measurement in the project, and the article says so.
+
+- [ ] **Step 5: Fix the harness for good**
+
+All future trials run outside the repository. Record this in the README as a reproduction instruction, because a reader who clones the companion repo and runs the harness inside it would hit exactly the same contamination.
