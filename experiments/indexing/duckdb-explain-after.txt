@@ -1,0 +1,88 @@
+
+> duckdb
+> node --experimental-strip-types experiments/indexing/duckdbQuery.ts experiments/indexing/engines.duckdb 
+  CREATE INDEX idx_inventory_store ON inventory_daily (store_id, snapshot_date);
+  EXPLAIN SELECT store_id, SUM(inventory_value)
+          FROM inventory_daily
+          WHERE store_id = (SELECT store_id FROM inventory_daily LIMIT 1)
+            AND snapshot_date > '2026-01-01'
+          GROUP BY store_id;
+
+
+explain_key | explain_value
+--- | ---
+physical_plan | ┌───────────────────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│         Groups: #0        │
+│    Aggregates: sum(#1)    │
+│                           │
+│          ~3 rows          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│          store_id         │
+│      inventory_value      │
+│                           │
+│        ~6,300 rows        │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         HASH_JOIN         │
+│    ────────────────────   │
+│      Join Type: INNER     │
+│                           │
+│        Conditions:        ├──────────────┐
+│    store_id = SUBQUERY    │              │
+│                           │              │
+│        ~6,300 rows        │              │
+└─────────────┬─────────────┘              │
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│          SEQ_SCAN         ││         PROJECTION        │
+│    ────────────────────   ││    ────────────────────   │
+│           Table:          ││ CASE  WHEN ((#1 > 1)) THEN│
+│        engines.main       ││   ("error"('More than one │
+│      .inventory_daily     ││      row returned by a    │
+│                           ││     subquery used as an   │
+│   Type: Sequential Scan   ││     expression - scalar   │
+│                           ││     subqueries can only   │
+│        Projections:       ││    return a single row.   │
+│          store_id         ││          Use "SET         │
+│      inventory_value      ││ scalar_subquery_error_on_m│
+│                           ││   ultiple_rows=false" to  │
+│          Filters:         ││     revert to previous    │
+│ snapshot_date>'2026-01-01 ││   behavior of returning a │
+│    00:00:00'::TIMESTAMP   ││ random row.')) ELSE #0 END│
+│                           ││                           │
+│        ~18,900 rows       ││           ~1 row          │
+└───────────────────────────┘└─────────────┬─────────────┘
+                             ┌─────────────┴─────────────┐
+                             │    UNGROUPED_AGGREGATE    │
+                             │    ────────────────────   │
+                             │        Aggregates:        │
+                             │        "first"(#0)        │
+                             │        count_star()       │
+                             └─────────────┬─────────────┘
+                             ┌─────────────┴─────────────┐
+                             │         PROJECTION        │
+                             │    ────────────────────   │
+                             │             #0            │
+                             │                           │
+                             │           ~1 row          │
+                             └─────────────┬─────────────┘
+                             ┌─────────────┴─────────────┐
+                             │      STREAMING_LIMIT      │
+                             └─────────────┬─────────────┘
+                             ┌─────────────┴─────────────┐
+                             │          SEQ_SCAN         │
+                             │    ────────────────────   │
+                             │           Table:          │
+                             │        engines.main       │
+                             │      .inventory_daily     │
+                             │                           │
+                             │   Type: Sequential Scan   │
+                             │   Projections: store_id   │
+                             │                           │
+                             │        ~94,500 rows       │
+                             └───────────────────────────┘
+
