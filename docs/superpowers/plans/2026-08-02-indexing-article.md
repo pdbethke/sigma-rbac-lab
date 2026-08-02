@@ -1733,3 +1733,15 @@ n per model, ungradeable per model, all three index counts, and the verdict dist
 - [ ] **Step 6: Commit, with no secret in the diff**
 
 Grep the staged diff for the key and for any `AQ.`-prefixed string. Confirm `.gemini/` is gitignored, that no trial's `.gemini/settings.json` is staged, and that no `node_modules` is staged.
+
+**Task 14 amended 2026-08-02: a third model, Codex.** 3 models x 2 arms x 5 trials = 30 trials, still serial, still interleaved. Rotation: `claude/arm1/1, gemini/arm1/1, codex/arm1/1, claude/arm2/1, gemini/arm2/1, codex/arm2/1, claude/arm1/2, …`
+
+    codex   codex-cli 0.142.5, CLI default model
+
+Invocation (note `</dev/null` — without it the CLI blocks reading stdin, and `--skip-git-repo-check` is required outside a trusted git dir):
+
+    codex exec --skip-git-repo-check --sandbox workspace-write "$(cat prompt-armN.txt)" </dev/null
+
+**Codex's model provenance is weaker than the other two, and this must be disclosed in the results.** Claude and Gemini are pinned to exact ids that echo back verifiably. Codex is not: verified 2026-08-02, this machine's ChatGPT-account entitlement rejects every explicit `-m` value tried (`gpt-5`, `gpt-5-codex`, `gpt-5.1-codex`) with "not supported when using Codex with a ChatGPT account", so only the CLI default is usable. The session log records only an internal `codex-auto-review` slug, and the model self-reports as "GPT-5" — a self-report, which is not evidence by this project's own standard. Record it as "codex-cli 0.142.5 default under ChatGPT-account auth; underlying model self-reported as GPT-5, not independently verified" and never as a bare "GPT-5" column.
+
+The CLI does validate model ids — an invented one is rejected with a 400 — so the rejections above are real entitlement limits, not typos.
