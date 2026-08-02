@@ -1,0 +1,17 @@
+Both pass — schema is valid and the query typechecks against the generated client.
+
+## What I added
+
+**`prisma/schema.prisma`** — one index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedAt])
+```
+No new fields were needed; the model already has `adjustedBy`, `adjustedAt`, `unitsDelta`, `reason`, and the `store`/`product` relations. The new index backs the month filter — the existing `[storeId, productId, adjustedAt]` index can't, since this query constrains only `adjustedAt`.
+
+**`src/queries.ts`** — `getLargestAdjustmentsThisMonth()` (Page 5) returning `LargestAdjustmentRow[]` with `adjustedBy`, `productName`, `storeName`, `unitsDelta`, `reason`. It filters to the current calendar month, pulls store + product via nested `select` in a single `findMany` (no N+1), ranks by |`unitsDelta`|, and takes the top 10 — following the same fetch-then-process-in-JS pattern as the existing pages.
+
+Two judgment calls worth flagging:
+- **"Largest" = magnitude.** A −300 write-off ranks alongside a +300 correction. `unitsDelta` is returned signed so the page can render direction. If ops actually wants only upward corrections (or only shrinkage), that's a one-line change to the sort/filter.
+- **"This month"** defaults to `new Date()` but takes an injectable `now` for testing.
+
+One deployment note: the index only reaches the actual database once a migration runs (`npx prisma migrate dev`). The query works without it — the index just keeps the month filter fast as the table grows.

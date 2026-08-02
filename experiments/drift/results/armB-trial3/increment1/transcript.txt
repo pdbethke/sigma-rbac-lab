@@ -1,0 +1,17 @@
+Schema validates and TypeScript compiles clean. Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — one index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedAt])
+```
+The new page filters adjustments by date across the entire chain. The existing `@@index([storeId, productId, adjustedAt])` can't serve that (its leading column is `storeId`), so a date-only filter would scan the table. This standalone index mirrors how `InventoryDaily` carries `@@index([snapshotDate])` for the same reason. No new columns were needed — the model already holds who (`adjustedBy`), the amount (`unitsDelta`), the reason (`reason`), and relations to store and product.
+
+**`src/queries.ts`** — a new `getLargestAdjustmentsThisMonth()` (Page 5), built the same way as the existing pages: a typed `LargestAdjustmentRow` interface, a `prisma.inventoryAdjustment.findMany` with a nested `select` pulling `store.name` and `product.name`, and a `.map()` to the flat row shape.
+
+Two interpretation calls worth flagging:
+- **"Largest" = biggest change in either direction.** A big write-down is as notable to an ops manager as a big write-up, so I rank by `Math.abs(unitsDelta)`. Because SQLite/Prisma can't `ORDER BY abs(...)`, ranking and the top-10 slice happen in memory — the same in-JS approach Page 4 already uses for its sort.
+- **"This month" = current calendar month**, computed as `[monthStart, nextMonthStart)`. I made `now` an injectable parameter defaulting to `new Date()` so it's testable, consistent with the explicit-parameter style of the other queries.
+
+One thing I did **not** do: push the index to the existing `dev.db`. The code change declares the intent in the schema; applying it needs a `prisma migrate`/`db push`, which I left alone since this is a lab DB and you didn't ask me to migrate. Say the word if you want me to run it.

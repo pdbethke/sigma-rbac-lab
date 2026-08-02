@@ -1,0 +1,17 @@
+Both pass — Prisma client regenerated cleanly (which validates the schema, including the new index) and `tsc --noEmit` reports no type errors.
+
+## Summary
+
+**`prisma/schema.prisma`** — added one index to `InventoryDaily`:
+```prisma
+@@index([snapshotDate, isStockout])
+```
+This serves the new query's stockout filter, following the schema's own convention (Page 2 filters `isLowStock` and has a matching `@@index([isLowStock])`). The "which stores exist on this date" lookup reuses the existing `@@index([snapshotDate])`, exactly as Page 4 does.
+
+**`src/queries.ts`** — added `getStoreStockoutCounts(snapshotDate)` returning `StoreStockoutCountRow[]` (`storeId`, `storeName`, `stockoutCount`), one row per store, ordered by name. It follows Page 4's exact shape: `groupBy` to aggregate, then resolve store names via a `findMany` + `Map`, then sort in JS.
+
+**Two judgment calls worth flagging:**
+- **"Out of stock"** maps to the existing `InventoryDaily.isStockout` boolean.
+- **"Every store"** — I include stores that had inventory on that date but *zero* stockouts (count `0`), rather than only stores that had a stockout. "One row per store" and a director wanting to see the good stores alongside the bad both point that way. That's why there are two `groupBy` calls (present stores, then stockout counts) merged with a zero default. If you'd rather show only stores that *had* a stockout, it collapses to a single `groupBy` with `isStockout: true` — say the word and I'll trim it.
+
+One thing I did *not* do: run a migration against `dev.db`. The schema change is in place, but the SQLite file won't have the new index until `prisma migrate`/`db push` runs. Let me know if you want that applied here.

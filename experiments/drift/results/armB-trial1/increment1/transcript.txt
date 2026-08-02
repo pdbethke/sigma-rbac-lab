@@ -1,0 +1,16 @@
+`tsc --noEmit` passed with no errors. Both changes are in place.
+
+## What I changed
+
+**`prisma/schema.prisma`** — added `@@index([adjustedAt])` to `InventoryAdjustment`. The page filters adjustments across all stores by date, and the existing `[storeId, productId, adjustedAt]` composite can't serve a store-agnostic date-range scan (wrong leading column). This mirrors how `InventoryDaily` already pairs its composite with a standalone `@@index([snapshotDate])`.
+
+**`src/queries.ts`** — added Page 5: `getLargestAdjustmentsThisMonth()` with a `LargestAdjustmentRow` interface, built in the same style as the existing pages (Prisma `select` with nested relation selects, JS post-processing to shape/sort/slice, like Page 4).
+
+Each row returns the five fields the manager asked for: `adjustedBy` (who), `productName`, `storeName`, `unitsDelta` (amount changed), and `reason`.
+
+Two things I decided, in case you'd want them different:
+
+- **Largest = by magnitude, both directions.** A −400 shrinkage write-off counts as a large adjustment, not just +400 corrections. I fetch the top 10 by delta from each end (20 candidate rows max), then keep the 10 with the biggest absolute change. If you actually only want the biggest *increases*, that collapses to a single `orderBy: { unitsDelta: "desc" }, take: 10`.
+- **`now` is an injectable parameter** defaulting to `new Date()`, so the call site stays `getLargestAdjustmentsThisMonth()` but tests can pin the month. Month bounds are computed in UTC to match how `adjustedAt` is stored.
+
+I did **not** create a Prisma migration or run `prisma generate` — the task scoped this to the two files, and this is an experiment run dir. If you want the index to actually exist in the DB, say the word and I'll generate the migration.

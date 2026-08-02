@@ -1,0 +1,16 @@
+Done. Both files are updated in the same style as the existing pages.
+
+**`prisma/schema.prisma`** — The `InventoryAdjustment` model already carried every field the page needs (`adjustedBy`, `product`, `store`, `unitsDelta`, `reason`, `adjustedAt`), so the only schema change is one index:
+
+```prisma
+@@index([adjustedAt])
+```
+
+The existing `@@index([storeId, productId, adjustedAt])` supports Page 3's per-store/per-product history, but this new page filters on `adjustedAt` alone (across all stores) — `adjustedAt` isn't a usable prefix of that composite index. The new index mirrors how `InventoryDaily` indexes `snapshotDate`.
+
+**`src/queries.ts`** — Added Page 5: `LargestAdjustmentRow` interface + `getLargestAdjustmentsThisMonth()`, following the same conventions as the other four (Prisma `findMany` with nested `select` for the store/product names, in-memory finish like Page 4).
+
+Two interpretation calls worth flagging:
+
+- **"This month"** = the current calendar month (`[first of month, first of next month)`), computed from `new Date()`.
+- **"Largest"** = biggest change *by magnitude* — a count that dropped by 500 ranks above one that rose by 10. Prisma/SQLite can't `ORDER BY abs()`, so I fetch the month's rows and sort by `Math.abs(unitsDelta)` before taking 10, the same in-memory-finish pattern Page 4 uses. The returned `unitsDelta` keeps its sign so the page can show direction. If the manager actually wants only the largest *increases* (positive deltas), that's a one-line change — say the word.

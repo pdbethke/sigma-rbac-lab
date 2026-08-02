@@ -1,0 +1,13 @@
+Schema validates and `tsc --noEmit` passed clean (no errors). Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — one index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedBy, adjustedAt])
+```
+The model already carried every field the page needs (`adjustedBy`, `adjustedAt`, `unitsDelta`, `reason`, plus the `store`/`product` relations). The three existing indexes all lead on `storeId` or `adjustedAt`, so a "one person over a window" scan had no supporting index — this one leads on `adjustedBy` with `adjustedAt` as the tiebreaker, covering both the equality filter and the range/sort.
+
+**`src/queries.ts`** — `getPersonAdjustments(adjustedBy, from, to)`, built the same way as Page 5: filter `InventoryAdjustment` across all stores and products, `select` the store and product names through the relations, order most-recent-first. It returns store, product, `unitsDelta`, reason, and `adjustedAt`. The date range is inclusive on both ends (`gte`/`lte`), which is the natural reading of an analyst-supplied window; I noted that in the doc comment.
+
+One thing worth flagging: you're inside the `experiments/drift/runs/armB-trial3/` copy (a drift-experiment working tree), not `app/`. The edits went into this run's files, matching where the task pointed (`prisma/schema.prisma` / `src/queries.ts` relative to here). If you actually meant the canonical app under `app/`, say the word and I'll port the same two changes there.

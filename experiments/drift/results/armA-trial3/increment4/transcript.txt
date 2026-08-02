@@ -1,0 +1,17 @@
+Both pass — schema valid, query typechecks.
+
+## What I added
+
+**`prisma/schema.prisma`** — replaced the standalone `@@index([productId])` on `InventoryDaily` with:
+```prisma
+@@index([productId, snapshotDate])
+```
+This serves the new access pattern (filter by product, group/order by date) and, since `productId` leads the composite, fully covers what the standalone index did — so it's a replacement, not an addition. It mirrors the store-side `[storeId, snapshotDate]` exactly, which the schema keeps with no standalone `[storeId]`.
+
+**`src/queries.ts`** — `getProductCostTrend(productId)` returning `ProductCostTrendRow[]` (`snapshotDate`, `avgCostPerUnit`), oldest date first. A single `groupBy` on `snapshotDate` with `_avg: { costPerUnit }` and `orderBy: { snapshotDate: "asc" }` — following Page 4's aggregate idiom.
+
+The one judgment call:
+
+- **"Combined across every store" = average cost per unit per date.** Each store stores its own `costPerUnit` for the product on a given date, so I collapse them to one point per date with a plain average. If merchandising actually wants an *inventory-value-weighted* average (weight each store's cost by its units on hand — more accurate for "what the on-hand stock cost"), that's a different aggregation that `groupBy._avg` can't express; it'd need either `_sum(inventoryValue)/_sum(unitsOnHand)` per date or a raw query. Say the word if that's the intent.
+
+Same deployment note as before: the index change lands on the next `npx prisma migrate dev`; the query is correct without it.

@@ -1,0 +1,17 @@
+Both pass — client generates and `tsc --noEmit` is clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — one index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedAt])
+```
+No new fields were needed: the model already has `adjustedBy` (who), `product`, `store`, `unitsDelta` (amount changed), `reason`, and `adjustedAt`. The new page scans by date chain-wide, and the existing `@@index([storeId, productId, adjustedAt])` can't serve that (its prefix is `storeId`, which the query doesn't filter on). This mirrors `InventoryDaily.@@index([snapshotDate])`.
+
+**`src/queries.ts`** — `getLargestAdjustmentsThisMonth()` (Page 5), built like the others: a `select` that pulls related `store.name` / `product.name`, returning a typed `LargestAdjustmentRow[]` with the five columns the manager asked for (who, product, store, unitsDelta, reason).
+
+Two judgment calls worth flagging:
+- **"This month"** = the current calendar month, computed as `[monthStart, monthEnd)` on `adjustedAt`. The function takes no args (the page is chain-wide, not per-store), unlike the param-driven earlier pages.
+- **"Largest"** = largest *magnitude* in either direction (`Math.abs`), so a big shrinkage write-down ranks alongside a big recount write-up — the operationally meaningful reading. Ranking + top-10 slice happen in JS, consistent with the JS post-processing in Page 4. If you actually want only the biggest *increases*, that's a one-line change to a DB-side `orderBy: { unitsDelta: "desc" }, take: 10`.
+
+I did **not** run a migration — the schema/query edits are what you asked for. The added index will apply next time you run `npm run prisma:migrate` (it's purely additive, safe for the existing `dev.db`).

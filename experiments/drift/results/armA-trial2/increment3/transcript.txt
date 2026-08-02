@@ -1,0 +1,15 @@
+Client generates and `tsc --noEmit` is clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — one composite index on `InventoryDaily`:
+```prisma
+@@index([snapshotDate, isStockout])
+```
+`snapshotDate` first (equality on the chosen date), then `isStockout` — so the stockout-count query seeks straight to that date's out-of-stock rows. The schema already had a bare boolean index (`isLowStock`, for Page 2) but nothing pairing a date with `isStockout`. No new fields needed.
+
+**`src/queries.ts`** — `getStoreStockoutCounts(snapshotDate)` (Page 7), built like Page 4 (`RegionalSummary`): `groupBy` on `storeId`, then resolve store names in JS and sort by name.
+
+One judgment call worth flagging: **"every store" includes stores with zero stockouts.** A single filtered `groupBy` would drop clean stores (they have no `isStockout: true` rows), which for a regional director's overview would hide exactly the good-news rows. So it's two groupings — one for every store present on that date, one for the stockout counts — merged, with absent stores showing `0`. Sorted by store name, matching Page 4's convention.
+
+As before, no migration run — the added index is additive and applies on your next `npm run prisma:migrate`.

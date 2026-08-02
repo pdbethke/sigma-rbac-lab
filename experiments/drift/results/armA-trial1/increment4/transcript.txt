@@ -1,0 +1,17 @@
+Schema validates, client regenerates, TypeScript compiles clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — a new index on `InventoryDaily`:
+```prisma
+@@index([productId, snapshotDate])
+```
+The trend query filters by `productId` and groups/orders by `snapshotDate`; this composite covers all three in one seek, paralleling the existing `[storeId, snapshotDate]`.
+
+**`src/queries.ts`** — Page 8, `getProductCostTrend(productId)`, in Page 4's `groupBy` style:
+
+- **Param**: the product.
+- **Columns**: `snapshotDate`, `avgCostPerUnit` — one row per date.
+- **"Combined across every store"**: averages `costPerUnit` across all stores carrying the product on each date, ordered earliest→latest.
+
+One interpretation worth flagging: I read "combined" as the **average** cost per unit across stores — the natural read for a cost trend, since it's price-like and shouldn't be summed. If the analyst actually wants a volume-weighted average (weighting each store's cost by its `unitsOnHand`, so a store holding more of the product influences the blended cost more), that's a more involved change — Prisma's `_avg` can't weight, so it'd need a `$queryRaw` or fetching rows and computing the weighted mean in JS. Say the word and I'll switch it.

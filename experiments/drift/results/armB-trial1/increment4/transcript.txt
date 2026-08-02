@@ -1,0 +1,16 @@
+Done. Typecheck passes clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — one composite index on `InventoryDaily`:
+```prisma
+@@index([productId, snapshotDate])
+```
+The query filters by `productId` and groups/orders by `snapshotDate`; this composite covers exactly that access path (the pre-existing standalone `[productId]` and `[snapshotDate]` indexes each cover only half). I left the existing indexes untouched — the change is purely additive.
+
+**`src/queries.ts`** — `getProductCostTrend(productId)` returning `ProductCostTrendRow[]` (`snapshotDate`, `averageCostPerUnit`), built the same way as the other aggregate pages: a `groupBy` on `snapshotDate` with `_avg: { costPerUnit }`, `orderBy` ascending so it runs earliest → latest.
+
+## The one interpretation to confirm
+"Combined across every store" → I averaged the per-store `costPerUnit` for each date (unweighted mean). The alternative is a **units-weighted** cost per unit — `Σ(cost×units) / Σ(units)` — which some merchandising analysts prefer since it reflects where the inventory actually sits. Prisma's `groupBy` can't do that ratio in one pass, so it'd need either two aggregates combined in code or a `$queryRaw`. If your analyst wants the weighted version, say so and I'll swap it.
+
+Two notes: I haven't run `prisma migrate`/`db push` to apply the new index to the SQLite file — tell me if you want that. And the `snapshotDate` column stores time as well as date; if a product can have multiple snapshots per calendar day you'd get one row per timestamp rather than per day, but the existing `@@unique([snapshotDate, storeId, productId])` implies one snapshot per store per date, so grouping by `snapshotDate` gives one row per date as intended.

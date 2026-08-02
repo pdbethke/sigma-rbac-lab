@@ -1,0 +1,17 @@
+Both pass — schema valid, query typechecks.
+
+## What I added
+
+**`prisma/schema.prisma`** — one composite index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedBy, adjustedAt])
+```
+No new fields; the model already has everything. The index leads with `adjustedBy` and includes `adjustedAt`, so it serves both the person filter and the date-range scan in one shot — the existing indexes lead with `storeId` or `adjustedAt`, so neither could.
+
+**`src/queries.ts`** — `getPersonAdjustments(adjustedBy, from, to)` returning `PersonAdjustmentRow[]` with `storeName`, `productName`, `unitsDelta`, `reason`, `adjustedAt`. It's a single filtered `findMany` that pulls store + product via nested `select` (no N+1), ordered most-recent-first to match the existing adjustment-history page (Page 3).
+
+Two judgment calls:
+- **Inclusive window `[from, to]`** (`gte`/`lte`). Note that if the analyst passes a `to` of a day's midnight, adjustments later that day fall outside it — the caller should pass an end-of-day (or next-day) `to` if they mean "through that whole day."
+- **Match by exact `adjustedBy` string.** `adjustedBy` is a free-text field on the model, so this matches the stored name exactly (case-sensitive). If loss prevention needs fuzzy/case-insensitive name matching, that's a `contains`/`mode` tweak — say the word.
+
+Same deployment note as before: the new index reaches the actual database on the next `npx prisma migrate dev`; the query runs correctly without it, just less efficiently as the table grows.

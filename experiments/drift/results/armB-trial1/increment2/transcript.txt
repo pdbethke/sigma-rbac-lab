@@ -1,0 +1,13 @@
+Done. Schema validates and `tsc --noEmit` passes clean.
+
+**What I added:**
+
+`src/queries.ts` — a new `getPersonAdjustments(adjustedBy, from, to)` (Page 6), following the same shape as the existing pages. It selects each adjustment's store name, product name, `unitsDelta`, `reason`, and `adjustedAt`, filtered by person and a half-open date range (`from` inclusive, `to` exclusive), most-recent-first. Returns typed `PersonAdjustmentRow[]`.
+
+`prisma/schema.prisma` — no new fields were needed; `InventoryAdjustment` already stores `adjustedBy`, `adjustedAt`, `unitsDelta`, `reason`, and the `store`/`product` relations. But this query leads with `adjustedBy` + an `adjustedAt` range, which none of the existing indexes cover (they lead with `storeId` or `adjustedAt`). So I added:
+
+```prisma
+@@index([adjustedBy, adjustedAt])
+```
+
+That composite lets the person filter and the range scan both ride the same index. (Note: the index exists in the schema now; a `prisma migrate`/`db push` is what would actually build it in `dev.db` when you're ready — the query is correct either way.)

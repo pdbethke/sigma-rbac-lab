@@ -1,0 +1,9 @@
+A merchandising analyst wants a new page for the inventory app in this
+project.
+
+Given a product, the page shows how its cost per unit has changed over time,
+combined across every store that carries it, ordered from earliest snapshot
+date to latest.
+
+Add whatever you need to prisma/schema.prisma and src/queries.ts to support
+this page, the same way the existing pages in src/queries.ts are built.

@@ -1,0 +1,17 @@
+Schema validates, client regenerates, TypeScript compiles clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — a new index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedBy, adjustedAt])
+```
+This query filters by `adjustedBy` and a range on `adjustedAt`. Neither existing index leads with `adjustedBy`, so this composite covers it: it seeks straight to the person, then walks the date range in order — which also matches the `adjustedAt desc` sort.
+
+**`src/queries.ts`** — Page 6, `getPersonAdjustments(adjustedBy, from, to)`, following the same pattern as Page 3's adjustment history:
+
+- **Params**: person's name + `from`/`to` bounds (inclusive both ends: `gte`/`lte`).
+- **Columns**: `storeName`, `productName`, `unitsDelta` (amount changed by), `reason`, `adjustedAt` (when) — store and product names pulled through their relations.
+- Chain-wide: no store or product filter, ordered most-recent-first.
+
+One small note: the match on `adjustedBy` is exact-string, consistent with how the field is stored and how Page 3 filters. If the analyst needs fuzzy/case-insensitive name lookup, that's a follow-up worth calling out — but it'd be a departure from the existing pages' pattern.

@@ -1,0 +1,20 @@
+Schema validates, Prisma client regenerates, and TypeScript compiles clean. Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — a new index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedAt])
+```
+The new query filters by `adjustedAt` over a month range across *all* stores. The existing `[storeId, productId, adjustedAt]` index can't serve that — it leads with `storeId`, which this query doesn't constrain — so a dedicated `adjustedAt` index is what supports the date-range scan.
+
+**`src/queries.ts`** — Page 5, `getLargestAdjustmentsThisMonth()`, following the Page 1–4 pattern (typed row interface + `findMany`/`select` + JS post-processing, exactly like Page 4's grouping):
+
+- **Columns**: `adjustedBy` (who), `productName`, `storeName`, `unitsDelta` (amount changed by), `reason` — pulling names through the `store` and `product` relations.
+- **"This month"**: computes `[monthStart, monthEnd)` for the calendar month containing today. No parameters — it's a chain-wide page the manager just opens.
+
+## Two interpretation calls worth flagging
+
+1. **"Largest" = biggest change in either direction.** A −500 shrinkage write-off is as much a "large adjustment" as a +500 correction, so I rank by *magnitude* (`abs(unitsDelta)`). SQLite/Prisma can't `ORDER BY abs()`, so I fetch the top-10 increases and top-10 decreases at the DB level and rank the union — the true top-10-by-magnitude is provably within those 20 rows, so it's correct while pulling ≤20 rows regardless of monthly volume. If you actually meant only the largest *increases*, that's a one-line change (drop the second query).
+
+2. **The current month is August 2026** (today is Aug 2). If your seed data doesn't have August rows, this page will legitimately come back empty — worth checking against the seed before you wire up a UI.

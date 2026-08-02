@@ -1,0 +1,55 @@
+[2026-08-02T15:28:58-04:00] setup /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial1
+[2026-08-02T15:28:58-04:00] START armA trial1 increment1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial1
+[2026-08-02T15:31:00-04:00] DONE armA trial1 increment1 rc=0
+[2026-08-02T15:31:00-04:00] setup /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial1
+[2026-08-02T15:31:00-04:00] START armB trial1 increment1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial1 (fresh session)
+[2026-08-02T15:33:17-04:00] DONE armB trial1 increment1 rc=0
+[2026-08-02T15:33:17-04:00] setup /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial2
+[2026-08-02T15:33:18-04:00] START armA trial2 increment1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial2
+[2026-08-02T15:35:22-04:00] DONE armA trial2 increment1 rc=0
+[2026-08-02T15:35:22-04:00] setup /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial2
+[2026-08-02T15:35:22-04:00] START armB trial2 increment1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial2 (fresh session)
+[2026-08-02T15:36:48-04:00] DONE armB trial2 increment1 rc=0
+[2026-08-02T15:36:48-04:00] setup /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial3
+[2026-08-02T15:36:48-04:00] START armA trial3 increment1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial3
+[2026-08-02T15:38:44-04:00] DONE armA trial3 increment1 rc=0
+[2026-08-02T15:38:44-04:00] setup /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial3
+[2026-08-02T15:38:44-04:00] START armB trial3 increment1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial3 (fresh session)
+[2026-08-02T15:40:18-04:00] DONE armB trial3 increment1 rc=0
+[2026-08-02T15:40:18-04:00] START armA trial1 increment2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial1
+[2026-08-02T15:40:54-04:00] DONE armA trial1 increment2 rc=0
+[2026-08-02T15:40:54-04:00] START armB trial1 increment2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial1 (fresh session)
+[2026-08-02T15:41:58-04:00] DONE armB trial1 increment2 rc=0
+[2026-08-02T15:41:58-04:00] START armA trial2 increment2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial2
+[2026-08-02T15:42:38-04:00] DONE armA trial2 increment2 rc=0
+[2026-08-02T15:42:38-04:00] START armB trial2 increment2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial2 (fresh session)
+[2026-08-02T15:43:51-04:00] DONE armB trial2 increment2 rc=0
+[2026-08-02T15:43:51-04:00] START armA trial3 increment2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial3
+[2026-08-02T15:44:43-04:00] DONE armA trial3 increment2 rc=0
+[2026-08-02T15:44:43-04:00] START armB trial3 increment2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial3 (fresh session)
+[2026-08-02T15:46:06-04:00] DONE armB trial3 increment2 rc=0
+[2026-08-02T15:46:06-04:00] START armA trial1 increment3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial1
+[2026-08-02T15:47:24-04:00] DONE armA trial1 increment3 rc=0
+[2026-08-02T15:47:24-04:00] START armB trial1 increment3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial1 (fresh session)
+[2026-08-02T15:49:21-04:00] DONE armB trial1 increment3 rc=0
+[2026-08-02T15:49:21-04:00] START armA trial2 increment3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial2
+[2026-08-02T15:50:47-04:00] DONE armA trial2 increment3 rc=0
+[2026-08-02T15:50:47-04:00] START armB trial2 increment3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial2 (fresh session)
+[2026-08-02T15:52:24-04:00] DONE armB trial2 increment3 rc=0
+[2026-08-02T15:52:24-04:00] START armA trial3 increment3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial3
+[2026-08-02T15:53:45-04:00] DONE armA trial3 increment3 rc=0
+[2026-08-02T15:53:45-04:00] START armB trial3 increment3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial3 (fresh session)
+[2026-08-02T15:56:04-04:00] DONE armB trial3 increment3 rc=0
+[2026-08-02T15:56:04-04:00] START armA trial1 increment4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial1
+[2026-08-02T15:56:47-04:00] DONE armA trial1 increment4 rc=0
+[2026-08-02T15:56:47-04:00] START armB trial1 increment4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial1 (fresh session)
+[2026-08-02T15:58:28-04:00] DONE armB trial1 increment4 rc=0
+[2026-08-02T15:58:28-04:00] START armA trial2 increment4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial2
+[2026-08-02T15:59:12-04:00] DONE armA trial2 increment4 rc=0
+[2026-08-02T15:59:12-04:00] START armB trial2 increment4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial2 (fresh session)
+[2026-08-02T16:01:00-04:00] DONE armB trial2 increment4 rc=0
+[2026-08-02T16:01:00-04:00] START armA trial3 increment4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armA-trial3
+[2026-08-02T16:01:59-04:00] DONE armA trial3 increment4 rc=0
+[2026-08-02T16:01:59-04:00] START armB trial3 increment4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/runs/armB-trial3 (fresh session)
+[2026-08-02T16:03:13-04:00] DONE armB trial3 increment4 rc=0
+ALL DONE. results under /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift/results

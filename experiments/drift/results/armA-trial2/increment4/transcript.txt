@@ -1,0 +1,15 @@
+Client generates and `tsc --noEmit` is clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — one composite index on `InventoryDaily`:
+```prisma
+@@index([productId, snapshotDate])
+```
+`productId` first (equality on the chosen product), then `snapshotDate` — so the trend query seeks to the product and walks its snapshots already in date order, serving both the filter and the `orderBy`. The schema had `[productId]` alone (filter only) and `[storeId, snapshotDate]` (the store-scoped mirror of this); this adds the product-scoped counterpart. No new fields.
+
+**`src/queries.ts`** — `getProductCostTrend(productId)` (Page 8): a `groupBy` on `snapshotDate` with `_avg: { costPerUnit }`, ordered `snapshotDate: "asc"` — the same `groupBy` idiom as Pages 4 and 7.
+
+One judgment call: **"combined across every store" = the average cost per unit across stores** on each date. Averaging is the meaningful roll-up for a per-unit cost (summing per-unit costs across stores would be a meaningless number), giving one point per snapshot date for the trend line. If merchandising actually wants a store-count-weighted or min/max view instead, that's a swap of the `_avg` aggregate.
+
+As before, no migration run — the added index is additive and applies on your next `npm run prisma:migrate`.

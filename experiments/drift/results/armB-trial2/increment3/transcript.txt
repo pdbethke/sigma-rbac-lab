@@ -1,0 +1,19 @@
+All green — schema valid, client regenerated, `tsc --noEmit` passes.
+
+## What I added
+
+**`prisma/schema.prisma`** — one line on `InventoryDaily`:
+```prisma
+@@index([isStockout])
+```
+Mirrors the existing `@@index([isLowStock])`, since the new query filters on `isStockout`.
+
+**`src/queries.ts`** — Page 7, `getStoreStockoutCounts(snapshotDate)`, built the same way as Page 4's `getRegionalSummary`:
+- `groupBy(["storeId"])` with `where: { snapshotDate, isStockout: true }` and `_count._all` — the count of out-of-stock products per store.
+- Loads the full `Store` list and back-fills any store not in the grouping to `0`, so **every** store gets exactly one row (a store with no stockouts, or no rows, that date reads as `0`).
+- Returns `{ storeId, storeName, stockoutCount }[]`, sorted by store name in memory — same idiom as Pages 4 and 5.
+
+## One thing to flag
+The `@@index([isStockout])` is in the schema and the client is regenerated, but it isn't in the SQLite DB until a migration runs (`prisma migrate dev` / `db push`). I didn't run one, since this run's harness manages the DB and I didn't want to mutate `dev.db` out from under it — say the word if you want me to apply it here.
+
+A design call worth confirming: I read *"every store"* literally as the whole chain, so stores with zero stockouts appear with `0`. If the director instead wants only stores that actually had a stockout (fewer rows, à la Page 4's grouping), drop the full-store back-fill and return the grouped rows directly.

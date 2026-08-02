@@ -1,0 +1,25 @@
+Done. Both files updated, everything validates.
+
+## What I added
+
+**`prisma/schema.prisma`** — one index on `InventoryDaily`:
+```prisma
+@@index([isStockout])
+```
+This is the direct parallel to the existing `@@index([isLowStock])`, which backs Page 2's `isLowStock: true` filter. The new page filters on `isStockout` the same way, so it gets the same treatment.
+
+**`src/queries.ts`** — a new `getStoreStockoutCounts(snapshotDate)` (Page 7), built exactly like Page 4's `getRegionalSummary`:
+- `groupBy` on `storeId`, filtered to `{ snapshotDate, isStockout: true }`, using `_count`
+- resolves store names in a second query and joins in memory
+- returns one row per store (`storeId`, `storeName`, `stockoutCount`), sorted by store name
+
+## Verification
+- `prisma validate` — clean
+- `prisma generate` — client regenerated
+- `tsc --noEmit` — exits 0
+
+## One thing for you to decide
+
+**Applying the index to the DB.** I kept the change scoped to the two files you named. The new index lives in `schema.prisma` but isn't in the actual `dev.db` yet — that needs a migration (`npx prisma migrate dev`), which would add a file under `prisma/migrations/`. I didn't run it since this is an experiment run and you scoped the task to the schema + query files; say the word and I'll generate the migration.
+
+**Behavioral note:** matching `getRegionalSummary`, a store only appears if it had **at least one** stockout on that date — stores with zero stockouts that day are omitted rather than shown as `0`. That's the consistent choice with the existing pages, but if the regional director wants every store to appear (including clean stores at `0`), that's a different query shape (count all stores present on the date, default to 0) — easy to switch if you'd prefer it.

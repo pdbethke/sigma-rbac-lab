@@ -1,0 +1,13 @@
+Client generates and `tsc --noEmit` is clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — one composite index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedBy, adjustedAt])
+```
+`adjustedBy` first (equality on the person), then `adjustedAt` (the range) — so the DB can seek to the person's rows and walk the window in order. No existing index has `adjustedBy` as a prefix, so this is the one it needs. No new fields: store, product, `unitsDelta`, `reason`, and `adjustedAt` are all already on the model.
+
+**`src/queries.ts`** — `getPersonAdjustments(adjustedBy, from, to)` (Page 6), built like the others: a param-driven `findMany` with a `select` that pulls the related `store.name` / `product.name`, returning a typed `PersonAdjustmentRow[]` with the five columns requested (store, product, unitsDelta, reason, adjustedAt), ordered most-recent-first — matching Page 3's adjustment-history convention.
+
+One judgment call: the date range is inclusive on both ends (`gte` / `lte`), which reads naturally for an analyst-supplied "from/to" window. As before, I didn't run a migration — the added index is purely additive and will apply on your next `npm run prisma:migrate`.

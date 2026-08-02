@@ -1,0 +1,13 @@
+Both changes are in and verified (`prisma generate` + `tsc --noEmit` clean).
+
+## What I added
+
+**`prisma/schema.prisma`** — one index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedBy, adjustedAt])
+```
+The page filters by person (equality on `adjustedBy`) and a date window (range on `adjustedAt`), then orders by `adjustedAt`. No existing index leads with `adjustedBy`, so without this the query full-scans the table. The composite serves all three — the equality seek, the range, and the sort.
+
+**`src/queries.ts`** — `getPersonAdjustments(adjustedBy, startDate, endDate)` plus its `PersonAdjustmentRow` interface, built the same way as the other pages: a single `findMany` with nested `select` for the related store/product names (like Pages 2 and 5, so no N+1), an inclusive `gte`/`lte` window, and `adjustedAt: "desc"` ordering. It returns store name, product name, `unitsDelta`, reason, and `adjustedAt` — exactly the five columns the analyst asked for, across every store and product.
+
+One note: the model's person field is `adjustedBy` (a free-text string), so the page matches on an exact name. If the analyst needs fuzzy/partial matching or a picker of known names, that'd be a follow-up — say the word and I'll add it.

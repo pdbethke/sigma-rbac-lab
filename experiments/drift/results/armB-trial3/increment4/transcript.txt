@@ -1,0 +1,22 @@
+Both changes are in and verified. Here's what I added.
+
+**`prisma/schema.prisma`** — a composite index on `InventoryDaily`:
+```prisma
+@@index([productId, snapshotDate])
+```
+The new query filters on `productId` and orders/groups by `snapshotDate`. The schema only had those two columns indexed separately, so this composite serves the access path directly — mirroring the existing `@@index([storeId, snapshotDate])`.
+
+**`src/queries.ts`** — a new `getProductCostOverTime(productId)` (Page 8), built like Pages 4 and 7:
+```ts
+const grouped = await prisma.inventoryDaily.groupBy({
+  by: ["snapshotDate"],
+  where: { productId },
+  _avg: { costPerUnit: true },
+  orderBy: { snapshotDate: "asc" },
+});
+```
+Returns one `{ snapshotDate, averageCostPerUnit }` row per snapshot date, earliest→latest.
+
+One judgment call worth flagging: **"combined across every store" is implemented as an average, not a sum.** Cost per unit is a per-unit rate, so summing store values would be meaningless (unlike Page 4's additive inventory value) — the average is the cost-per-unit trend across the stores carrying the product on each date. If the analyst actually wants a units-weighted average (weighting each store by units on hand), that's a small change — say the word and I'll switch it.
+
+`prisma generate` + `tsc --noEmit` both pass.

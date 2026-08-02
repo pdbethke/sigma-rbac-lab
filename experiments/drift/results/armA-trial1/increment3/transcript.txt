@@ -1,0 +1,17 @@
+Schema validates, client regenerates, TypeScript compiles clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — a new index on `InventoryDaily`:
+```prisma
+@@index([snapshotDate, isStockout])
+```
+The counting query filters by `snapshotDate` + `isStockout`; this composite serves it directly (seek to the date, then the stockout flag), paralleling the existing single-column `[isLowStock]`.
+
+**`src/queries.ts`** — Page 7, `getStoreStockoutCounts(snapshotDate)`, in the same shape as Page 4's regional summary (`groupBy` + resolve names + JS sort):
+
+- **Param**: the chosen snapshot date.
+- **Columns**: `storeId`, `storeName`, `stockoutCount` — one row per store.
+- **Zero handling**: it lists every store that *reported* inventory that date and left-joins the stockout counts, so a store with nothing out of stock shows `0` rather than being dropped.
+
+One interpretation worth flagging: I scoped "every store" to stores present in the snapshot for the chosen date. If the director instead wants the *entire* chain listed — including stores that filed no snapshot that day, shown as `0` — that's a one-line swap (base the rows on `prisma.store.findMany()` instead of the `present` grouping). I went with reported-stores-only so a `0` means a true "nothing out of stock" rather than "no data."

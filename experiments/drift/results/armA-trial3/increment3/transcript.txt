@@ -1,0 +1,17 @@
+Both pass — schema valid, query typechecks.
+
+## What I added
+
+**`prisma/schema.prisma`** — one index on `InventoryDaily`:
+```prisma
+@@index([isStockout])
+```
+Mirrors the existing `@@index([isLowStock])`, added for the same reason: a new page filters on this flag.
+
+**`src/queries.ts`** — `getStoreStockoutCounts(snapshotDate)` returning `StoreStockoutCountRow[]` (`storeId`, `storeName`, `outOfStockCount`), one row per store, sorted by name — following Page 4's `groupBy` + resolve-names pattern.
+
+The one judgment call worth flagging:
+
+- **"Every store" includes zero-stockout stores.** A `groupBy` filtered on `isStockout: true` only returns stores that *had* a stockout, which would silently drop a store with perfect availability. Since the director asked for *every* store with one row each, I enumerate the stores present on that date (first `groupBy`) and join the stockout counts (second `groupBy`) onto them, defaulting to `0`. I scoped "every store" to stores with a snapshot on that date — a store with no data that day would be misreported as "0 out of stock" rather than "unknown," so it's excluded. If the director instead wants *all* `Store` records regardless of whether they reported that day, that's a swap of the first query to `prisma.store.findMany` — say the word.
+
+Same deployment note as the prior pages: the new index takes effect on the next `npx prisma migrate dev`; the query is correct without it.
