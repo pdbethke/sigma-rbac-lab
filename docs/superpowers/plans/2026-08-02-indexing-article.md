@@ -1924,3 +1924,31 @@ Same four outcomes. Do not rewrite expectations.
 - [ ] **Step 5: Fix the harness for good**
 
 All future trials run outside the repository. Record this in the README as a reproduction instruction, because a reader who clones the companion repo and runs the harness inside it would hit exactly the same contamination.
+
+---
+
+### Task 18: Does conformity improve with capability?
+
+Added 2026-08-02. Task 16 found 0/24 on a stripped baseline — but with **one model**, `claude-opus-4-8`. That model is frontier tier, so capability plainly did not rescue it, and the pilot's two zero-index trials were Opus 5, newer still. What is missing is any cross-tier comparison **at expansion**.
+
+The natural assumption is that this is a small-model failure. Gemini flash's 0/5 at *creation* looks like a tier effect. The 0/24 at *expansion* is not — that was the strongest model in the run. This task establishes whether that generalises or whether Opus 4.8 was unlucky.
+
+**Design: Task 16 exactly, across models.** Same stripped baseline, same four increments, same pre-registered `EXPECTED.md`, same grading, serial and interleaved by model.
+
+    claude-opus-4-8      already measured in Task 16: 0/24
+    gemini-3.6-flash     fast tier
+    codex                CLI default, provenance caveat as before
+
+2 new models x 2 arms x 3 trials x 4 increments = 48 sessions. If that is too many, drop to arm B only (fresh session per increment) — Task 16 showed arm A and arm B indistinguishable, so arm B alone is defensible and halves the cost to 24. **State the reduction in the report; do not present arm-B-only numbers as if both arms ran.**
+
+**Run outside the repository** — Task 17's isolation lesson applies. Verify no project skill is visible before spending sessions.
+
+- [ ] **Step 1: Wait for Task 17 to finish.** Serial. No concurrent runs.
+- [ ] **Step 2: Verify isolation**, then replicate Task 16 per model.
+- [ ] **Step 3: Report the three-model table side by side with Task 16's result.**
+
+**If all three fail at roughly 0**, conformity is not a capability problem and the article can say so — which is the strongest available version of the claim, because it removes "just use a better model" as an answer.
+
+**If the frontier models degrade less than flash**, the effect is partly capability, and the article says that instead: the failure is worst at the cheap tier that cost pressure pushes production traffic toward.
+
+Either result is publishable. Report whichever occurs first and plainly.
