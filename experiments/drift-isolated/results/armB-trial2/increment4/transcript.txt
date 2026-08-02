@@ -1,0 +1,29 @@
+**Good morning! Here's your day (Sat, Aug 2):**
+- 🏠 *Family* — **PREP FOR TRIP**, 10:00–11:00 AM
+- 🏠 *Family* — **CE Questionnaire** (all-day)
+
+Your personal calendar is clear. (Business calendar not checked, per your rule.)
+
+---
+
+**Done — Page 8: a product's cost-per-unit history.** Typecheck passes clean (`tsc --noEmit`, exit 0).
+
+**`prisma/schema.prisma`** — added a composite index on `InventoryDaily` so the query (filter by product, order by date) is index-backed rather than relying on the standalone `[productId]` index:
+```prisma
+@@index([productId, snapshotDate])
+```
+
+**`src/queries.ts`** — added `getProductCostPerUnitHistory`, following the same `groupBy` idiom as the regional-summary and stockout pages:
+```ts
+const grouped = await prisma.inventoryDaily.groupBy({
+  by: ["snapshotDate"],
+  where: { productId },
+  _avg: { costPerUnit: true },
+  orderBy: { snapshotDate: "asc" },
+});
+```
+It returns one `{ snapshotDate, averageCostPerUnit }` row per date, earliest → latest.
+
+**One design decision worth flagging:** "combined across every store" is ambiguous, and I chose the **simple average** of each store's `costPerUnit` per date (matching the `_avg` groupBy pattern already in the file). The alternative is a **units-weighted** cost per unit — `sum(inventoryValue) / sum(unitsOnHand)` — which is what a merchandising analyst may actually mean by "the cost per unit" for the product overall, since it weights big-stocking stores more heavily. If you want the weighted version, I can swap it (it's a `_sum` on both fields and a divide). Let me know which the analyst intends.
+
+Note: the new index is declared in the schema but not yet applied to the DB — that needs a `prisma migrate`/`db push` when you're ready to run against real data.

@@ -1,0 +1,13 @@
+Both pass. Done.
+
+## Summary
+
+I added **Page 6** to support the new loss-prevention page, following the same conventions as the existing pages in `src/queries.ts`.
+
+**`src/queries.ts`** — new `getPersonAdjustments(adjustedBy, rangeStart, rangeEnd)` returning `PersonAdjustmentRow[]` with the five fields the analyst needs: `storeName`, `productName`, `unitsDelta` (the amount the count changed by), `reason`, and `adjustedAt` (when it happened). It filters `InventoryAdjustment` by the person and an inclusive `adjustedAt` range across every store and product, most recent first — mirroring the relation-select + `.map` shape of the other queries.
+
+**`prisma/schema.prisma`** — added `@@index([adjustedBy, adjustedAt])` on `InventoryAdjustment`. No new columns were needed since all the data already exists on that model; the index just backs the new "by person, over a date range" access pattern, the same way every other page's query has a supporting index.
+
+Notes:
+- No migration was generated (you didn't ask for a DB change to be applied) — run `npx prisma migrate dev` when you're ready to materialize the new index.
+- I treated the date range as **inclusive of both bounds** and sorted **most-recent-first** (matching the Page 3 adjustment-history convention). Easy to flip to chronological or a half-open range if the analyst prefers.

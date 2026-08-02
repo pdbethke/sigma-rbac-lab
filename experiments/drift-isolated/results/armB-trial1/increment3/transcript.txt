@@ -1,0 +1,20 @@
+Schema validates, the Prisma client regenerated, and `tsc` passes clean. Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — one index on `InventoryDaily`:
+```prisma
+@@index([isStockout])
+```
+The page filters on `isStockout` the same way Page 2 filters on `isLowStock` (which already has its own index), so this mirrors that existing convention. No new columns were needed — `isStockout` and `snapshotDate` already exist on `InventoryDaily`.
+
+**`src/queries.ts`** — a new `getStoreStockoutCounts(snapshotDate)` returning `StoreStockoutCountRow[]` (`storeId`, `storeName`, `stockoutCount`). It follows the same shape as Page 4 (`getRegionalSummary`), the closest existing analog — a per-store aggregate for a chosen snapshot date:
+
+1. `groupBy(["storeId"])` over `InventoryDaily` where `snapshotDate` matches and `isStockout: true`, using `_count`.
+2. Loads all stores and maps each to its count, defaulting to `0`.
+3. Sorts by store name.
+
+## One decision worth flagging
+The ask said **"every store"**, so I start from `Store.findMany()` and report stores with zero stockouts as `0`, rather than only listing stores that had a stockout (which a plain `groupBy` would do — that's how Page 4 behaves). If the director instead wants *only* stores that had at least one stockout on the date, drop the `stores` roster step and map directly off `grouped`. Let me know and I'll adjust.
+
+I did not create a UI page or a migration file — the task scoped the change to `schema.prisma` and `queries.ts`. When you're ready to apply the index to the database, run `npx prisma migrate dev`.

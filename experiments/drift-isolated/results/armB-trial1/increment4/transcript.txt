@@ -1,0 +1,20 @@
+Schema validates and `tsc --noEmit` passes clean. Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — a composite index on `InventoryDaily`:
+```prisma
+@@index([productId, snapshotDate])
+```
+This mirrors the existing `[storeId, snapshotDate]` index and directly serves the new page's access pattern (filter by product, group/order by date). No new model or column was needed — `InventoryDaily` already carries `snapshotDate`, `productId`, and `costPerUnit`.
+
+**`src/queries.ts`** — `getProductCostTrend(productId)`, built the same way as the existing pages (JSDoc, exported row interface, `groupBy`):
+```ts
+export interface ProductCostTrendRow {
+  snapshotDate: Date;
+  costPerUnit: number;
+}
+```
+It `groupBy(["snapshotDate"])` filtered by `productId`, takes `_avg.costPerUnit`, and orders `snapshotDate: "asc"` (earliest → latest).
+
+**One design decision worth flagging:** "combined across every store" is aggregating a *per-unit rate*, so I used a **simple average** of each store's `costPerUnit` per date (like Page 4/7 use `_sum`/`_count`). If the analyst instead wants a **volume-weighted** blended cost — `sum(inventoryValue) / sum(unitsOnHand)`, i.e. what the chain actually paid per unit on hand — that's a one-line change to the aggregation. Say the word and I'll switch it.

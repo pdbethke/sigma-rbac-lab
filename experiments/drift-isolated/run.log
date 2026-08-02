@@ -1,0 +1,19 @@
+[2026-08-02T18:56:12-04:00] setup /tmp/claude-drift-isolated/runs/armB-trial1
+[2026-08-02T18:56:12-04:00] START armB trial1 increment1 -> /tmp/claude-drift-isolated/runs/armB-trial1 (fresh session, isolated cwd)
+[2026-08-02T18:57:50-04:00] DONE armB trial1 increment1 rc=0
+[2026-08-02T18:57:50-04:00] setup /tmp/claude-drift-isolated/runs/armB-trial2
+[2026-08-02T18:57:50-04:00] START armB trial2 increment1 -> /tmp/claude-drift-isolated/runs/armB-trial2 (fresh session, isolated cwd)
+[2026-08-02T19:00:38-04:00] DONE armB trial2 increment1 rc=0
+[2026-08-02T19:00:38-04:00] START armB trial1 increment2 -> /tmp/claude-drift-isolated/runs/armB-trial1 (fresh session, isolated cwd)
+[2026-08-02T19:01:45-04:00] DONE armB trial1 increment2 rc=0
+[2026-08-02T19:01:45-04:00] START armB trial2 increment2 -> /tmp/claude-drift-isolated/runs/armB-trial2 (fresh session, isolated cwd)
+[2026-08-02T19:02:48-04:00] DONE armB trial2 increment2 rc=0
+[2026-08-02T19:02:48-04:00] START armB trial1 increment3 -> /tmp/claude-drift-isolated/runs/armB-trial1 (fresh session, isolated cwd)
+[2026-08-02T19:04:04-04:00] DONE armB trial1 increment3 rc=0
+[2026-08-02T19:04:04-04:00] START armB trial2 increment3 -> /tmp/claude-drift-isolated/runs/armB-trial2 (fresh session, isolated cwd)
+[2026-08-02T19:05:45-04:00] DONE armB trial2 increment3 rc=0
+[2026-08-02T19:05:45-04:00] START armB trial1 increment4 -> /tmp/claude-drift-isolated/runs/armB-trial1 (fresh session, isolated cwd)
+[2026-08-02T19:07:09-04:00] DONE armB trial1 increment4 rc=0
+[2026-08-02T19:07:09-04:00] START armB trial2 increment4 -> /tmp/claude-drift-isolated/runs/armB-trial2 (fresh session, isolated cwd)
+[2026-08-02T19:08:22-04:00] DONE armB trial2 increment4 rc=0
+ALL DONE. results under /tmp/claude-drift-isolated/results

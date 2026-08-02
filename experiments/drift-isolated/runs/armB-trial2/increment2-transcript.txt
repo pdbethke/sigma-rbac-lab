@@ -1,0 +1,18 @@
+Both pass — schema is valid and the new query typechecks against the existing generated client (indexes don't alter client types, and the query only touches existing fields).
+
+## What I added
+
+**`prisma/schema.prisma`** — one index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedBy, adjustedAt])
+```
+The model already stored everything the page needs (`adjustedBy`, `adjustedAt`, `unitsDelta`, `reason`, plus the `store` and `product` relations). This index supports filtering by person + time window efficiently — mirroring how the other adjustment queries each have a matching index (`[storeId, productId, adjustedAt]`, `[adjustedAt]`).
+
+**`src/queries.ts`** — a new `getPersonAdjustments(adjustedBy, from, to)` following the same shape as the existing pages (exported row interface + async function, `select` limited to the columns shown, `.map` to the flat row type):
+
+- Filters `adjustedBy` = the person and `adjustedAt` within the inclusive range `[from, to]`.
+- Returns store name, product name, `unitsDelta`, reason, and `adjustedAt` — ordered most-recent-first, matching Page 3's adjustment-history ordering.
+
+One decision worth flagging: I made the date range **inclusive of both ends** (`gte`/`lte`). If the analyst's UI passes the upper bound as a bare day boundary (midnight), you'd want to pass the start of the *next* day as `to` to capture that whole last day, or I can switch it to a half-open `[from, to)` like `getLargestAdjustmentsThisMonth` uses — say the word.
+
+Note: I edited the schema but didn't run a migration (`prisma migrate`), since the task scope was the schema + queries. The new index will need a migration to reach an actual database.

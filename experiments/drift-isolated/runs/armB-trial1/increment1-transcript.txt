@@ -1,0 +1,16 @@
+Both pass. Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — a standalone `@@index([adjustedAt])` on `InventoryAdjustment`. Everything else the page needs (`adjustedBy`, `unitsDelta`, `reason`, and the `Store`/`Product` relations) already existed on that model. The new index is what makes a "this month, across all stores" filter efficient — the existing composite index leads with `storeId`, so it can't serve a date-only scan. This mirrors `InventoryDaily`'s standalone `@@index([snapshotDate])`.
+
+**`src/queries.ts`** — `getLargestAdjustmentsThisMonth()` (Page 5), built the same way as the existing pages: a typed `LargestAdjustmentRow` interface, relation `select`s for the names, and an in-memory final step (like Page 4's regional summary).
+
+Two design points worth flagging:
+
+- **"Largest" = by magnitude.** A −500 write-down is a bigger adjustment than a +5 correction, so it ranks by `Math.abs(unitsDelta)`. Since Prisma/SQLite can't order by absolute value, I ask the DB for the 10 most-positive and 10 most-negative deltas — the true top-10-by-magnitude is provably contained in that ≤20-row set — then rank and slice in memory. This keeps the DB doing the heavy filtering/ordering rather than pulling a whole month of rows into JS. If you actually meant "largest increases only," that's a one-line change (drop the negative query and the abs sort).
+- **"This month"** is the current calendar month, computed from `new Date()`; I left it as an optional `now` parameter so it's testable, defaulting to today.
+
+Verified: `tsc --noEmit` clean and `prisma validate` passes. Note the index is a schema change, so it'll need a migration (`prisma migrate dev`) to hit an existing database.
+
+One aside, unrelated to the code: a session hook asked me to pull your Google Calendar for today — say the word and I'll grab your personal + family agenda.

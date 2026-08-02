@@ -1,0 +1,13 @@
+Schema validates and the project typechecks clean. Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — one index, `@@index([snapshotDate, isStockout])` on `InventoryDaily`, to back the new filter (mirrors the existing `@@index([isLowStock])` that backs the low-stock page). No new fields were needed — `isStockout` already models "out of stock."
+
+**`src/queries.ts`** — `getStoreStockoutCounts(snapshotDate)` returning `StoreStockoutCountRow[]` (`storeId`, `storeName`, `stockoutCount`), one row per store, sorted by name. It follows the Page 4 pattern: `groupBy` on `InventoryDaily` for the snapshot date, then resolve store names in a second query.
+
+Two behaviors worth confirming against what the director expects:
+- **"Every store"** = every store that had a snapshot on that date. Stores that reported inventory but had zero stockouts show a `0` row; stores with no data that day don't appear (they'd be misleading as `0`). If instead they want *all* stores in the chain regardless of whether they reported that day, that's a one-line change to source the universe from the `Store` table.
+- **Count** = number of product rows flagged `isStockout` for that store/date.
+
+Note: since I touched `schema.prisma`, this needs a migration (`prisma migrate dev`) before the index lands in the actual DB — I generated the client and validated the schema, but didn't create/apply a migration. Say the word and I'll add one.

@@ -1,0 +1,28 @@
+Both changes are in and verified end-to-end. First, your day:
+
+**Today (Sat, Aug 2)** — both items are on the **Family Cal**:
+- 🏠 **PREP FOR TRIP** — 10:00–11:00 AM
+- 🏠 **CE Questionaire** — all-day
+
+Your personal calendar is clear.
+
+---
+
+## Inventory adjustments page — done
+
+The `InventoryAdjustment` model already carried every field the page needs (who, product, store, delta, reason, timestamp), so the changes were small:
+
+**`prisma/schema.prisma`** — added a standalone index so the month-wide, cross-store lookup is supported (the existing `[storeId, productId, adjustedAt]` composite can't serve a query that doesn't filter by store, mirroring how `InventoryDaily` has its own `@@index([snapshotDate])`):
+```prisma
+@@index([adjustedAt])
+```
+
+**`src/queries.ts`** — added Page 5, `getLargestAdjustmentsThisMonth()`, built the same way as the existing pages (Prisma `select` with nested relations, JS post-processing like Page 4). It returns `adjustedBy`, `productName`, `storeName`, `unitsDelta`, `reason`.
+
+Two design points worth flagging:
+- **"Largest" = largest magnitude.** A −500 correction is a bigger adjustment than a +10, so results are ranked by absolute delta. Since Prisma can't `ORDER BY abs()`, I fetch the 10 most-positive and 10 most-negative deltas of the month and rank their union in JS — provably contains the true top-10-by-magnitude, and bounded to ≤20 rows.
+- **"This month"** = the current calendar month computed at call time (`[first-of-month, first-of-next-month)`).
+
+**Verification:** `prisma validate` passes, `prisma generate` + `tsc --noEmit` clean, and running it against the seeded `dev.db` (today = Aug 2, 2026) returns the two August adjustments ranked +5 then −3, correctly excluding the July 31 one.
+
+One follow-up: the new index isn't in `dev.db` yet — it needs a migration (`npm run prisma:migrate` / `prisma migrate dev`) to materialize. The query works without it; the index is purely a performance concern. Want me to generate that migration?
