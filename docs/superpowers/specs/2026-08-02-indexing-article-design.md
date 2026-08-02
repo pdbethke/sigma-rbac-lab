@@ -40,12 +40,42 @@ attribution in `05` — both caught only because something independent was compu
 
 ## Deliverables, in dependency order
 
+    package.json                    NEW   root Node project: vitest, prisma, the TS parser
     experiments/indexing/           NEW   index-count test: prompts, raw transcripts, tally
-    app/                            NEW   generated application layer, part of the demo project
+    app/                            NEW   generated Prisma application, part of the demo project
     .claude/skills/performance/     NEW   the N+1 scanner skill
     .claude/settings.json           EDIT  SessionStart hook, matchers startup + compact
     docs/posts/indexing.txt         NEW   the article
     docs/posts/README.md            EDIT  a section on why this piece is shaped the way it is
+
+**Stack: Prisma and TypeScript, not Python.** The premise of the article is a claim about what is
+being shipped now, and what is being shipped now is TypeScript against Prisma. A Python corpus would
+make the piece a thought experiment about where the problem is not. Three concrete gains follow:
+Prisma indexes are declarative, so `@@index([storeId, snapshotDate])` is a line the agent either
+wrote or did not and nothing has to be inferred from ORM convention; `prisma migrate diff` emits real
+`CREATE INDEX` DDL in one command with no application boot; and the N+1 shape — an awaited query
+inside a `map`, or a relation read without `include` — is the canonical one of this era.
+
+The cost is Node and npm entering a repository that is stdlib Python today. `oracle/` stays Python and
+untouched. All new code is TypeScript under one root `package.json` with vitest as the only test
+runner, so the repo does not carry two test stacks.
+
+**DuckDB does two jobs.** As the metrics store, every graded trial is written to
+`experiments/indexing/metrics.duckdb`, so the numbers in the article come out of a query anyone can
+re-run rather than out of a table a human transcribed — the same discipline the SQL oracle applies to
+the row counts.
+
+As an engine, it is the article's strongest example, and it replaces a citation with a demonstration.
+Section 3 argues that "add an index" is engine-specific advice. Rather than resting that on
+Snowflake's documentation, the same rows are loaded into SQLite and into DuckDB and both are asked to
+`EXPLAIN` the same query: one embedded row store, one embedded columnar engine, checkable on a laptop
+in under a minute.
+
+**The claim has to be the narrow one.** DuckDB *does* support `CREATE INDEX`; it builds ART indexes
+and uses them for point lookups and constraint enforcement. The defensible statement is that for the
+analytical scan this schema invites, DuckDB relies on automatic zone maps and the index often buys
+nothing, while SQLite's plan for the same query names `idx_inventory_store`. That is measured, not
+asserted, and the measured output is committed.
 
 The article is written **last**, from what the first four produce. If the tests come back boring —
 agents index correctly, the scanner finds nothing — that is a result, and the article says so. It
@@ -66,6 +96,12 @@ There is already an oracle. `oracle/schema.sql` declares 17 tables and exactly 4
 Three are composite and the column order encodes the access pattern: `status` is present because
 assignments are filtered to active, and `snapshot_date` trails `store_id` because a store's inventory
 is read as a time range. Roughly thirty other `REFERENCES` columns are left unindexed on purpose.
+
+**A control has to run before any trial.** Prisma's behavior on relation fields is the confound: if
+it emitted indexes for relation scalars on its own, every trial would be graded against work the
+agent did not do. So a hand-written schema carrying zero `@@index` declarations is compiled through
+`prisma migrate diff` first, and the DDL is checked for `CREATE INDEX`. Whatever it shows is recorded
+before the trials run, and it is stated in the article.
 
 Method:
 
@@ -109,11 +145,13 @@ The skill:
   code. It goes under `.claude/skills/` rather than following the existing `skills/sigma-public/`
   convention at the repo root: that directory holds a skill authored for publication, whereas this one
   has to actually load in this project in order for any claim about it to be verifiable.
-- Detection is **static and ORM-aware**, deliberately not clever: a query call inside a loop or
-  comprehension, a related-object access on a queryset without `select_related` / `prefetch_related`,
-  serializers reaching across relations. It reports candidates with `file:line` and what would fix
-  each. It does **not** attempt to prove an N+1 at runtime. Flagging for a human is the honest scope;
-  overreach is what gets scanners turned off.
+- Detection is **static and ORM-aware**, deliberately not clever, and written in TypeScript because
+  the corpus is: an awaited Prisma query inside a loop or inside a `map` / `forEach` callback, and a
+  relation read on a record fetched without a matching `include` or `select`. It reports candidates
+  with `file:line` and what would fix each. It does **not** attempt to prove an N+1 at runtime.
+  Flagging for a human is the honest scope; overreach is what gets scanners turned off.
+- Parsing uses `@typescript-eslint/typescript-estree`. The scanner is unit-tested rule by rule under
+  vitest, so every claim the article makes about what it catches is backed by a test.
 
 The hook:
 
