@@ -105,6 +105,7 @@ oracle/           SQLite schema, the resolution query, and a build script
 expected/         frozen fixtures the Sigma build is diffed against
 docs/             field guide, build log, Flask↔Sigma translation, evidence
 skills/           the platform mechanics learned here, as an agent-readable skill
+app/              a generated Prisma application, committed as-generated, used as the N+1 scanner's corpus
 datapackage.json  the same schema as machine-readable JSON (Frictionless Table Schema)
 ```
 
