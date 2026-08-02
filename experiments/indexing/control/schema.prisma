@@ -1,0 +1,76 @@
+// experiments/indexing/control/schema.prisma
+datasource db {
+  provider = "sqlite"
+  url      = "file:./control.db"
+}
+
+model Store {
+  storeId   String  @id
+  storeKey  String
+  storeName String
+  inventory InventoryDaily[]
+  adjustments InventoryAdjustment[]
+}
+
+model ProductType {
+  productTypeId String @id
+  name          String
+  families      ProductFamily[]
+}
+
+model ProductFamily {
+  productFamilyId String      @id
+  name            String
+  productTypeId   String
+  productType     ProductType @relation(fields: [productTypeId], references: [productTypeId])
+  lines           ProductLine[]
+}
+
+model ProductLine {
+  productLineId   String        @id
+  name            String
+  productFamilyId String
+  productFamily   ProductFamily @relation(fields: [productFamilyId], references: [productFamilyId])
+  products        Product[]
+}
+
+model Brand {
+  brandId   String    @id
+  brandName String
+  products  Product[]
+}
+
+model Product {
+  productId     String      @id
+  skuNumber     String
+  productName   String
+  productLineId String
+  brandId       String
+  productLine   ProductLine @relation(fields: [productLineId], references: [productLineId])
+  brand         Brand       @relation(fields: [brandId], references: [brandId])
+  inventory     InventoryDaily[]
+  adjustments   InventoryAdjustment[]
+}
+
+model InventoryDaily {
+  snapshotDate DateTime
+  storeId      String
+  productId    String
+  unitsOnHand  Int
+  isLowStock   Boolean
+  store        Store    @relation(fields: [storeId], references: [storeId])
+  product      Product  @relation(fields: [productId], references: [productId])
+
+  @@id([snapshotDate, storeId, productId])
+}
+
+model InventoryAdjustment {
+  adjustmentId String   @id
+  storeId      String
+  productId    String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  store        Store    @relation(fields: [storeId], references: [storeId])
+  product      Product  @relation(fields: [productId], references: [productId])
+}
