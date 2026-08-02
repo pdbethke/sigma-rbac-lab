@@ -1,0 +1,48 @@
+Task 16 — stripped baseline verification
+==========================================
+
+Source: experiments/indexing/runs-crossmodel/claude/arm1-trial5
+Target: experiments/drift-stripped/baseline
+
+1. schema.prisma diff (original -> stripped): only @@index lines removed, nothing else.
+   `diff experiments/indexing/runs-crossmodel/claude/arm1-trial5/prisma/schema.prisma experiments/drift-stripped/baseline/prisma/schema.prisma`
+
+28d27
+<   @@index([region])
+46d44
+<   @@index([productTypeId])
+57d54
+<   @@index([productFamilyId])
+80,81d76
+<   @@index([productLineId])
+<   @@index([brandId])
+110,113d104
+<   @@index([storeId, snapshotDate])
+<   @@index([productId])
+<   @@index([snapshotDate])
+<   @@index([isLowStock])
+129d119
+<   @@index([storeId, productId, adjustedAt])
+
+All @id, @@id, @unique, @@unique lines preserved verbatim (verified by grep before/after).
+
+2. `prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma`
+   run against the stripped schema:
+
+   - CREATE INDEX statements: 0
+   - DROP INDEX statements: 10 (exactly the 10 @@index declarations removed above)
+
+   DROP INDEX "InventoryAdjustment_storeId_productId_adjustedAt_idx";
+   DROP INDEX "InventoryDaily_isLowStock_idx";
+   DROP INDEX "InventoryDaily_snapshotDate_idx";
+   DROP INDEX "InventoryDaily_productId_idx";
+   DROP INDEX "InventoryDaily_storeId_snapshotDate_idx";
+   DROP INDEX "Product_brandId_idx";
+   DROP INDEX "Product_productLineId_idx";
+   DROP INDEX "ProductFamily_productTypeId_idx";
+   DROP INDEX "ProductLine_productFamilyId_idx";
+   DROP INDEX "Store_region_idx";
+
+Confirms: stripping is mechanical and reversible — the underlying migration history is
+untouched, only the schema.prisma declarations (and, transitively, the live dev.db
+indexes) were removed. Zero net-new indexes were introduced by the stripping process.

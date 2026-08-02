@@ -1,0 +1,7 @@
+A regional director wants a new page for the inventory app in this project.
+
+Given a chosen snapshot date, the page shows every store with a count of how
+many of its products were out of stock on that date, one row per store.
+
+Add whatever you need to prisma/schema.prisma and src/queries.ts to support
+this page, the same way the existing pages in src/queries.ts are built.

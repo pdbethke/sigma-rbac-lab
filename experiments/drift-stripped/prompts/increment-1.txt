@@ -1,0 +1,9 @@
+A store operations manager wants a new page for the inventory app in this
+project.
+
+The page lists the ten largest inventory adjustments made this month, showing
+who made each one, the product, the store, the amount the count changed by,
+and the reason given.
+
+Add whatever you need to prisma/schema.prisma and src/queries.ts to support
+this page, the same way the existing pages in src/queries.ts are built.
