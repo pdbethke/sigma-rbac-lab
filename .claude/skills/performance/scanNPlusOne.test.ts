@@ -79,4 +79,35 @@ describe("scanSource", () => {
     expect(findings[0].file).toBe("queries.ts");
     expect(findings[0].line).toBe(2);
   });
+
+  it("flags a relation walk inside a forEach callback on an unincluded result", () => {
+    const source = `
+      const items = await prisma.inventoryDaily.findMany({ where: { storeId } });
+      items.forEach((item) => {
+        const brand = item.product.brand.brandName;
+      });
+    `;
+    expect(rules(source)).toEqual(["unincluded-relation"]);
+  });
+
+  it("flags a relation walk inside a map callback on an unincluded result", () => {
+    const source = `
+      const items = await prisma.inventoryDaily.findMany({ where: { storeId } });
+      const brands = items.map((item) => item.product.brand.brandName);
+    `;
+    expect(rules(source)).toEqual(["unincluded-relation"]);
+  });
+
+  it("does not flag a forEach relation walk when include was declared", () => {
+    const source = `
+      const items = await prisma.inventoryDaily.findMany({
+        where: { storeId },
+        include: { product: { include: { brand: true } } },
+      });
+      items.forEach((item) => {
+        const brand = item.product.brand.brandName;
+      });
+    `;
+    expect(rules(source)).toEqual([]);
+  });
 });

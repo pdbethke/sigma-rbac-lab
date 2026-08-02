@@ -43,32 +43,6 @@ function queryMethodName(node: Node): string | null {
   return QUERY_METHODS.has(name) ? name : null;
 }
 
-/** Bodies that execute once per element: real loops, and callbacks to map/forEach/etc. */
-function iteratedBodies(tree: Node): Node[] {
-  const bodies: Node[] = [];
-  walk(tree, (node) => {
-    if (LOOP_TYPES.has(node.type) && node.body) bodies.push(node.body);
-    if (node.type === "CallExpression") {
-      const callee = node.callee;
-      if (
-        callee?.type === "MemberExpression" &&
-        callee.property?.type === "Identifier" &&
-        ITERATING_METHODS.has(callee.property.name)
-      ) {
-        for (const argument of node.arguments ?? []) {
-          if (
-            argument.type === "ArrowFunctionExpression" ||
-            argument.type === "FunctionExpression"
-          ) {
-            bodies.push(argument.body);
-          }
-        }
-      }
-    }
-  });
-  return bodies;
-}
-
 /**
  * Names of variables bound (via a plain `const x = await prisma.model.findX(...)`,
  * with no `.field` access chained onto the call, no destructuring) to a query result
@@ -96,25 +70,60 @@ function unincludedResults(tree: Node): Set<string> {
 }
 
 /**
- * For each iterated body, the loop-local binding(s) that alias an element of an
- * unincluded query result: `for (const item of items)` where `items` is unincluded
- * binds `item` the same way. Only identifiers bound this way (or the unincluded
- * variable itself, for direct access without a loop) are valid roots for the
- * relation rule.
+ * An element binding pairs the name a loop/callback body knows an item by with
+ * the name of the collection it was drawn from, e.g. `item` <- `items` for both
+ * `for (const item of items)` and `items.forEach((item) => ...)`.
  */
-function unincludedElementNames(body: Node, loopNode: Node | null, unincluded: Set<string>): Set<string> {
-  const names = new Set<string>();
+interface ElementBinding {
+  paramName: string;
+  sourceName: string;
+}
+
+/**
+ * The element binding for a `for-of`/`for-in` loop over a plain identifier, e.g.
+ * `for (const item of items)` binds `item` <- `items`. Returns null for anything
+ * else (destructuring, non-identifier source, `for` / `while`).
+ */
+function forOfBinding(loopNode: Node): ElementBinding | null {
   if (
-    loopNode &&
-    (loopNode.type === "ForOfStatement" || loopNode.type === "ForInStatement") &&
-    loopNode.left?.type === "VariableDeclaration"
+    (loopNode.type !== "ForOfStatement" && loopNode.type !== "ForInStatement") ||
+    loopNode.left?.type !== "VariableDeclaration"
   ) {
-    const decl = loopNode.left.declarations?.[0];
-    const right = loopNode.right;
-    if (decl?.id?.type === "Identifier" && right?.type === "Identifier" && unincluded.has(right.name)) {
-      names.add(decl.id.name);
-    }
+    return null;
   }
+  const decl = loopNode.left.declarations?.[0];
+  const right = loopNode.right;
+  if (decl?.id?.type === "Identifier" && right?.type === "Identifier") {
+    return { paramName: decl.id.name, sourceName: right.name };
+  }
+  return null;
+}
+
+/**
+ * The element binding for an iterating-method callback, e.g.
+ * `items.forEach((item) => ...)` binds `item` <- `items`. `reduce`'s first
+ * callback parameter is the accumulator, not an element of the collection, so
+ * `reduce` is deliberately excluded rather than binding the wrong parameter.
+ */
+function callbackBinding(callee: Node, fn: Node): ElementBinding | null {
+  if (callee.property.name === "reduce") return null;
+  const receiver = callee.object;
+  const param = fn.params?.[0];
+  if (receiver?.type === "Identifier" && param?.type === "Identifier") {
+    return { paramName: param.name, sourceName: receiver.name };
+  }
+  return null;
+}
+
+/**
+ * Given an element binding for this body (if any) and the set of variables
+ * holding unincluded query results, the additional name(s) that are valid
+ * relation-rule roots inside this body: the bound element name, when its
+ * source is itself an unincluded result.
+ */
+function unincludedElementNames(binding: ElementBinding | null, unincluded: Set<string>): Set<string> {
+  const names = new Set<string>();
+  if (binding && unincluded.has(binding.sourceName)) names.add(binding.paramName);
   return names;
 }
 
@@ -145,11 +154,14 @@ export function scanSource(source: string, filename = "<memory>"): Finding[] {
   const findings: Finding[] = [];
   const unincluded = unincludedResults(tree);
 
-  // Pair each iterated body with the loop/call node that produced it, so we can
-  // recover `for (const item of items)` bindings for the relation rule.
-  const bodyPairs: Array<{ body: Node; loop: Node | null }> = [];
+  // Pair each iterated body with its element binding (if any), so we can recover
+  // `for (const item of items)` and `items.forEach((item) => ...)` bindings for
+  // the relation rule.
+  const bodyPairs: Array<{ body: Node; binding: ElementBinding | null }> = [];
   walk(tree, (node) => {
-    if (LOOP_TYPES.has(node.type) && node.body) bodyPairs.push({ body: node.body, loop: node });
+    if (LOOP_TYPES.has(node.type) && node.body) {
+      bodyPairs.push({ body: node.body, binding: forOfBinding(node) });
+    }
     if (node.type === "CallExpression") {
       const callee = node.callee;
       if (
@@ -159,16 +171,16 @@ export function scanSource(source: string, filename = "<memory>"): Finding[] {
       ) {
         for (const argument of node.arguments ?? []) {
           if (argument.type === "ArrowFunctionExpression" || argument.type === "FunctionExpression") {
-            bodyPairs.push({ body: argument.body, loop: null });
+            bodyPairs.push({ body: argument.body, binding: callbackBinding(callee, argument) });
           }
         }
       }
     }
   });
 
-  for (const { body, loop } of bodyPairs) {
+  for (const { body, binding } of bodyPairs) {
     const validRoots = new Set(unincluded);
-    for (const name of unincludedElementNames(body, loop, unincluded)) validRoots.add(name);
+    for (const name of unincludedElementNames(binding, unincluded)) validRoots.add(name);
 
     // Reported member-expression sites already flagged in this body, keyed by root
     // identifier: only the shallowest access per root triggers a finding, so
