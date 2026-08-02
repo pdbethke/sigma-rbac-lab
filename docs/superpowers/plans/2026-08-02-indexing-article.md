@@ -1279,11 +1279,21 @@ git commit -m "Wire the N+1 scan to SessionStart on startup and compact, with ob
 - Consumes: `scanPath` from Task 6, `app/` from Task 5.
 - Produces: the findings the article's section 7 quotes.
 
-- [ ] **Step 1: Run the scanner on the promoted app**
+- [ ] **Step 1: Run the scanner on ALL TEN trials, not only the promoted app**
+
+Revised 2026-08-02. Two independent human reads of `app/src/queries.ts` found no N+1 pattern in the promoted corpus, so a single-corpus scan would settle almost nothing. Ten independently generated codebases is a far better test — of the generated code and of the scanner alike.
 
 ```bash
-npm run scan | tee experiments/indexing/scan-output.txt
+for d in experiments/indexing/runs/*/; do
+  echo "=== $(basename "$d") ==="
+  node --experimental-strip-types .claude/skills/performance/scanNPlusOne.ts "$d/src" 2>&1 || true
+done | tee experiments/indexing/scan-output.txt
+node --experimental-strip-types .claude/skills/performance/scanNPlusOne.ts app >> experiments/indexing/scan-output.txt
 ```
+
+Adjust the source subdirectory per trial if a session laid its project out differently — check first rather than assuming every trial used `src/`. A trial whose query code was not found must be reported as not scanned, never counted as clean.
+
+`scanPath` already skips `node_modules`; confirm that it did, because the trial directories contain installed dependencies and a scan that wandered into them would produce meaningless findings.
 
 - [ ] **Step 2: Judge every candidate**
 
@@ -1291,7 +1301,9 @@ Open each finding at its line and decide: real N+1, or false positive. Record bo
 
 - [ ] **Step 3: Write SCAN-RESULTS.md**
 
-The raw output, the true/false split with per-finding reasoning, and — for the most illustrative real finding — the actual code and the row count it multiplies against. Take the row count from `expected/`; if the relevant count is not there, query `oracle/rbac.db` and show the query.
+A per-trial table — trial, files scanned, candidates found, true, false — then the raw output, the per-finding reasoning, and, for the most illustrative real finding, the actual code and the row count it multiplies against. Take the row count from `expected/`; if the relevant count is not there, query `oracle/rbac.db` and show the query.
+
+**A zero result across all ten is a real and publishable finding**, and it must be reported as plainly as a dramatic one would be. Two independent human reads already found no N+1 in the promoted corpus, so this outcome is likely. If it happens, the honest conclusion is that these sessions wrote query code that avoids the pattern — nested `select`, one query per page — and the article says so and gives them the credit. What it must NOT do is quietly retire the scanner section, or go hunting for a corpus that fails until one is found. The scanner's own disclosed false-negative list (in the Task 6 report: `reduce` element params, destructured callback params, chained receivers, C-style `for` loops, wrapper functions, raw query methods) belongs in that write-up too, because "the scanner found nothing" and "there is nothing to find" are different claims and the piece may only make the first.
 
 - [ ] **Step 4: Commit**
 
