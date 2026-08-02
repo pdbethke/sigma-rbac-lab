@@ -59,6 +59,39 @@ export function grade(indexes: ParsedIndex[]): Grade {
 }
 
 /**
+ * `total_indexes` (unchanged from `grade()`, kept for comparison) counts every parsed
+ * index, including `CREATE UNIQUE INDEX` — which Prisma emits mechanically from any
+ * `@unique` / `@@unique`, not from a session's access-pattern reasoning — and indexes
+ * on tables entirely outside the oracle's graded pair. `explicit_indexes` and
+ * `in_scope_indexes` narrow that down. This does not change `grade()` or its Verdict
+ * columns; it is reported alongside them, not instead of them.
+ */
+export interface IndexCounts {
+  totalIndexes: number;
+  /** Non-unique indexes only — excludes anything Prisma derived from `@unique`. */
+  explicitIndexes: number;
+  /** Non-unique indexes, further restricted to InventoryDaily and
+   *  InventoryAdjustment — the two tables the oracle and the grading target. */
+  inScopeIndexes: number;
+}
+
+const IN_SCOPE_TABLES = new Set(
+  ["inventory_daily", "InventoryDaily", "inventory_adjustments", "InventoryAdjustment"].map(
+    normalize,
+  ),
+);
+
+export function countIndexes(indexes: ParsedIndex[]): IndexCounts {
+  const explicit = indexes.filter((index) => !index.unique);
+  const inScope = explicit.filter((index) => IN_SCOPE_TABLES.has(normalize(index.table)));
+  return {
+    totalIndexes: indexes.length,
+    explicitIndexes: explicit.length,
+    inScopeIndexes: inScope.length,
+  };
+}
+
+/**
  * Ask Prisma itself for the DDL, so the index list is not inferred from source.
  *
  * Two deviations from the brief's sketch, both confirmed against the trial data:
@@ -105,6 +138,8 @@ export interface TrialRow extends Grade {
   arm: number;
   trial: number;
   gradeable: boolean;
+  explicitIndexes: number;
+  inScopeIndexes: number;
 }
 
 /** Parse `arm2-trial4` into { arm: 2, trial: 4 }. */
@@ -121,16 +156,18 @@ export async function recordMetrics(rows: TrialRow[], dbPath: string): Promise<v
   await connection.run(`
     CREATE TABLE trials (
       run VARCHAR, arm INTEGER, trial INTEGER, gradeable BOOLEAN,
-      total_indexes INTEGER, composite_count INTEGER,
+      total_indexes INTEGER, explicit_indexes INTEGER, in_scope_indexes INTEGER,
+      composite_count INTEGER,
       inventory_daily VARCHAR, adjustments VARCHAR
     )
   `);
   for (const row of rows) {
     await connection.run(
-      "INSERT INTO trials VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+      "INSERT INTO trials VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
       [
         row.run, row.arm, row.trial, row.gradeable,
-        row.totalIndexes, row.compositeCount, row.inventoryDaily, row.adjustments,
+        row.totalIndexes, row.explicitIndexes, row.inScopeIndexes,
+        row.compositeCount, row.inventoryDaily, row.adjustments,
       ],
     );
   }
@@ -139,8 +176,10 @@ export async function recordMetrics(rows: TrialRow[], dbPath: string): Promise<v
 
 async function main(): Promise<void> {
   const runsDir = new URL("./runs/", import.meta.url).pathname;
-  const header = ["| run | total | composite | inventory_daily | adjustments |",
-    "| --- | --- | --- | --- | --- |"];
+  const header = [
+    "| run | total | explicit | in_scope | composite | inventory_daily | adjustments |",
+    "| --- | --- | --- | --- | --- | --- | --- |",
+  ];
   const bodyRows: string[] = [];
   const trialRows: TrialRow[] = [];
 
@@ -150,22 +189,28 @@ async function main(): Promise<void> {
     const ddl = extractDdl(dir);
     writeFileSync(join(dir, "extracted.sql"), ddl);
     if (ddl === "") {
-      bodyRows.push(`| ${run} | ungradeable | ungradeable | ungradeable | ungradeable |`);
+      bodyRows.push(
+        `| ${run} | ungradeable | ungradeable | ungradeable | ungradeable | ungradeable | ungradeable |`,
+      );
       trialRows.push({
         run, arm, trial, gradeable: false,
-        totalIndexes: 0, compositeCount: 0,
+        totalIndexes: 0, explicitIndexes: 0, inScopeIndexes: 0, compositeCount: 0,
         inventoryDaily: "missing", adjustments: "missing",
       });
       continue;
     }
-    const result = grade(parseIndexes(ddl));
+    const parsed = parseIndexes(ddl);
+    const result = grade(parsed);
+    const counts = countIndexes(parsed);
     bodyRows.push(
-      `| ${run} | ${result.totalIndexes} | ${result.compositeCount} | ` +
+      `| ${run} | ${counts.totalIndexes} | ${counts.explicitIndexes} | ` +
+        `${counts.inScopeIndexes} | ${result.compositeCount} | ` +
         `${result.inventoryDaily} | ${result.adjustments} |`,
     );
     trialRows.push({
       run, arm, trial, gradeable: true,
-      totalIndexes: result.totalIndexes, compositeCount: result.compositeCount,
+      totalIndexes: counts.totalIndexes, explicitIndexes: counts.explicitIndexes,
+      inScopeIndexes: counts.inScopeIndexes, compositeCount: result.compositeCount,
       inventoryDaily: result.inventoryDaily, adjustments: result.adjustments,
     });
   }

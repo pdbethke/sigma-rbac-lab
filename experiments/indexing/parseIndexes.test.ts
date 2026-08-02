@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import { parseIndexes } from "./parseIndexes.ts";
 
 const ORACLE_INDEXES = [
-  { table: "assignments", columns: ["user_id", "status"] },
-  { table: "permissions", columns: ["role_id"] },
-  { table: "inventory_daily", columns: ["store_id", "snapshot_date"] },
-  { table: "inventory_adjustments", columns: ["store_id", "product_id"] },
+  { table: "assignments", columns: ["user_id", "status"], unique: false },
+  { table: "permissions", columns: ["role_id"], unique: false },
+  { table: "inventory_daily", columns: ["store_id", "snapshot_date"], unique: false },
+  { table: "inventory_adjustments", columns: ["store_id", "product_id"], unique: false },
 ];
 
 describe("parseIndexes", () => {
@@ -19,20 +19,20 @@ describe("parseIndexes", () => {
     const sql =
       'CREATE INDEX "InventoryDaily_storeId_snapshotDate_idx" ON "InventoryDaily"("storeId", "snapshotDate");';
     expect(parseIndexes(sql)).toEqual([
-      { table: "inventorydaily", columns: ["storeid", "snapshotdate"] },
+      { table: "inventorydaily", columns: ["storeid", "snapshotdate"], unique: false },
     ]);
   });
 
   it("handles UNIQUE, IF NOT EXISTS, and identifiers containing spaces", () => {
     const sql = 'CREATE UNIQUE INDEX IF NOT EXISTS "idx_a" ON "Orders" ("Customer Id", placed_at);';
     expect(parseIndexes(sql)).toEqual([
-      { table: "orders", columns: ["customer id", "placed_at"] },
+      { table: "orders", columns: ["customer id", "placed_at"], unique: true },
     ]);
   });
 
   it("drops sort and collation suffixes from column names", () => {
     const sql = "CREATE INDEX idx_b ON t (a DESC, b COLLATE NOCASE);";
-    expect(parseIndexes(sql)).toEqual([{ table: "t", columns: ["a", "b"] }]);
+    expect(parseIndexes(sql)).toEqual([{ table: "t", columns: ["a", "b"], unique: false }]);
   });
 
   it("ignores commented-out indexes and CREATE TABLE", () => {
@@ -41,10 +41,32 @@ describe("parseIndexes", () => {
       "CREATE TABLE t (id TEXT PRIMARY KEY);",
       "CREATE INDEX idx_real ON t (a, b);",
     ].join("\n");
-    expect(parseIndexes(sql)).toEqual([{ table: "t", columns: ["a", "b"] }]);
+    expect(parseIndexes(sql)).toEqual([{ table: "t", columns: ["a", "b"], unique: false }]);
   });
 
   it("returns an empty array when there are no indexes", () => {
     expect(parseIndexes("CREATE TABLE t (id TEXT PRIMARY KEY);")).toEqual([]);
+  });
+
+  it("marks a plain CREATE INDEX as not unique", () => {
+    const sql = "CREATE INDEX idx_c ON t (a, b);";
+    expect(parseIndexes(sql)[0].unique).toBe(false);
+  });
+
+  it("marks CREATE UNIQUE INDEX as unique even with mixed case", () => {
+    const sql = 'create UNIQUE index "u1" on "T" ("a");';
+    expect(parseIndexes(sql)[0].unique).toBe(true);
+  });
+
+  it("distinguishes unique from non-unique across multiple statements", () => {
+    const sql = [
+      'CREATE UNIQUE INDEX "T_a_key" ON "T"("a");',
+      'CREATE INDEX "T_b_idx" ON "T"("b");',
+    ].join("\n");
+    const result = parseIndexes(sql);
+    expect(result).toEqual([
+      { table: "t", columns: ["a"], unique: true },
+      { table: "t", columns: ["b"], unique: false },
+    ]);
   });
 });

@@ -1,4 +1,4 @@
-arm | n | ungradeable | exact_match | partial | wrong_order | missing | avg_indexes
---- | --- | --- | --- | --- | --- | --- | ---
-1 | 5 | 0 | 3 | 2 | 0 | 0 | 14
-2 | 5 | 0 | 2 | 2 | 1 | 0 | 18.2
+arm | n | ungradeable | exact_match | partial | wrong_order | missing | avg_total_indexes | avg_explicit_indexes | avg_in_scope_indexes | trials_with_zero_explicit
+--- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
+1 | 5 | 0 | 3 | 2 | 0 | 0 | 14 | 7.6 | 4 | 2
+2 | 5 | 0 | 2 | 2 | 1 | 0 | 18.2 | 10 | 5.2 | 0

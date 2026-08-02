@@ -1,12 +1,12 @@
-| run | total | composite | inventory_daily | adjustments |
-| --- | --- | --- | --- | --- |
-| arm1-trial1 | 6 | 1 | partial | missing |
-| arm1-trial2 | 16 | 3 | match | partial |
-| arm1-trial3 | 17 | 4 | match | partial |
-| arm1-trial4 | 6 | 1 | partial | missing |
-| arm1-trial5 | 25 | 9 | match | partial |
-| arm2-trial1 | 21 | 8 | wrong-order | partial |
-| arm2-trial2 | 17 | 5 | partial | partial |
-| arm2-trial3 | 19 | 7 | match | partial |
-| arm2-trial4 | 15 | 7 | partial | partial |
-| arm2-trial5 | 19 | 9 | match | partial |
+| run | total | explicit | in_scope | composite | inventory_daily | adjustments |
+| --- | --- | --- | --- | --- | --- | --- |
+| arm1-trial1 | 6 | 0 | 0 | 1 | partial | missing |
+| arm1-trial2 | 16 | 10 | 5 | 3 | match | partial |
+| arm1-trial3 | 17 | 11 | 6 | 4 | match | partial |
+| arm1-trial4 | 6 | 0 | 0 | 1 | partial | missing |
+| arm1-trial5 | 25 | 17 | 9 | 9 | match | partial |
+| arm2-trial1 | 21 | 12 | 7 | 8 | wrong-order | partial |
+| arm2-trial2 | 17 | 9 | 4 | 5 | partial | partial |
+| arm2-trial3 | 19 | 10 | 5 | 7 | match | partial |
+| arm2-trial4 | 15 | 7 | 4 | 7 | partial | partial |
+| arm2-trial5 | 19 | 12 | 6 | 9 | match | partial |
