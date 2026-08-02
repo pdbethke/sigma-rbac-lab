@@ -1763,6 +1763,25 @@ Both are consistent, because Task 14 tested the easy case: a greenfield schema w
 
 If B degrades relative to A, the loss-of-context mechanism is demonstrated rather than asserted — and the `SessionStart`/`compact` re-scan stops being a plausible-sounding prescription and becomes a targeted fix for a measured failure.
 
+**Sharpened 2026-08-02, from the user's own observation.** The increments are not generic new features. Each one is a **query that no existing index can serve well** — typically a join across the hierarchy or a filter on a column that was deliberately left unindexed. That isolates the judgment being tested: a new access pattern has arrived, and the question is only whether the index set gets revisited.
+
+This is closer to what practitioners actually report than a greenfield build, and it is cheap — the signal appears in one increment, not five, and it runs against an already-graded project rather than regenerating everything.
+
+**Grade four outcomes per increment, not two.** The fourth is the one most likely to matter:
+
+    correct     declared the pre-registered index
+    partial     declared an index, wrong columns or wrong order
+    none        declared nothing, said nothing
+    flagged     declared nothing BUT raised the index question in prose
+
+`flagged` is a genuinely different behaviour from `none` — a model that says "this will need an index on adjusted_by" and leaves it to you has done the reviewable thing, even though the schema is unchanged. Collapsing the two would hide the most interesting result available here. Record the verbatim sentence where it happens.
+
+Candidate increments, each demanding an index the baseline does not have:
+
+- adjustments by the user who made them, over a date range — wants `(adjusted_by, adjusted_at)`; `adjusted_by` is unindexed in the oracle by design
+- low-stock products by brand within a region — crosses `Product -> Brand` and `Store -> region`, served by nothing existing
+- a product's cost history across all stores — inverts the fact table's leading column, so `(store_id, snapshot_date)` does not help
+
 - [ ] **Step 1: Pre-register the expected index for each increment, BEFORE running anything**
 
 Four or five feature requests, each introducing a genuinely new access pattern, described in business terms with no performance vocabulary. For example: adjustments made by a given user over a date range (wants `(adjusted_by, adjusted_at)`); low-stock products by brand within a region; a product's price history across stores.
