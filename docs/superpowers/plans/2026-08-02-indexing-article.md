@@ -1952,3 +1952,41 @@ The natural assumption is that this is a small-model failure. Gemini flash's 0/5
 **If the frontier models degrade less than flash**, the effect is partly capability, and the article says that instead: the failure is worst at the cheap tier that cost pressure pushes production traffic toward.
 
 Either result is publishable. Report whichever occurs first and plainly.
+
+---
+
+### Task 19: Can instruction beat convention?
+
+Added 2026-08-02, from the user's observation about Task 17's null result.
+
+Task 17 found that the project's own `performance` skill did not change trial behaviour. But that skill was **never invoked** — only its description sat in the available-skills list. So what Task 17 actually established is narrow and worth stating on its own: **a skill sitting in a repository is not ambient guidance.** It does nothing until something triggers it.
+
+The untested and far more useful question: **can an explicit instruction override the conformity effect?** Task 16 showed a stripped baseline produces 0/24. Every reader of this article is in that position — an existing codebase with no index convention. The practical question is whether a repo rule fixes it or whether the code wins.
+
+**Design: Task 16 exactly, plus one instruction.** Same stripped baseline, same four increments, same frozen `EXPECTED.md`, same model `claude-opus-4-8`, arm B only (3 trials x 4 increments = 12 sessions), serial, run from outside the repository.
+
+The single change: the trial project contains a `CLAUDE.md` carrying one rule, in business-neutral language, present from increment 1:
+
+    When you add or change a query, declare the database index that serves its
+    access pattern, or state explicitly why no new index is needed.
+
+Do not name a column, a table or an expected index. Do not use the words fast, slow, scale, performance or optimize. The rule states an obligation, not an answer — otherwise the experiment measures whether the model can follow a spec, which nobody doubts.
+
+**Three outcomes, all publishable:**
+
+    instruction wins   ~12/12  the fix is a repo rule: cheap, immediate, actionable
+    code wins          ~0/12   conformity beats instruction; only seeding real indexes works
+    partial            between  quantifies what instruction is worth against convention
+
+- [ ] **Step 1: Wait for Task 18. Serial only.**
+- [ ] **Step 2: Verify isolation** (`git rev-parse --show-toplevel` fails, skill check answers NO), paste both verbatim.
+- [ ] **Step 3: Add the CLAUDE.md rule to the stripped baseline copy**, commit it, and diff against the Task 16 baseline to prove the ONLY difference is that file.
+- [ ] **Step 4: Run 12 sessions, grade against the unchanged EXPECTED.md.**
+- [ ] **Step 5: Report the three-way table.**
+
+    Task 16  stripped, no instruction    0/24
+    Task 19  stripped, with instruction  ?/12
+
+Also record whether any session *stated why no index was needed* — the rule's second branch. A model that declines and explains has complied; a model that silently does neither has not. That distinction decides whether the rule is worth recommending.
+
+This is the most directly actionable experiment in the project: it tells a reader whether a one-line repo rule fixes their codebase or whether nothing short of real indexes will.
