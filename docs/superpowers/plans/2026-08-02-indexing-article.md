@@ -14,7 +14,7 @@
 - US spelling throughout. No `organisation`, `behaviour`, `modelling`, `analyse`, `optimise`.
 - No unrun claims. If a measurement was not taken, the article does not describe its result. No present-tense description of something that has not been executed.
 - Sample size stated in the text as an explicit number ("n of 5"), never "agents tend to".
-- Hook names and matchers are verified by firing them and observing output, never recalled. Claude Code has **no `PostCompact` hook**; the post-compaction hook is `SessionStart` with matcher `compact`.
+- Hook names and matchers are verified by firing them and observing output, never recalled. **Correction, verified against the installed 2.1.220 extension: `PostCompact` DOES exist** as a hook event, alongside `PreCompact` and `SessionStart`. An earlier version of this plan asserted it does not — that was wrong, and the article must not repeat it. What this project uses is `SessionStart` with matchers `startup` and `compact`, both of which were observed firing (`docs/hook-verification.md`). The article may state what was observed and must make no claim about which events do or do not exist beyond that.
 - `31,500` is `My Inventory` for a store manager, per `expected/` and `VERIFY.md`. It is **not** the agent's corpus; that number is 150 / 450.
 - Persona roles come from `data/roles.csv` verbatim. Priya is **Regional Manager**, not "regional director".
 - Claims about Snowflake or Sigma storage are phrased as what that engine does, checked against current published documentation, never as a general claim about columnar databases.
