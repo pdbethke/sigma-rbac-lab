@@ -1,0 +1,42 @@
+=== arm1-trial1 ===
+N+1 scan: 1 candidate(s) in experiments/indexing/runs/arm1-trial1//src
+  experiments/indexing/runs/arm1-trial1/src/queries.ts:123  [unincluded-relation] Relation read on a record fetched without include or select. Each access may issue its own query.
+=== arm1-trial2 ===
+N+1 scan: 1 candidate(s) in experiments/indexing/runs/arm1-trial2//src
+  experiments/indexing/runs/arm1-trial2/src/queries.ts:140  [unincluded-relation] Relation read on a record fetched without include or select. Each access may issue its own query.
+=== arm1-trial3 ===
+N+1 scan: 4 candidate(s) in experiments/indexing/runs/arm1-trial3//src
+  experiments/indexing/runs/arm1-trial3/src/queries.ts:134  [unincluded-relation] Relation read on a record fetched without include or select. Each access may issue its own query.
+  experiments/indexing/runs/arm1-trial3/src/seed.ts:34  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm1-trial3/src/seed.ts:75  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm1-trial3/src/seed.ts:87  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+=== arm1-trial4 ===
+N+1 scan: 1 candidate(s) in experiments/indexing/runs/arm1-trial4//src
+  experiments/indexing/runs/arm1-trial4/src/queries.ts:121  [unincluded-relation] Relation read on a record fetched without include or select. Each access may issue its own query.
+=== arm1-trial5 ===
+N+1 scan: 1 candidate(s) in experiments/indexing/runs/arm1-trial5//src
+  experiments/indexing/runs/arm1-trial5/src/queries.ts:141  [unincluded-relation] Relation read on a record fetched without include or select. Each access may issue its own query.
+=== arm2-trial1 ===
+N+1 scan: no candidates in experiments/indexing/runs/arm2-trial1//src
+=== arm2-trial2 ===
+N+1 scan: 6 candidate(s) in experiments/indexing/runs/arm2-trial2//src
+  experiments/indexing/runs/arm2-trial2/src/seed.ts:45  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm2-trial2/src/seed.ts:64  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm2-trial2/src/seed.ts:69  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm2-trial2/src/seed.ts:71  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm2-trial2/src/seed.ts:76  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm2-trial2/src/seed.ts:88  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+=== arm2-trial3 ===
+N+1 scan: 5 candidate(s) in experiments/indexing/runs/arm2-trial3//src
+  experiments/indexing/runs/arm2-trial3/src/queries.ts:280  [unincluded-relation] Relation read on a record fetched without include or select. Each access may issue its own query.
+  experiments/indexing/runs/arm2-trial3/src/seed.ts:37  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm2-trial3/src/seed.ts:73  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm2-trial3/src/seed.ts:86  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+  experiments/indexing/runs/arm2-trial3/src/seed.ts:129  [query-in-loop] Query .create() runs once per iteration. Fetch the set in one query, or use include to load the relation with its parent.
+=== arm2-trial4 ===
+N+1 scan: no candidates in experiments/indexing/runs/arm2-trial4//src
+=== arm2-trial5 ===
+N+1 scan: no candidates in experiments/indexing/runs/arm2-trial5//src
+=== app ===
+N+1 scan: 1 candidate(s) in app
+  app/src/queries.ts:140  [unincluded-relation] Relation read on a record fetched without include or select. Each access may issue its own query.
