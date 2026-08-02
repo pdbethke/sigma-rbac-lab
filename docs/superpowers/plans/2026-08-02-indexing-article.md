@@ -1756,6 +1756,18 @@ Both are consistent, because Task 14 tested the easy case: a greenfield schema w
 
 **This task tests accumulation, which is where the hypothesis most likely holds.**
 
+**THE PRE-REGISTERED HYPOTHESIS, in the user's words, recorded 2026-08-02 before any increment ran:**
+
+> *It indexes on the foundational creation, but not in the expansion.*
+
+That is a directional prediction, and the two experiments together test it. Task 14 measured foundational creation and found competence — 8 of 10 pilot trials, and every gradeable Opus 4.8 and Codex trial, declared explicit indexes unprompted. Task 15 measures expansion against the same domain, the same oracle and the same grading.
+
+**What would confirm it:** indexes declared at creation, and class A / class B increments scoring `none` or `flagged` rather than `correct`.
+
+**What would falsify it:** models revisiting the index set at expansion as readily as at creation. If that happens it is reported as plainly as a confirmation would be, and the article's argument moves to the tier and prompting effects instead — which are already measured and already interesting.
+
+Recording the prediction here, before the data exists, is what makes either outcome meaningful. A hypothesis fitted to results afterwards explains everything and predicts nothing.
+
 **The design is two-arm, and the arms are the mechanism under test:**
 
     arm A  one continuous session performs every increment (context retained)
