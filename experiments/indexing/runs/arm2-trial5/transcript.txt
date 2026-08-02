@@ -1,0 +1,17 @@
+Built and verified.
+
+**Files:** `prisma/schema.prisma`, `src/queries.ts`, plus `package.json` / `tsconfig.json` / `.env` / migration / README.
+
+**Verified, not assumed:**
+- `npx tsc --noEmit` passes.
+- All four query functions were run against a seeded database and returned correct rows (then the seed data was cleared — `prisma/dev.db` ships empty).
+- `EXPLAIN QUERY PLAN` on each page's SQL: every one is an index SEARCH, none a table scan.
+
+**The scale decisions that shaped the code.** `InventoryDaily` is the only table that grows — years × daily × hundreds of stores × thousands of SKUs. Everything else is a dimension table. So:
+
+- The unique key is `[snapshotDate, storeId, productId]`, which doubles as the access path for the regional roll-up. Two more composite indexes cover the store-centric pages (`[storeId, snapshotDate]`, `[storeId, snapshotDate, isLowStock]` — the boolean goes last because it's low cardinality and only trims an already-narrow store-day range).
+- Pages 1, 2 and 4 are pinned to one snapshot date. Page 1 finds the store's latest date with an ordered `findFirst` on the store-leading index (stops after one row) rather than a `MAX()` over its history.
+- **Page 2 is where I made a judgment call:** the spec doesn't mention a date, but "every product flagged low stock in a region" across years of daily snapshots returns the same SKU once per day it was ever low. I made `snapshotDate` optional and defaulted it to the region's most recent snapshot. Say the word if you actually want the historical form.
+- Page 4 sums with `groupBy` in SQL — a region-day is hundreds of thousands of rows and none need to cross the wire. Pages 1–3 are paged and return a SQL `count` beside the rows.
+
+**One assumption flagged in the README:** your model list gives `InventoryAdjustment` a "who adjusted it" field with no person model, so `adjustedBy` is a string and page 3 returns it directly. If adjusters are system users you'll want to filter and report on, that wants a `User` model with an FK — one migration, and the existing index doesn't move.

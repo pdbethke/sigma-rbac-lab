@@ -1,0 +1,24 @@
+Done. The project builds, migrates, and all four query functions were smoke-tested against seeded data (then the dev DB was reset to empty).
+
+**Layout**
+- `prisma/schema.prisma` — the eight models
+- `prisma/migrations/…_init/migration.sql` — applied
+- `src/client.ts` — `PrismaClient` on the better-sqlite3 driver adapter
+- `src/queries.ts` — one exported function per page
+- `prisma.config.ts`, `tsconfig.json`, `.env` (`DATABASE_URL="file:./dev.db"`), `.gitignore`
+
+**Schema notes**
+- `InventoryDaily` is keyed `@@unique([snapshotDate, storeId, productId])` — one row per snapshot/store/product, as specified.
+- `InventoryAdjustment.serialNumber` is unique; `Product.skuNumber` and `Store.storeKey` likewise.
+- The type→family→line→product chain is modeled with a `@@unique([parentId, name])` on each level, so names only have to be unique within their parent.
+- Indexes follow the four access paths: `[storeId, snapshotDate]`, `[productId, snapshotDate]`, `[storeId, isLowStock]` on the daily table, `Store.region`, and `[storeId, productId, adjustedAt]` on adjustments.
+
+**Queries** (`src/queries.ts`)
+1. `getStoreCurrentInventory(storeKey)` — resolves the store's own latest `snapshotDate`, then returns product name, brand, family, and units on hand.
+2. `getRegionLowStock(region)` — `isLowStock` rows across the region on the region's latest snapshot date; store name, product name, units on hand.
+3. `getProductAdjustmentHistory(storeKey, skuNumber)` — newest first, with `adjustedBy`, delta, reason, serial.
+4. `getRegionalInventoryValue(region, snapshotDate)` — `groupBy` store with `_sum.inventoryValue`, joined back onto the store list so stores with no rows report 0.
+
+Two judgment calls worth flagging: pages 1 and 2 weren't given a snapshot date, so both derive "latest" themselves (per-store for page 1, per-region for page 2); and page 4 includes zero-value stores rather than dropping them.
+
+`npm run typecheck` passes.

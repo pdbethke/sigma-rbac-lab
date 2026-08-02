@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Store {
+  id        Int     @id @default(autoincrement())
+  storeKey  String  @unique
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventoryDaily InventoryDaily[]
+  adjustments    InventoryAdjustment[]
+
+  // Pages 2 and 4 both scope by region before touching inventory.
+  @@index([region])
+}
+
+model ProductType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int    @id @default(autoincrement())
+  name          String
+  productTypeId Int
+
+  productType ProductType   @relation(fields: [productTypeId], references: [id])
+  lines       ProductLine[]
+
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int    @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products      Product[]
+
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id        Int    @id @default(autoincrement())
+  brandName String @unique
+
+  products Product[]
+}
+
+model Product {
+  id            Int    @id @default(autoincrement())
+  skuNumber     String @unique
+  productName   String
+  productLineId Int
+  brandId       Int
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id])
+  brand       Brand       @relation(fields: [brandId], references: [id])
+
+  inventoryDaily InventoryDaily[]
+  adjustments    InventoryAdjustment[]
+
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id             Int      @id @default(autoincrement())
+  snapshotDate   DateTime
+  storeId        Int
+  productId      Int
+  costPerUnit    Float
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Float
+  inventoryValue Float
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Float
+  leadTimeDays   Int
+  merchantId     String
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // "One row per snapshot date, store and product" — enforce it, and get the
+  // lookup for free.
+  @@unique([snapshotDate, storeId, productId])
+  // Pages 1 and 2 enter by store, then narrow by date. Store leads because it
+  // is always an equality match; date is either "the latest" or a single day.
+  @@index([storeId, snapshotDate])
+  // Page 4 sweeps one date across every store in a region.
+  @@index([snapshotDate])
+  // Page 2 filters on the low-stock flag within a region's stores.
+  @@index([isLowStock])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjustedBy   String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String   @unique
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Page 3 asks for one product at one store, newest first.
+  @@index([storeId, productId, adjustedAt])
+  @@index([productId])
+}

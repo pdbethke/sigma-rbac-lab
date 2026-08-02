@@ -1,0 +1,22 @@
+# Global Operating Rules (across all projects)
+
+## scp / direct prod edits — emergency only
+
+**Do not `scp` files to a production host as a regular deploy mechanism.** Even when a project lacks a CI pipeline, the right move is to set up version control + a workflow first, then deploy through it — not to bypass the missing rails because they're missing.
+
+**Why:** A direct scp produces no diff, no audit trail, no rollback target. The user has been burned by this. Even when a fix is time-sensitive (e.g. an active compliance bypass), spend the 15 minutes to `git init` + push to GitHub + add a deploy workflow, THEN apply the fix through the workflow. The fix being urgent is not a license to skip the floor of "the change exists somewhere with history."
+
+**When `scp` IS acceptable:**
+- The user has explicitly asked for it ("just scp it", "skip CI just this once")
+- Recovery from a broken deploy where CI itself can't run (and the user has been told what's happening)
+- Throwaway artifacts that aren't code (e.g. one-off data files for a manual investigation)
+
+**When `scp` is NOT acceptable, even if "we'll fix it later":**
+- A repo that lacks git → set it up first
+- A repo that has git but no remote → push it first
+- A repo with a remote but no CI → add the workflow first
+- Any urgent-but-not-emergency situation
+
+If a fix can't wait through the 15-minute setup, **say that explicitly to the user and ask** before reaching for scp. "We need to ship this in five minutes; OK to scp now and add the rails right after?" lets the user weigh urgency vs. discipline.
+
+Recorded 2026-04-26 after the a production incident. The scp worked, but the user had to call out the missing version control twice before the right thing was set up.

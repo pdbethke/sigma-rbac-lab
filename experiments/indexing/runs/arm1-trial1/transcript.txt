@@ -1,0 +1,20 @@
+Done. TypeScript + Prisma 7 + SQLite project builds, migrates, and the four query functions were verified against a real SQLite database (seeded, run, output checked, then the scratch DB removed).
+
+**Files**
+
+- `prisma/schema.prisma` — all eight models. `Store` keyed by unique `storeKey`; the `ProductType → ProductFamily → ProductLine → Product` chain; `Product` also joins `Brand`. `InventoryDaily` has `@@unique([snapshotDate, storeId, productId])` (one row per date/store/product, as specified); `InventoryAdjustment` has a unique `serialNumber`.
+- `src/queries.ts` — one exported function per page, plus the shared `prisma` client:
+  - `getStoreCurrentInventory(storeKey)` — resolves that store's latest snapshot date first, then returns product name, brand name, family name, units on hand.
+  - `getLowStockByRegion(region)` — every `isLowStock` row at stores in the region → store name, product name, units on hand.
+  - `getProductAdjustmentHistory(storeKey, skuNumber)` — adjustments newest-first, including `adjustedBy`.
+  - `getRegionalInventoryValue(region, snapshotDate)` — `groupBy` store with `_sum: inventoryValue`, joined back to store names, sorted descending.
+- `prisma.config.ts`, `tsconfig.json`, `.env`, `.gitignore`.
+
+**Two things worth knowing**, both forced by Prisma 7 (7.9.1 is what installs today):
+
+1. `datasource.url` is no longer allowed in the schema — the connection URL lives in `prisma.config.ts`, and the client is constructed with a driver adapter (`@prisma/adapter-better-sqlite3`). So `queries.ts` imports `PrismaClient` from `./generated/prisma/client.js`, not `@prisma/client`.
+2. Prisma 7 also doesn't auto-load `.env`, hence the `dotenv/config` import in the config file.
+
+Run `npm run generate` after cloning (the generated client is gitignored) and `npm run migrate` to create the DB. `npm run typecheck` passes clean.
+
+Note that `getLowStockByRegion` returns low-stock rows across *all* snapshot dates, not just the latest — the page description says "flagged low stock at any store in a region" without naming a date. If you want it scoped to current inventory only, that's a one-line change and I'd suggest making it consistent with page 1.

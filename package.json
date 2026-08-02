@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "scan": "node --experimental-strip-types .claude/skills/performance/scanNPlusOne.ts app"
+    "scan": "node --experimental-strip-types .claude/skills/performance/scanNPlusOne.ts app",
+    "duckdb": "node --experimental-strip-types experiments/indexing/duckdbQuery.ts"
   },
   "devDependencies": {
     "@duckdb/node-api": "1.5.5-r.3",

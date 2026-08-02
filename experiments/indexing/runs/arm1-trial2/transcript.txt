@@ -1,0 +1,21 @@
+Done. Working project in the current directory — migration applied, typecheck clean, all four queries verified against seeded data.
+
+**`prisma/schema.prisma`** — nine models. The hierarchy chains ProductType → ProductFamily → ProductLine → Product, with Brand joined at Product. `InventoryDaily` carries all nineteen listed measures; `InventoryAdjustment` carries the audit fields.
+
+**`src/queries.ts`** — one function per page:
+
+| Page | Function |
+|---|---|
+| 1 | `getStoreCurrentInventory(storeKey)` |
+| 2 | `getLowStockByRegion(region)` |
+| 3 | `getProductAdjustmentHistory(storeKey, skuNumber)` |
+| 4 | `getRegionalSummary(region, snapshotDate)` |
+
+Two judgment calls worth flagging:
+
+- **"Current" vs. an explicit date.** Only page 4 named a snapshot date, so pages 1 and 2 resolve the latest date themselves — page 1 per store, page 2 as the max across the region's stores. If stores can lag each other on snapshot ingestion, page 2 would need a per-store latest instead; say the word and I'll switch it.
+- **Indexes follow the four access paths** rather than blanket-covering every foreign key. `InventoryDaily(storeId, snapshotDate)` serves pages 1 and 2, `InventoryDaily(snapshotDate)` serves page 4's cross-store sweep, and `InventoryAdjustment(storeId, productId, adjustedAt)` covers page 3's filter and its newest-first sort in a single pass. `Store(region)` supports the region scoping both regional pages start from. I also made `(snapshotDate, storeId, productId)` unique, since "one row per snapshot date, store and product" is a grain worth enforcing rather than trusting.
+
+The seed includes deliberate negative cases, and `npm run smoke` confirms each is handled: a stale prior-day snapshot excluded from page 1, an out-of-region low-stock row excluded from page 2, and a different product's adjustment at the same store excluded from page 3.
+
+One environment note: Prisma 7 no longer accepts `url` inside the `datasource` block, so the connection string goes through `prisma.config.ts` for the CLI and through the better-sqlite3 driver adapter at runtime.

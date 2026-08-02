@@ -1,0 +1,45 @@
+**Today (Sun Aug 2)** — personal calendar is clear; three family items: CE Questionnaire (all day, family) · 10–11am PREP FOR TRIP (family) · 11am–12pm WORK ON WILLS (family).
+
+---
+
+## The project
+
+Built and verified in `arm2-trial2/`. TypeScript + Prisma 7 + SQLite, migration applied, seeded, all checks green.
+
+**`prisma/schema.prisma`** — the eight models as specified. Every index carries a comment naming the page it exists for.
+
+**`src/queries.ts`** — one exported function per page:
+
+| # | Function |
+| --- | --- |
+| 1 | `getStoreCurrentInventory(storeId, page?)` |
+| 2 | `getRegionLowStock(region, opts?)` |
+| 3 | `getProductAdjustmentHistoryAtStore(storeId, productId, page?)` |
+| 4 | `getRegionalInventoryValueSummary(region, snapshotDate)` |
+
+### What the "several years × hundreds of stores" line drove
+
+`InventoryDaily` is the only table that grows with time — that's hundreds of millions of rows, so it got the design attention:
+
+- **Every read is pinned to one snapshot date.** "Current inventory" resolves the latest date as a one-row backwards index seek, then reads that date. Nothing walks history to derive a per-row newest.
+- **Three indexes, each justified.** The `(snapshotDate, storeId, productId)` unique defines the grain *and* serves page 4 from its leading pair. `(storeId, snapshotDate, isLowStock)` serves pages 1 and 2 — the flag is the third column so low-stock filtering happens inside the index rather than by fetching and discarding healthy rows. `productId` alone exists only for FK maintenance, which would otherwise full-scan the biggest table on a product delete. Indexes cost write throughput on the nightly load, so there are no speculative extras.
+- **Every list paginates; the aggregate pushes down.** Page 4 is a grouped scan in the database, not a fetch-and-sum in JS.
+
+### Verification
+
+`npm run smoke` runs all four functions against seeded data (12 behavioral checks, including the page-4 aggregate cross-checked against a JS summation) and then asserts the `EXPLAIN QUERY PLAN` of each hot statement. All five plans are index-driven, two of them covering, none with a temp b-tree sort:
+
+```
+q1 latest-date : SEARCH InventoryDaily USING COVERING INDEX ..._storeId_snapshotDate_isLowStock_idx (storeId=?)
+q2 low stock   : SEARCH InventoryDaily USING INDEX ..._storeId_snapshotDate_isLowStock_idx (storeId=? AND snapshotDate=? AND isLowStock=?)
+q3 history     : SEARCH InventoryAdjustment USING COVERING INDEX ..._storeId_productId_adjustedAt_idx (storeId=? AND productId=?)
+q4 summary     : SEARCH InventoryDaily USING INDEX ..._snapshotDate_storeId_productId_key (snapshotDate=? AND storeId=?)
+```
+
+`npm run typecheck` and `npm run build` both pass clean.
+
+### Two calls I made, flagged rather than buried
+
+**Page 2 takes a snapshot date, defaulting to the region's newest.** The spec named only a region. Resolving a latest date *per store* would mix a store whose nightly load has landed with one whose hasn't, on the same screen. One page, one comparable day — a store missing that day shows no rows. Easy to change if you'd rather see stale-but-present data.
+
+**Money stays `Decimal` end to end** — `totalInventoryValue` is never converted to a JS number. Worth knowing: SQLite has no native decimal type, so Prisma's `DECIMAL` is real arithmetic underneath. The schema gets true fixed-point on Postgres unchanged; if production really is SQLite, money totals deserve a spot-check against the source system.

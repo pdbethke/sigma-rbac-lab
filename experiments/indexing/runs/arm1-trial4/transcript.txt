@@ -1,0 +1,23 @@
+Done. TypeScript + Prisma + SQLite project is built, migrated, and verified.
+
+**Files**
+- `prisma/schema.prisma` — the eight models
+- `prisma/migrations/20260802145819_init/` — applied
+- `prisma.config.ts` — Prisma 7 requires the datasource URL here, not in the schema
+- `src/queries.ts` — the four page functions
+- `tsconfig.json`, `.env`, `.gitignore`
+
+**Schema notes**
+- `ProductType → ProductFamily → ProductLine → Product`, with `Product` also pointing at `Brand`.
+- `InventoryDaily` has `@@unique([snapshotDate, storeId, productId])` — one row per snapshot/store/product, as specified.
+- `InventoryAdjustment.serialNumber` is unique; `Store.storeKey`, `Product.skuNumber`, and `Brand.brandName` likewise.
+
+**Query functions**
+1. `getStoreCurrentInventory(storeKey)` — resolves that store's max `snapshotDate` first, then returns product name, brand, family, units on hand.
+2. `getLowStockByRegion(region)` — filters `isLowStock` through the store relation.
+3. `getProductAdjustmentHistory(storeKey, skuNumber)` — newest first, includes `adjustedBy`.
+4. `getRegionalInventoryValue(region, snapshotDate)` — `groupBy` store with `_sum` on `inventoryValue`, then joins store names.
+
+**Verification:** `tsc --noEmit` exits 0. I also ran a throwaway smoke script against a seeded row set — all four returned correct data (query 1 correctly returned the latest snapshot's 3 units rather than the prior day's 40), then deleted the script and reset the database to an empty migrated state.
+
+Two things worth knowing: Prisma 7 dropped `url` from the schema's `datasource` block and requires a driver adapter on the client, so `queries.ts` constructs `PrismaClient` with `@prisma/adapter-better-sqlite3`. And `dev.db` lands at the project root, not in `prisma/`.

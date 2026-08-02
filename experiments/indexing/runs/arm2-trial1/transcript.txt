@@ -1,0 +1,22 @@
+Built and verified.
+
+**Files**
+- `prisma/schema.prisma` — 9 models (Store, ProductType, ProductFamily, ProductLine, Brand, Product, Adjuster, InventoryDaily, InventoryAdjustment). I added an `Adjuster` model rather than a free-text name, so "who adjusted it" is a real relation.
+- `src/queries.ts` — the four page functions plus a `latestSnapshotDate()` helper.
+- `src/client.ts`, `prisma/seed.ts`, `src/smoke.ts`, `prisma.config.ts`, `README.md`.
+
+**What the production-scale note drove.** `InventoryDaily` is days × stores × products, so it carries the indexing weight:
+
+| Index | Serves |
+|---|---|
+| `@@unique([storeId, snapshotDate, productId])` | natural key + query 1's day slice |
+| `@@index([snapshotDate, storeId])` | query 4's date-first roll-up |
+| `@@index([storeId, snapshotDate, isLowStock])` | query 2 |
+| `@@index([productId, snapshotDate])` | product-centric views + the FK |
+| `InventoryAdjustment(storeId, productId, adjustedAt)` | query 3's filter *and* its `ORDER BY ... DESC` |
+
+Equality columns lead each composite, sort/range columns trail. `Store(region)` is indexed because queries 2 and 4 both start by resolving a region to store ids — that keeps the fact-table read an indexed `IN (...)` instead of a join-then-filter. Every query pins one snapshot date; queries 1 and 2 are cursor-paginated (default 200); query 4 aggregates with `groupBy`/`_sum` in the database rather than pulling the day's rows into Node. FKs are indexed explicitly since SQLite won't.
+
+**Verification:** `tsc --noEmit` clean, seed writes 840 daily rows + 60 adjustments, `npm run smoke` returns real data from all four functions, and `EXPLAIN QUERY PLAN` shows every page resolving via `SEARCH ... USING INDEX` with no temp B-tree for ordering.
+
+Two things worth flagging: Prisma 7 moved the datasource URL out of `schema.prisma` into `prisma.config.ts` (with `dotenv/config`, since it no longer auto-loads `.env`), and I dropped the snake_case `@@map` table names to keep DB naming consistent — say the word if you want snake_case columns and I'll map all the fields.

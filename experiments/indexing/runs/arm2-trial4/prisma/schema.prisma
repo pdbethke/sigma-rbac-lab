@@ -1,0 +1,166 @@
+// Retail inventory for a chain of stores.
+//
+// Sizing assumption baked into the indexes below: several years of DAILY
+// snapshots x hundreds of stores x thousands of products. InventoryDaily is
+// therefore the only table that matters for performance — it will hold
+// hundreds of millions of rows, while every other table stays small enough to
+// live in page cache. Each index on InventoryDaily is justified by a named
+// query in src/queries.ts; there are no speculative indexes, because on a
+// table this size every extra index is real write amplification on the nightly
+// snapshot load.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        Int     @id @default(autoincrement())
+  storeKey  String  @unique
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventoryDaily      InventoryDaily[]
+  inventoryAdjustment InventoryAdjustment[]
+
+  // Queries 2 and 4 both start by resolving a region to its stores.
+  @@index([region])
+}
+
+model ProductType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int    @id @default(autoincrement())
+  name          String
+  productTypeId Int
+
+  productType ProductType   @relation(fields: [productTypeId], references: [id])
+  lines       ProductLine[]
+
+  @@unique([productTypeId, name])
+  // SQLite does not index foreign keys automatically; the @@unique above
+  // already covers lookups by productTypeId, so no separate index is needed.
+}
+
+model ProductLine {
+  id              Int    @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products      Product[]
+
+  @@unique([productFamilyId, name])
+}
+
+model Brand {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  products Product[]
+}
+
+model Product {
+  id            Int    @id @default(autoincrement())
+  sku           String @unique
+  name          String
+  productLineId Int
+  brandId       Int
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id])
+  brand       Brand       @relation(fields: [brandId], references: [id])
+
+  inventoryDaily      InventoryDaily[]
+  inventoryAdjustment InventoryAdjustment[]
+
+  // Foreign-key indexes: SQLite creates none on its own, and both are needed
+  // to make the hierarchy joins in query 1 index lookups rather than scans.
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id           Int      @id @default(autoincrement())
+  // Stored as a UTC-midnight DateTime: SQLite has no DATE type, so all writers
+  // must normalize to midnight or the equality filters below silently miss.
+  snapshotDate DateTime
+  storeId      Int
+  productId    Int
+
+  costPerUnit    Decimal
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Float
+  inventoryValue Decimal
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Decimal
+  leadTimeDays   Int
+  merchantId     Int
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // The natural grain of the table. Beyond enforcing one row per
+  // (date, store, product), its leading columns serve query 4: summing
+  // inventory value for a whole region on one snapshot date is a range scan
+  // over (snapshotDate, storeId) rather than a scan of the day's rows.
+  @@unique([snapshotDate, storeId, productId])
+
+  // Queries 1 and 2 are store-first. This index makes "the latest snapshot
+  // date held by store X" an index max() — one B-tree descent instead of an
+  // aggregate over years of that store's history — and then makes reading
+  // that store's rows for that date a contiguous range scan. isLowStock is a
+  // trailing column so query 2's filter is resolved inside the index, without
+  // touching the heap for rows that are not low stock.
+  @@index([storeId, snapshotDate, isLowStock])
+
+  // Product-first history: "how has this SKU moved across the chain" and the
+  // per-product lookups that back query 3's context. Without it, any
+  // product-scoped question degrades to a full-table scan.
+  @@index([productId, snapshotDate])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjustedBy   String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String   @unique
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Query 3 verbatim: one product at one store, newest first. All three
+  // columns are in the index, so the ordering is free — no filesort over a
+  // store's whole adjustment history.
+  @@index([storeId, productId, adjustedAt])
+
+  // Chain-wide audit of a single SKU, and the FK index SQLite would not
+  // otherwise create for productId.
+  @@index([productId, adjustedAt])
+}

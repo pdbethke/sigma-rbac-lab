@@ -1,0 +1,25 @@
+Built and verified.
+
+**Files**
+- `prisma/schema.prisma` — all nine models, migrated into `dev.db`
+- `src/queries.ts` — the four page functions
+- `src/seed.ts` / `src/verify.ts` — deterministic seed and smoke test
+- `README.md`, `tsconfig.json`, `prisma.config.ts`, npm scripts
+
+**Verification** — `npm run verify` passes: each query returns correct values against the seed (latest-date selection, region scoping, newest-first ordering, per-store sums), and `EXPLAIN QUERY PLAN` confirms all five hot access paths use an index, no table scans. `npm run typecheck` is clean.
+
+**Indexing for production scale.** `InventoryDaily` is the table that decides whether these pages load, so its three indexes each back a named query with equality columns leading and the range/sort column trailing:
+
+| Index | Serves |
+| --- | --- |
+| `(storeId, snapshotDate)` | latest-date probe + that store's day of rows |
+| `(snapshotDate, storeId)` | regional value rollup |
+| `(snapshotDate, isLowStock, storeId)` | region-wide low-stock list |
+
+Plus `(storeId, productId, adjustedAt)` on adjustments, which returns page 3 in order with no filesort, and `Store(region)`.
+
+Three shape decisions matter as much as the indexes: the latest snapshot date is a single indexed probe rather than a `max()` over the store's whole history; region filters resolve to store ids first so the fact-table read stays an indexed `storeId IN (...)` instead of a join the planner may drive from the wrong side; and the regional summary aggregates via `groupBy` in the database rather than pulling a region-day of rows into the process. List queries take `take`/`skip` (default 100, max 1000) — for deep paging you'll want cursor pagination instead.
+
+Two things worth flagging. **Prisma 7.9** installed rather than v6, so the setup uses `prisma.config.ts` plus the better-sqlite3 driver adapter; the schema has no `url` (v7 rejects it). And I modeled `adjustedBy` as a relation to a `User` table since page 3 returns who made each adjustment — the brief didn't specify whether adjusters are real accounts, so swap it for a scalar name column if not.
+
+Money fields are `Float`; if exact decimal arithmetic matters for `inventoryValue`, store integer cents before this reaches real data.

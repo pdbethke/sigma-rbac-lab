@@ -1,0 +1,23 @@
+Done. TypeScript + Prisma 7 + SQLite project, migrated and verified end to end.
+
+**Files**
+- `prisma/schema.prisma` — all 8 models
+- `prisma.config.ts` — Prisma 7 config (v7 dropped `datasource.url` in the schema; connection now lives here with the `better-sqlite3` driver adapter)
+- `src/client.ts` — shared `PrismaClient` with the adapter
+- `src/queries.ts` — one exported function per page
+- `src/seed.ts`, `src/smoke.ts` — sample data and a runner that exercises all four
+- `prisma/migrations/20260802145500_init/` — applied
+
+**The four functions** in `src/queries.ts:1`:
+1. `getStoreCurrentInventory(storeKey)` — resolves that store's latest snapshot date, returns product name, brand, family, units on hand.
+2. `getLowStockByRegion(region, snapshotDate?)` — low-stock rows across the region; defaults to the region's latest snapshot.
+3. `getProductAdjustmentHistory(storeKey, skuNumber)` — newest first, with `adjustedBy`.
+4. `getRegionalInventoryValue(region, snapshotDate)` — `groupBy` sum of `inventoryValue` per store, joined back to store names; stores with no rows come back as 0 rather than vanishing.
+
+**Verified:** `npx tsc --noEmit` clean, and `npm run smoke` returned rows for all four pages (output above).
+
+Two notes on judgment calls I made:
+- The spec said "latest snapshot date" for page 1 but not for pages 2 and 4. I made page 4 take an explicit date (a regional summary is usually run *for* a date) and page 2 take an optional one defaulting to latest.
+- `InventoryDaily` has a `@@unique([snapshotDate, storeId, productId])` — that's what "one row per snapshot date, store and product" implies, and it gives the lookup index for page 1 for free.
+
+One thing worth flagging: the seed writes `isLowStock` as a stored boolean alongside `reorderPoint`, so the two can drift. Page 2 filters on the flag. If you'd rather have it be `unitsOnHand < reorderPoint` computed at query time, that's a small change to `getLowStockByRegion` — say the word.

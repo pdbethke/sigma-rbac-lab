@@ -58,22 +58,46 @@ export function grade(indexes: ParsedIndex[]): Grade {
   };
 }
 
-/** Ask Prisma itself for the DDL, so the index list is not inferred from source. */
+/**
+ * Ask Prisma itself for the DDL, so the index list is not inferred from source.
+ *
+ * Two deviations from the brief's sketch, both confirmed against the trial data:
+ *
+ * 1. The brief's `execFileSync` call had no `cwd`, so `npx prisma` resolved this repo's
+ *    own root-level Prisma 6.19.3 dev dependency and its `--to-schema-datamodel` schema
+ *    path was interpreted relative to the repo root, not the trial directory — every
+ *    trial came back ungradeable. Each trial installed its own `prisma` locally (some
+ *    picked up Prisma 7 as the latest release; see below), and several trials moved
+ *    their datasource config into a `prisma.config.ts` that Prisma only discovers via
+ *    the current working directory. Fix: run with `cwd: projectDir` and a schema path
+ *    relative to that `cwd`.
+ * 2. 8 of the 10 trial projects resolved `prisma` to 7.9.1 (latest at run time), which
+ *    renamed `--to-schema-datamodel` to `--to-schema` (the old flag now errors: "was
+ *    removed. Please use --[from/to]-schema instead"). The other 2 trials pinned Prisma
+ *    6.19.3 (matching the control run) and only accept the old flag name. Both flags
+ *    are tried in turn so a trial's own Prisma version does not itself decide
+ *    gradeability.
+ */
 export function extractDdl(projectDir: string): string {
-  const schema = [
+  const schemaAbs = [
     join(projectDir, "prisma", "schema.prisma"),
     join(projectDir, "schema.prisma"),
   ].find(existsSync);
-  if (!schema) return "";
-  try {
-    return execFileSync(
-      "npx",
-      ["prisma", "migrate", "diff", "--from-empty", "--to-schema-datamodel", schema, "--script"],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-    );
-  } catch {
-    return "";
+  if (!schemaAbs) return "";
+  const schemaRelative = schemaAbs.slice(projectDir.length + 1);
+  const flagsToTry = ["--to-schema", "--to-schema-datamodel"];
+  for (const flag of flagsToTry) {
+    try {
+      return execFileSync(
+        "npx",
+        ["prisma", "migrate", "diff", "--from-empty", flag, schemaRelative, "--script"],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], cwd: projectDir },
+      );
+    } catch {
+      // try the next flag name
+    }
   }
+  return "";
 }
 
 export interface TrialRow extends Grade {

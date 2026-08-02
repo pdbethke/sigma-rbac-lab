@@ -1,0 +1,32 @@
+Done. The project is in place and verified end-to-end.
+
+**Files**
+- `prisma/schema.prisma` — full data model, SQLite datasource
+- `src/queries.ts` — one exported function per page
+- `prisma/migrations/20260802151902_init/migration.sql` — generated, applied
+- `package.json`, `tsconfig.json`, `.env`, `.gitignore`
+
+**What drove the design.** At several years × daily × hundreds of stores, `InventoryDaily` is the only table where anything matters — everything else stays cache-resident. So each index on it is tied to a named query, and there are no speculative ones, since every extra index is write amplification on the nightly load.
+
+- `@@unique([snapshotDate, storeId, productId])` — enforces the grain, and its leading columns serve query 4's regional sum.
+- `@@index([storeId, snapshotDate, isLowStock])` — makes "latest snapshot date for store X" a single B-tree descent instead of an aggregate over that store's whole history, then a contiguous range read. `isLowStock` trails so query 2's filter resolves inside the index.
+- `@@index([productId, snapshotDate])` — product-first history.
+- `@@index([storeId, productId, adjustedAt])` on adjustments — query 3's filter is the leading two columns and its sort is the third, so ordering is free.
+
+Also added the FK indexes SQLite does not create on its own (`Product.productLineId`, `Product.brandId`, `Store.region`).
+
+**Query-layer choices.** Every list page is cursor-paged with a bounded limit — a single store on a single day is already thousands of rows, and query 2 across a region is larger. Query 1 pulls brand and line→family in one nested `select` rather than per row. Query 2 resolves the region to a store list once and maps names in memory, so no per-row join. Query 4 pushes the sum into a `groupBy` so one row per store crosses the wire, not the day's raw rows; stores with no rows on the date still appear, with zero — a store missing from the snapshot load is a signal worth surfacing.
+
+One caveat to flag: SQLite has no `DATE` type, so `snapshotDate` is a UTC-midnight `DateTime`. Writers must normalize or equality filters silently miss; `toSnapshotDate()` is exported and applied to every caller-supplied date.
+
+**Verification.** `prisma validate` passes, `tsc --noEmit` is clean, the migration applies. I seeded a small dataset, ran all four functions plus cursor paging and the empty-region path, and checked `EXPLAIN QUERY PLAN` on the hot paths — all five are index `SEARCH`es with no table scan and no temp B-tree for sorting:
+
+```
+Q1 latest-date :: SEARCH ... USING COVERING INDEX (storeId=?)
+Q1 rows        :: SEARCH ... USING INDEX (snapshotDate=? AND storeId=?)
+Q2 low stock   :: SEARCH ... USING INDEX (storeId=? AND snapshotDate=? AND isLowStock=?)
+Q3 history     :: SEARCH ... USING INDEX (storeId=? AND productId=?)
+Q4 groupBy     :: SEARCH ... USING INDEX (snapshotDate=? AND storeId=?)
+```
+
+The seed/plan harness was temporary and has been removed, so the source tree is just the schema and `queries.ts`. If you want it kept as a committed check, say so and I'll restore it as a proper test.

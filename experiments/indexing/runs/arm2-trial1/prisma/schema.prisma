@@ -1,0 +1,167 @@
+// Retail inventory for a chain of stores.
+//
+// Sizing assumption that drives the indexing below: several years of *daily*
+// snapshots for hundreds of stores. InventoryDaily is the only table that grows
+// with (days x stores x products) — it dominates everything else by orders of
+// magnitude, so every access path onto it is indexed deliberately.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Store {
+  id        Int     @id @default(autoincrement())
+  storeKey  String  @unique
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventoryDaily      InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  // Regional pages (queries 2 and 4) start by resolving a region to its stores.
+  @@index([region])
+}
+
+model ProductType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int    @id @default(autoincrement())
+  name          String
+  productTypeId Int
+
+  productType ProductType   @relation(fields: [productTypeId], references: [id])
+  lines       ProductLine[]
+
+  @@unique([productTypeId, name])
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int    @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products      Product[]
+
+  @@unique([productFamilyId, name])
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  products Product[]
+}
+
+model Product {
+  id            Int    @id @default(autoincrement())
+  sku           String @unique
+  name          String
+  productLineId Int
+  brandId       Int
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id])
+  brand       Brand       @relation(fields: [brandId], references: [id])
+
+  inventoryDaily       InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  // Both FKs are indexed: SQLite does not create indexes for foreign keys
+  // automatically, and every product listing joins back through these.
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model Adjuster {
+  id    Int    @id @default(autoincrement())
+  name  String
+  email String @unique
+
+  adjustments InventoryAdjustment[]
+}
+
+/// One row per (snapshotDate, store, product). The large table.
+model InventoryDaily {
+  id             Int      @id @default(autoincrement())
+  snapshotDate   DateTime
+  storeId        Int
+  productId      Int
+  costPerUnit    Decimal
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Int
+  inventoryValue Decimal
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Decimal
+  leadTimeDays   Int
+  merchantId     Int
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Natural key. Also the access path for "this store, this day, everything on
+  // hand" (query 1) and for point lookups of a single product-day-store row.
+  @@unique([storeId, snapshotDate, productId], name: "store_date_product")
+
+  // Query 4 (regional value roll-up) and any all-stores-on-a-date report scan by
+  // date first, so it needs a date-leading index; the unique above is store-leading
+  // and cannot serve it without touching every store's slice.
+  @@index([snapshotDate, storeId])
+
+  // Query 2: low-stock rows for a set of stores on the latest date. isLowStock is
+  // low-cardinality on its own, so it trails the selective columns rather than
+  // leading. This index is what keeps the regional low-stock page from degenerating
+  // into a scan of the store's whole history.
+  @@index([storeId, snapshotDate, isLowStock])
+
+  // Product-centric views ("where is SKU X held?") and the FK itself.
+  @@index([productId, snapshotDate])
+
+  @@index([merchantId])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjusterId   Int
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String   @unique
+
+  store    Store    @relation(fields: [storeId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+  adjuster Adjuster @relation(fields: [adjusterId], references: [id])
+
+  // Query 3 reads one product's history at one store, newest first — this index
+  // serves the filter and the sort together.
+  @@index([storeId, productId, adjustedAt])
+  @@index([productId, adjustedAt])
+  @@index([adjusterId])
+}

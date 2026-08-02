@@ -1,0 +1,159 @@
+// Retail inventory for a chain of stores.
+//
+// Scale note: InventoryDaily is the hot table — one row per (snapshot date, store,
+// product) for several years of daily snapshots across hundreds of stores. It grows
+// into the hundreds of millions of rows, so every index below is chosen to serve a
+// specific query in src/queries.ts, with the equality columns first and the range /
+// sort column last.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7: the connection URL lives in prisma.config.ts, and the client is
+// constructed with a driver adapter (see src/queries.ts).
+datasource db {
+  provider = "sqlite"
+}
+
+model Store {
+  id        Int    @id @default(autoincrement())
+  storeKey  String @unique
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventoryDaily InventoryDaily[]
+  adjustments    InventoryAdjustment[]
+
+  // Query 2 and 4 both start by resolving a region to its stores.
+  @@index([region])
+}
+
+model ProductType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int    @id @default(autoincrement())
+  name          String
+  productTypeId Int
+
+  productType ProductType   @relation(fields: [productTypeId], references: [id])
+  lines       ProductLine[]
+
+  @@unique([productTypeId, name])
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int    @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products      Product[]
+
+  @@unique([productFamilyId, name])
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id        Int    @id @default(autoincrement())
+  brandName String @unique
+
+  products Product[]
+}
+
+model Product {
+  id            Int    @id @default(autoincrement())
+  skuNumber     String @unique
+  productName   String
+  productLineId Int
+  brandId       Int
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id])
+  brand       Brand       @relation(fields: [brandId], references: [id])
+
+  inventoryDaily InventoryDaily[]
+  adjustments    InventoryAdjustment[]
+
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id             Int      @id @default(autoincrement())
+  snapshotDate   DateTime
+  storeId        Int
+  productId      Int
+  costPerUnit    Float
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Float
+  inventoryValue Float
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Float
+  leadTimeDays   Int
+  merchantId     String
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // One snapshot row per store/product/day. Doubles as the driving index for
+  // query 1: find the latest snapshotDate for a store, then read that day's rows.
+  @@unique([storeId, productId, snapshotDate])
+  @@index([storeId, snapshotDate])
+
+  // Query 4: total inventory value per store for one snapshot date, scoped to a
+  // region's stores. Date first because it is the single most selective filter —
+  // one day out of several years.
+  @@index([snapshotDate, storeId])
+
+  // Query 2: low stock at any store in a region on the latest snapshot. isLowStock
+  // is trailing so the index still serves the store+date prefix, and the flagged
+  // rows are a small slice of each day.
+  @@index([snapshotDate, isLowStock, storeId])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjustedById Int
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String   @unique
+
+  store      Store   @relation(fields: [storeId], references: [id])
+  product    Product @relation(fields: [productId], references: [id])
+  adjustedBy User    @relation(fields: [adjustedById], references: [id])
+
+  // Query 3: one product's adjustment history at one store, newest first.
+  @@index([storeId, productId, adjustedAt])
+  @@index([adjustedById])
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  fullName String
+  email    String @unique
+
+  adjustments InventoryAdjustment[]
+}

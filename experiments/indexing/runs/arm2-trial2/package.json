@@ -1,0 +1,30 @@
+{
+  "name": "arm2-trial2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/queries.js",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "seed": "tsx src/seed.ts",
+    "smoke": "tsx src/smoke.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "prisma": "^7.9.1",
+    "tsx": "^4.23.4",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "dotenv": "^17.4.2"
+  },
+  "type": "module"
+}

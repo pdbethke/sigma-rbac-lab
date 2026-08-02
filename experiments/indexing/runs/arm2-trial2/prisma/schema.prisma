@@ -1,0 +1,164 @@
+// Retail inventory for a chain of stores.
+//
+// Sizing note: InventoryDaily is the only table that grows with time. At
+// several years of daily snapshots x hundreds of stores x the SKUs each store
+// carries, it lands in the hundreds of millions of rows. Every index on it is
+// chosen to serve a specific page in src/queries.ts; every index on it also
+// costs write throughput on the nightly snapshot load, so there are no
+// speculative ones.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Store {
+  id        Int      @id @default(autoincrement())
+  storeKey  String   @unique
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventoryDaily       InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  // Page 2 (low stock across a region) and page 4 (regional summary) both
+  // start by resolving a region to its stores. Hundreds of stores is small,
+  // but this keeps that step off a table scan and returns the ids in one hop.
+  @@index([region])
+}
+
+model ProductType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int    @id @default(autoincrement())
+  name          String
+  productTypeId Int
+
+  productType ProductType   @relation(fields: [productTypeId], references: [id])
+  lines       ProductLine[]
+
+  @@unique([productTypeId, name])
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int    @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products      Product[]
+
+  @@unique([productFamilyId, name])
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id        Int    @id @default(autoincrement())
+  brandName String @unique
+
+  products Product[]
+}
+
+model Product {
+  id            Int    @id @default(autoincrement())
+  sku           String @unique
+  name          String
+  productLineId Int
+  brandId       Int
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id])
+  brand       Brand       @relation(fields: [brandId], references: [id])
+
+  inventoryDaily       InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  // Foreign keys are not indexed automatically on SQLite. Both of these are
+  // walked when the inventory pages hydrate product metadata for a page of
+  // snapshot rows, and both are needed for referential-integrity checks on
+  // delete of a line or brand.
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id             Int      @id @default(autoincrement())
+  snapshotDate   DateTime
+  storeId        Int
+  productId      Int
+  costPerUnit    Decimal
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Int
+  inventoryValue Decimal
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Decimal
+  leadTimeDays   Int
+  merchantId     Int
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // The grain of the table, and the guard against a re-run of the nightly load
+  // double-inserting a day. Its leading (snapshotDate, storeId) prefix is also
+  // exactly what page 4 scans: one date, the stores of one region.
+  @@unique([snapshotDate, storeId, productId])
+
+  // Page 1 (one store's current inventory) and page 2 (low stock in a region)
+  // both drill in by store, then date. isLowStock rides along as the third
+  // column so page 2's filter is satisfied inside the index rather than by
+  // fetching and discarding rows; page 1 still uses the (storeId, snapshotDate)
+  // prefix. Resolving "the latest snapshot date for this store" is a backwards
+  // scan of one row on this same index.
+  @@index([storeId, snapshotDate, isLowStock])
+
+  // Page 1 hydrates product metadata by id, so no product-led index is needed
+  // for reads. This one exists for the maintenance direction — deleting or
+  // repointing a product has to find its snapshot rows, and without it that is
+  // a full scan of the largest table in the database.
+  @@index([productId])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjustedBy   String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String   @unique
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Page 3 is exactly this shape: one store, one product, newest first. All
+  // three columns are in the index, so the ordering is free.
+  @@index([storeId, productId, adjustedAt])
+
+  // Adjustments for one product across the chain — not a page yet, but it is
+  // the FK-maintenance path, same argument as InventoryDaily.productId.
+  @@index([productId])
+}
