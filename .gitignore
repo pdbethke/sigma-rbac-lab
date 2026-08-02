@@ -4,3 +4,4 @@ __pycache__/
 .DS_Store
 oracle/rbac.db
 data/inventory/
+.claude/worktrees/
