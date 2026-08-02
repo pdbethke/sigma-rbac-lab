@@ -1830,3 +1830,51 @@ The interesting shape is not a total; it is whether the index set stops being re
 One domain, one baseline project, one model unless extended. And note the obvious limit: a fresh session with the repository available is not the same as a compacted session that has partial context — arm B is the harsher case.
 
 **If drift does not appear, report that too.** It would mean the fundamentals survive accumulation better than practitioners expect, which contradicts widely held belief and is worth more than a confirmation.
+
+---
+
+### Task 16: The imitation control — does it reason, or copy?
+
+Added 2026-08-02, directly from Task 15's result. Task 15 falsified the pre-registered hypothesis: 24 of 24 increments got a schema-appropriate index, arm A and arm B indistinguishable. But its baseline carried **13-14 existing `@@index` declarations**, and the one partial was reasoned aloud by analogy to a neighbouring index (`@@index([isStockout])` beside the existing `@@index([isLowStock])`).
+
+So Task 15 cannot distinguish two very different behaviours:
+
+    reasoning    the model derives the access pattern from the query and indexes for it
+    imitation    the model sees a schema full of @@index lines and continues the pattern
+
+**These predict identically when a convention is present and oppositely when it is absent** — which is the situation in most inherited codebases, and is where practitioners report finding N+1s and missing indexes.
+
+**Design: the same experiment with exactly one variable changed.** Baseline is the *identical* project Task 15 used, `runs-crossmodel/claude/arm1-trial5`, with only the `@@index` lines mechanically deleted. Same generator, same code style, same queries, same model performing the increments, same four increment prompts, same pre-registered `EXPECTED.md`, same two arms, same 3 trials each.
+
+Do **not** substitute a different project (a Gemini zero-index trial, say) — that would confound generator and code style with the variable under test.
+
+- [ ] **Step 1: Build the stripped baseline, mechanically and reversibly**
+
+Copy the Task 15 baseline, delete only lines matching `@@index(...)`, and change nothing else. Keep every `@id`, `@@id`, `@unique` and `@@unique` — those are correctness constraints, not performance decisions, and removing them would alter behaviour rather than convention.
+
+Verify: `prisma migrate diff` on the stripped schema emits **zero** `CREATE INDEX`, and a `diff` against the original shows only deleted `@@index` lines. Commit the stripped baseline and that diff before running anything.
+
+- [ ] **Step 2: Reuse the pre-registered expectations unchanged**
+
+`experiments/drift/EXPECTED.md` already states the expected index for all four increments and is committed at `63cdf40`, before any data existed. Do not rewrite it.
+
+One addition, recorded before running: the stripped baseline also lacks indexes for the **four original queries** the project already serves. Whether a session restores any of those, unprompted, while adding a new feature is a second signal — record it, but grade it separately from the four increments so it cannot inflate the primary result.
+
+- [ ] **Step 3: Run identically to Task 15**
+
+Four increments, alternating class, 3 trials per arm, serial, interleaved, arm A one continuous session and arm B fresh per increment. 24 sessions.
+
+- [ ] **Step 4: Compare against Task 15 directly**
+
+The comparison is the whole point. Same table, side by side:
+
+    Task 15  well-indexed baseline    24/24 correct-or-partial
+    Task 16  stripped baseline        ?
+
+**If the results match, imitation is ruled out** and Task 15's falsification stands as evidence the model reasons about access patterns. **If Task 16 degrades, what Task 15 measured was convention-following** — and the hypothesis survives in a sharper and more useful form: *it indexes when there is an index to copy*, which fails precisely in the inherited codebases where it matters.
+
+Either outcome is publishable and neither is the one to hope for.
+
+- [ ] **Step 5: State the limits**
+
+Still one domain, one baseline lineage, one model, four increments. And note the asymmetry: a stripped schema is not the same as a schema that never had indexes — the column choices, relations and naming still reflect a project that was designed with them.
