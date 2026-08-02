@@ -1,0 +1,13 @@
+Typecheck passes.
+
+## Done
+
+**Schema (`prisma/schema.prisma`):** No change needed — `InventoryDaily` already has `snapshotDate`, `costPerUnit`, and `productId`.
+
+**Query (`src/queries.ts`):** Added `getProductCostTrend(productId)` returning `ProductCostTrendRow[]`, following the `groupBy` pattern:
+
+- Groups this product's `InventoryDaily` rows by `snapshotDate`, taking `_avg` of `costPerUnit` to combine across every store carrying it.
+- `orderBy: { snapshotDate: "asc" }` — earliest to latest, done in the query since it groups on the sort key directly (no JS re-sort needed).
+- Returns one row per date: `snapshotDate` and `avgCostPerUnit`.
+
+The interpretive call — "combined" = simple mean across stores — is flagged above. If merchandising wants a **units-weighted** average (each store's cost weighted by units on hand, which better reflects blended cost of what's actually stocked), that's not expressible in a single Prisma `groupBy`; I'd fetch the per-store rows and compute `Σ(cost·units)/Σ(units)` per date in JS. Say the word and I'll switch it.

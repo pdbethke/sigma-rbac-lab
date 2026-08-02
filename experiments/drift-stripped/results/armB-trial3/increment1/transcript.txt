@@ -1,0 +1,14 @@
+Typechecks clean.
+
+## Summary
+
+**`prisma/schema.prisma` — no change needed.** The existing `InventoryAdjustment` model already holds every field this page requires (`adjustedBy`, `productId`, `storeId`, `unitsDelta`, `reason`, plus `adjustedAt` to scope by month), with relations to `Store` and `Product` for their names. I didn't add columns just to touch the file.
+
+**`src/queries.ts` — added `getLargestAdjustmentsThisMonth()`** (`src/queries.ts:174`), built the same way as the existing pages:
+- Filters `InventoryAdjustment` to the current calendar month via an `adjustedAt` range (`gte` month start, `lt` next month start).
+- Pulls the store name and product name through nested `select`s.
+- Returns the top ten via a `LargestAdjustmentRow[]` interface with `adjustedBy`, `productName`, `storeName`, `unitsDelta`, and `reason`.
+
+**One judgment call worth flagging:** I ranked by the *absolute* size of `unitsDelta`, so a large downward correction (e.g. −480 for shrinkage) counts as a "large adjustment" alongside big increases. If the manager actually only wants the largest *increases*, that's a one-line change (drop the `Math.abs`). Let me know which they mean.
+
+One note on the pattern: like the existing `getRegionalSummary`, the ranking happens in JS after the fetch (SQLite/Prisma can't `ORDER BY abs(...)` through the query API), so the whole month's adjustments are loaded before slicing to ten — fine at this scale, worth revisiting if a store ever logs tens of thousands of adjustments a month.

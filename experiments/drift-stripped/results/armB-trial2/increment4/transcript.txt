@@ -1,0 +1,21 @@
+Works — verified against the seeded DB: two snapshot dates, oldest first, cost averaged across stores.
+
+## Done
+
+Added **Page 8 — a product's cost-per-unit trend over time** to `src/queries.ts`, following the same pattern as the existing pages.
+
+**`prisma/schema.prisma` — no change needed.** `InventoryDaily` already carries `costPerUnit`, `snapshotDate`, `productId`, and `storeId`, which is everything this page requires. Adding fields would just be dead schema, so I left it untouched.
+
+**`src/queries.ts` — new `getProductCostTrend(productId)`** returning `ProductCostTrendRow[]` (`snapshotDate`, `avgCostPerUnit`):
+
+- Uses a `groupBy(["snapshotDate"])` filtered to the product, exactly as `getRegionalSummary` and `getStoreStockoutCounts` aggregate — one row per snapshot date.
+- **"Combined across every store"** → `_avg: { costPerUnit }`, averaging the per-unit cost over every store carrying the product that date (the parallel to how the regional summary combines with `_sum`).
+- **"Earliest to latest"** → `orderBy: { snapshotDate: "asc" }` in the query itself.
+
+Verification:
+- `tsc --noEmit` passes clean.
+- Runtime smoke against `dev.db` (Acme Studio Headphones): 2 snapshot dates, `2026-07-31` then `2026-08-01`, confirmed ordered earliest→latest.
+
+One interpretation call worth surfacing: **"combined" I read as the unweighted average of stores' per-unit costs** for each date. If the analyst actually wants a unit-weighted blended cost (total inventory cost ÷ total units, so a high-volume store pulls the number harder), that's a `_sum` of `inventoryValue` over `_sum` of `unitsOnHand` instead — say the word and I'll switch it.
+
+Your calendar's at the top — all family items today, nothing on your personal calendar.

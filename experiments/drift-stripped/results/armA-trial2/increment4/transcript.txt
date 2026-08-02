@@ -1,0 +1,11 @@
+Typechecks clean (exit 0).
+
+## Done
+
+**`src/queries.ts`** — added `getProductCostTrend(productId)` and its `ProductCostTrendRow` type as "Page 8", using the same `groupBy` approach as Page 4:
+- Groups the product's `InventoryDaily` rows by `snapshotDate`, taking `_avg` of `costPerUnit` to combine across every store carrying it.
+- Ordered `snapshotDate` ascending — earliest to latest, as requested.
+
+**`prisma/schema.prisma`** — no change needed; `costPerUnit` and `snapshotDate` already exist on `InventoryDaily`.
+
+The interpretation note stands: "combined across every store" is done as an **unweighted average** of each store's `costPerUnit` per date. That's the direct reading of the request. If merchandising actually wants a **units-weighted** blended cost (so a store holding 10,000 units influences the combined cost more than one holding 5), that's a different figure — computable from `costPerUnit × unitsOnHand` summed over `unitsOnHand`, but it needs the raw rows rather than a `groupBy _avg`. Say the word and I'll switch it.

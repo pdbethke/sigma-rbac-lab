@@ -1,0 +1,14 @@
+Typechecks clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — no change needed; `InventoryDaily` already has `isStockout`, `snapshotDate`, and the `store` relation.
+
+**`src/queries.ts`** — added `getStoreStockoutCounts(snapshotDate)` with its `StoreStockoutCountRow` interface, following the Page 4 `groupBy` + name-resolve pattern.
+
+The query:
+- Groups `InventoryDaily` by `storeId` where `isStockout` is true on the chosen date, producing the out-of-stock count per store.
+- Separately enumerates every store present in that snapshot, so a store with **zero** stockouts still gets a row (count `0`) rather than dropping out — that's the "every store" reading.
+- Resolves store names and returns `storeId`, `storeName`, `outOfStockCount`, one row per store, sorted by store name (same convention as `getRegionalSummary`).
+
+One judgment call worth surfacing: "every store" here means every store with inventory in that day's snapshot. If the director instead wants every store in the chain — including ones with no data at all that date — I'd swap the second query for a plain `prisma.store.findMany()`. Let me know which they intend.

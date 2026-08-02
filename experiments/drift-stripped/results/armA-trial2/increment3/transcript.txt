@@ -1,0 +1,12 @@
+Typechecks clean (exit 0).
+
+## Done
+
+**`src/queries.ts`** — added `getStoreStockoutCounts(snapshotDate)` and its `StoreStockoutCountRow` type as "Page 7", built in the Page 4 (`getRegionalSummary`) style:
+- One `groupBy` establishes the universe — every store with inventory rows on the chosen `snapshotDate`.
+- A second `groupBy` (filtered to `isStockout: true`) counts stockouts per store; stores absent from that result default to **0**.
+- Store names resolved via a `store.findMany` lookup, then one row per store, sorted by name.
+
+**`prisma/schema.prisma`** — no change needed; `InventoryDaily.isStockout` and the `snapshotDate`/`storeId` fields already carry everything this page reads.
+
+One note carried over from the design point above: this reports on stores **present in the snapshot for that date**. A store that reported and was fully stocked shows `0`; a store that submitted no snapshot that day simply doesn't appear (rather than showing a misleading `0`). If the director would rather see every store in the chain regardless of whether it reported — with non-reporting stores flagged distinctly from genuine zeros — that's a small change, but I'd want to represent "didn't report" as something other than `0` so the two cases stay distinguishable.

@@ -1,0 +1,13 @@
+Typecheck passes cleanly.
+
+## Done
+
+**Schema (`prisma/schema.prisma`):** No change needed. The existing `InventoryAdjustment` model already carries everything the page requires — `adjustedBy` (who), `unitsDelta` (amount the count changed by), `reason` (reason given), `adjustedAt` (to scope to this month), plus relations to `Store` and `Product` (the store and product). I intentionally didn't invent a schema change where none was warranted.
+
+**Query (`src/queries.ts`):** Added `getLargestAdjustmentsThisMonth()` returning `LargestAdjustmentRow[]`, following the same shape as the existing pages (documented interface + async function, Prisma `findMany` with a nested `select`, JS post-processing like `getRegionalSummary` uses). It:
+
+- Scopes to the current calendar month via a `[monthStart, nextMonthStart)` range on `adjustedAt`.
+- Ranks by **magnitude** of change (`|unitsDelta|`) so a large write-down and a large write-up both count as big adjustments — the interpretation that matches "largest adjustments" for someone auditing big swings. This is done in JS because SQLite can't `orderBy` an absolute value through Prisma. Ties break by most recent.
+- Takes the top 10 and returns `adjustedBy`, `productName`, `storeName`, `unitsDelta`, `reason`.
+
+One judgment call worth flagging: I read "ten largest" as largest by *magnitude* (either direction). If the manager actually means only the biggest *increases* (positive deltas), that's a one-line change — drop the `Math.abs` and filter to `unitsDelta > 0`. Say the word and I'll adjust.

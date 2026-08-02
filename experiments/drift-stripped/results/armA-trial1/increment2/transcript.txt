@@ -1,0 +1,12 @@
+Typecheck passes.
+
+## Done
+
+**Schema (`prisma/schema.prisma`):** No change needed — `InventoryAdjustment` already holds `adjustedBy`, `adjustedAt`, `unitsDelta`, `reason` and the `Store`/`Product` relations.
+
+**Query (`src/queries.ts`):** Added `getAdjustmentsByPerson(adjustedBy, from, to)` returning `PersonAdjustmentRow[]`, in the same style as the existing pages:
+
+- Filters on `adjustedBy` (the person) and an `adjustedAt` range (`gte: from`, `lte: to`) — inclusive of both endpoints, spanning every store and product.
+- Returns `storeName`, `productName`, `unitsDelta` (the amount the count changed by), `reason`, and `adjustedAt` (when it happened), most recent first — matching how `getProductAdjustmentHistory` orders its results.
+
+One thing worth flagging: the match on `adjustedBy` is exact. `adjustedBy` is a free-text string on the model, so this assumes the analyst passes the name exactly as stored. If names in the data aren't clean/canonical (e.g. "J. Smith" vs "John Smith"), that's a data-quality question rather than a query one — let me know if you'd want fuzzy/case-insensitive matching instead and I can adjust.

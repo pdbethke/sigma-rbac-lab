@@ -1,0 +1,14 @@
+Typechecks clean (exit 0).
+
+## Done
+
+**Schema (`prisma/schema.prisma`):** no change needed — `InventoryDaily` already carries `snapshotDate` and the `isStockout` boolean, which is everything the page requires.
+
+**`src/queries.ts`:** added `getStoreStockoutCounts(snapshotDate)` returning `StoreStockoutCountRow[]` — one row per store with `storeId`, `storeName`, and `stockoutCount`, sorted by store name. It follows the same idiom as the existing `getRegionalSummary` (Page 4): `groupBy` on `storeId`, then resolve names through a `Map`.
+
+How it works:
+1. `groupBy` on `storeId` where `snapshotDate` matches → the universe of stores present in that snapshot (so zero-stockout stores still appear).
+2. A second filtered `groupBy` (`isStockout: true`) with `_count` → stockouts per store.
+3. Overlay counts onto the universe (defaulting to `0`), attach names, sort by name.
+
+The one interpretive call: a store that *has* a snapshot that date but no stockouts shows with count `0`; a store with no data that date isn't invented. If the director actually wants only stores that had at least one stockout (dropping the zeros), that's a one-line change — collapse to a single filtered `groupBy` — just say the word.

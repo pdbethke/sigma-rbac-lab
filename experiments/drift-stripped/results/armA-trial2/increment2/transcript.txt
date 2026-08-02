@@ -1,0 +1,14 @@
+Typechecks clean (exit 0).
+
+## Done
+
+**`src/queries.ts`** — added `getPersonAdjustments(adjustedBy, from, to)` and its `PersonAdjustmentRow` type as "Page 6", in the same style as the existing pages:
+- Filters `InventoryAdjustment` by `adjustedBy` and `adjustedAt` within `[from, to]` (inclusive on both ends), with no store or product restriction — so it spans the whole chain.
+- Pulls store name and product name through the existing relations, and returns `unitsDelta`, `reason`, and `adjustedAt` directly.
+- Ordered most-recent-first, mirroring Page 3's `getProductAdjustmentHistory`.
+
+**`prisma/schema.prisma`** — no change needed; `InventoryAdjustment` already carries every field and relation this page requires.
+
+Two small notes:
+- The date range is **inclusive** at both ends (`gte`/`lte`). If the analyst passes a bare date like `2026-08-01` as `to`, that resolves to midnight, so adjustments later that day would fall outside — pass an exclusive next-day boundary (or end-of-day) if you want a full trailing day included.
+- Matching on `adjustedBy` is an **exact string match** on the stored name, consistent with how `adjustedBy` is treated elsewhere in the file. If names aren't guaranteed unique or consistently formatted, that's a data-quality caveat worth knowing for a loss-prevention use case — but it's out of scope for this schema as built.

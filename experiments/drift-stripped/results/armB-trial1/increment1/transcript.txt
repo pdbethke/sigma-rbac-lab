@@ -1,0 +1,12 @@
+Type-checks clean. Done.
+
+## Summary
+
+**No schema change was needed.** The existing `InventoryAdjustment` model in `prisma/schema.prisma` already carries every field the page requires — `adjustedBy` (who), `adjustedAt` (for the month filter), `unitsDelta` (amount changed by), `reason`, plus `store` and `product` relations for their names. I checked each column against the spec and confirmed the model is complete, so adding fields would have been noise.
+
+**`src/queries.ts`** — added `getLargestAdjustmentsThisMonth(monthStart, monthEnd)` and its `LargestAdjustmentRow` interface, in the same shape as the four existing page queries (exported interface, `select` projection, flat row mapping):
+
+- Filters `adjustedAt` to the month with a `gte`/`lt` range (caller passes the boundaries, matching how the other functions take their scope as parameters rather than computing "now" internally).
+- Returns `adjustedBy`, `productName`, `storeName`, `unitsDelta`, `reason`.
+
+**One judgment call worth flagging:** "ten largest" I read as largest *by magnitude* — a −500 shrink correction is a bigger adjustment than a +5 restock. Prisma over SQLite can't `orderBy abs(unitsDelta)`, so the query pulls the month's rows and sorts by `Math.abs()` in code before taking 10 (comment explains why). If the manager actually means only the largest *increases*, that'd be a `orderBy: { unitsDelta: "desc" }, take: 10` at the DB instead — easy to switch if that's the intent.

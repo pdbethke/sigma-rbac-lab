@@ -1,0 +1,14 @@
+Typechecks clean (exit 0) against the generated Prisma client.
+
+## Done
+
+Added **`getPersonAdjustments(person, rangeStart, rangeEnd)`** to `src/queries.ts` (Page 6), returning each matching adjustment's store, product, `unitsDelta`, `reason`, and `adjustedAt`, most recent first.
+
+**No `prisma/schema.prisma` change was needed** — I want to flag that explicitly since the task invited one. The `InventoryAdjustment` model already has everything the page requires:
+- `adjustedBy` (person) and `adjustedAt` (timestamp) to filter by,
+- `unitsDelta` and `reason` to display,
+- `store` and `product` relations for the store/product names.
+
+Notes on how it matches the existing pages:
+- Built the same way as Page 3 (`getProductAdjustmentHistory`) and Page 5 (`getLargestAdjustments`), which read the same table — single `findMany`, `select` down to the needed fields, related-name lookups via nested `select`, `orderBy: { adjustedAt: "desc" }`.
+- The date window is **half-open `[rangeStart, rangeEnd)`**, consistent with Page 5's month range and the seed's `adjustedAt` convention. So to cover a full final day, pass `rangeEnd` as the day *after* the last day of interest. Say the word if the analyst would rather have an inclusive end date and I'll switch it to `lte`.

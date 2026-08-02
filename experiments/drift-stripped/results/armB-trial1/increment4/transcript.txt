@@ -1,0 +1,14 @@
+Typecheck passes clean. Done.
+
+## Summary
+
+**`prisma/schema.prisma`** — no change needed. `InventoryDaily` already stores `snapshotDate`, `storeId`, `productId`, and `costPerUnit` (one row per store/product/day), which is exactly what this page reads. Adding a model or column would be dead weight.
+
+**`src/queries.ts`** — added **Page 8: `getProductCostTrend(productId)`**, matching the style of the existing pages (same `groupBy` approach as `getRegionalSummary`):
+
+- Groups `InventoryDaily` by `snapshotDate`, filtered to the one product.
+- `_avg: { costPerUnit }` gives the cost per unit **combined across every store** carrying it that day (one row per date).
+- `orderBy: { snapshotDate: "asc" }` returns it **earliest → latest**.
+- Returns `ProductCostTrendRow[]` (`{ snapshotDate, avgCostPerUnit }`), with the same `?? 0` null-guard the neighboring aggregate queries use.
+
+One interpretation call worth flagging: "combined across every store" I read as the **average** cost per unit across stores on each date (the natural per-unit combination). If the analyst actually wants a different roll-up — e.g. a value-weighted average (total inventory value ÷ total units) or min/max spread across stores — that's a one-line change to the aggregate; say the word.

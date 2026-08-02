@@ -1,0 +1,13 @@
+Typecheck passes.
+
+## Done
+
+**Schema (`prisma/schema.prisma`):** No change needed — `InventoryDaily` already carries `snapshotDate`, `isStockout`, and the `Store` relation.
+
+**Query (`src/queries.ts`):** Added `getStoreStockoutCounts(snapshotDate)` returning `StoreStockoutCountRow[]`, built the same way as `getRegionalSummary` (groupBy, then resolve store names via a `findMany` + `Map`, sorted by store name):
+
+- First groupBy finds **every store that reported** on that date, so stores with no stockouts still get a row.
+- Second groupBy (`where: { snapshotDate, isStockout: true }`, `_count`) gives the out-of-stock product count per store.
+- Merged into one row per store — `storeId`, `storeName`, `stockoutCount` (defaulting to `0` for stores with no stockouts).
+
+The zero-count inclusion was the one interpretive call worth flagging, covered above. If the director instead wants only stores that actually had a stockout, drop the first groupBy and build straight off the stockout grouping — say the word.

@@ -1,0 +1,18 @@
+Works correctly against the seeded data — the August query returns the two August-dated adjustments ranked by magnitude (+5 before −3), and July returns only its one July-31 adjustment. Month filtering and magnitude sort both behave.
+
+## Summary
+
+**`prisma/schema.prisma` — no change needed.** The existing `InventoryAdjustment` model already carries every column this page requires (`adjustedBy`, `unitsDelta`, `reason`) plus the `store` and `product` relations for the names. Adding fields would have been gratuitous, so I left it alone.
+
+**`src/queries.ts` — added `getLargestAdjustments(monthOf: Date)`** and its `LargestAdjustmentRow` type, following the established patterns:
+- Returns exactly the five things the manager asked for: who made it (`adjustedBy`), product name, store name, the count change (`unitsDelta`), and the reason.
+- Filters to a half-open `[monthStart, nextMonthStart)` UTC range — matching how `getRegionalSummary` takes a date parameter rather than reading the clock, so it stays deterministic and testable.
+- Ranks by **magnitude** of the change and keeps the top ten, ties broken most-recent-first.
+
+Two design calls I made:
+1. **"Largest" = largest by magnitude** — a −40 write-off outranks a +5 correction, which is the operationally relevant reading. This is why the sort runs in JS (`Math.abs`): Prisma's `orderBy` can't sort on absolute value. This mirrors `getRegionalSummary`, which also sorts in JS after fetching.
+2. **Month passed as a parameter** rather than computed from `now()` — consistent with the codebase and keeps the query reproducible; the caller passes any instant within the target month.
+
+If you'd like, I can add a `Page 5` line to `src/smoke.ts` so it's exercised alongside the others, but I left that file untouched since the task scoped to schema + queries.
+
+One note: none of the existing pages add DB indexes (the schema uses only `@@unique`), so I stayed consistent and didn't add one. If adjustment volume grows large, an `@@index([adjustedAt])` on `InventoryAdjustment` would speed the month-range scan — say the word and I'll add it.

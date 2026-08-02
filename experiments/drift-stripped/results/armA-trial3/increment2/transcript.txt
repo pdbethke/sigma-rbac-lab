@@ -1,0 +1,13 @@
+Typechecks clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — no change needed; `InventoryAdjustment` already has `adjustedBy`, `adjustedAt`, `unitsDelta`, `reason`, and the `store`/`product` relations.
+
+**`src/queries.ts`** — added `getPersonAdjustments(adjustedBy, from, to)` with its `PersonAdjustmentRow` interface, matching the existing page pattern.
+
+The query:
+- Filters `adjustedBy` to the person and `adjustedAt` to the inclusive `[from, to]` window — no store or product restriction, so it spans the whole chain.
+- Returns store name, product name, the signed `unitsDelta`, the `reason`, and `adjustedAt`, ordered most-recent-first (same convention as the Page 3 adjustment history).
+
+One judgment call: `adjustedBy` is matched exactly (the field is a plain string, and that's how the schema stores the person). If the loss-prevention page should do case-insensitive or partial-name matching, say so and I'll switch the `where` to a `contains`/`mode` filter.

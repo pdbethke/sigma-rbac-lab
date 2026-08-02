@@ -1,0 +1,11 @@
+Typechecks clean.
+
+## What I added
+
+**`prisma/schema.prisma`** — no change needed; `InventoryDaily` already has `costPerUnit`, `snapshotDate`, and `productId`.
+
+**`src/queries.ts`** — added `getProductCostTrend(productId)` with its `ProductCostTrendRow` interface, following the Page 4 `groupBy` aggregate pattern.
+
+The query groups `InventoryDaily` by `snapshotDate` for the given product, averages `costPerUnit` across the stores carrying it on each date, and orders earliest → latest — returning one `{ snapshotDate, avgCostPerUnit }` row per date.
+
+One judgment call worth surfacing: "combined across every store" is implemented as an **unweighted mean** of each store's unit cost. If merchandising would rather weight by units on hand (a volume-weighted average cost, so big-stock stores count more), that's a different figure — I'd compute `sum(costPerUnit × unitsOnHand) / sum(unitsOnHand)` in JS instead. Say the word and I'll switch it.

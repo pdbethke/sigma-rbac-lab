@@ -1,0 +1,14 @@
+Done. Type-checks clean.
+
+## What I added
+
+**`prisma/schema.prisma` — no changes.** The existing `InventoryAdjustment` model already holds everything the page needs: `adjustedBy` (the person), `adjustedAt` (when), `unitsDelta` (amount the count changed), `reason`, and relations to `store` and `product`. It's the same table Pages 3 and 5 already read from, so there was nothing to add — and I didn't add filler.
+
+**`src/queries.ts` — one new query, `getPersonAdjustments`**, in the same shape as the existing pages:
+
+- Takes `adjustedBy` plus `rangeStart` / `rangeEnd`.
+- Filters `inventoryAdjustment` by that person and `adjustedAt` in the window, spanning every store and product (no store/product constraint).
+- Returns store name, product name, `unitsDelta`, `reason`, and `adjustedAt`, most recent first.
+- Exports a `PersonAdjustmentRow` interface, mirroring the other pages.
+
+One convention call worth flagging: I made the window **half-open `[rangeStart, rangeEnd)`** to match `getLargestAdjustmentsThisMonth` (which uses `gte`/`lt`). If your analyst thinks of the end date as inclusive (e.g. "through Aug 31"), the caller should pass `rangeEnd` as the start of the *next* day — same as the month query does. Say the word if you'd rather I make it inclusive (`lte`) instead.

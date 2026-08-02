@@ -1,0 +1,14 @@
+Typechecks clean (`tsc --noEmit`, exit 0).
+
+## Done
+
+**`src/queries.ts`** — added `getLargestAdjustmentsThisMonth()` and its `LargestAdjustmentRow` type as "Page 5", built the same way as the existing pages:
+- Filters `InventoryAdjustment` to the current calendar month via `adjustedAt` between `monthStart` and `nextMonthStart`.
+- Selects `adjustedBy` and `reason` directly, and pulls store name / product name through the existing `store` and `product` relations (same relation-select style as Page 1).
+- Ranks by `Math.abs(unitsDelta)` and takes the top 10 — the in-JS sort-then-slice mirrors Page 4's approach (Prisma/SQLite can't `orderBy` an absolute value).
+
+**`prisma/schema.prisma`** — no change needed. `InventoryAdjustment` already holds every field this page shows, and its `store`/`product` relations reach the store and product names.
+
+Two things to confirm:
+- **"Largest" = magnitude, both directions.** As noted above, a big shrink ranks alongside a big correction. Say the word if you want increases-only.
+- **"This month" = current calendar month**, computed at call time, so the page takes no arguments (unlike `getRegionalSummary`, which is handed a specific date). That fits a self-contained "this month" view — but if you'd rather the caller pass the month in (easier to test), I can switch it to a parameter.

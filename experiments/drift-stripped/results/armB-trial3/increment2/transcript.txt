@@ -1,0 +1,12 @@
+Type-checks clean. Done.
+
+## Summary
+
+**`prisma/schema.prisma` — no changes needed.** The `InventoryAdjustment` model already carries everything the page requires: `adjustedBy` (the person), `adjustedAt` (the timestamp and the range filter), `unitsDelta` (amount changed), `reason`, and relations to `Store` and `Product` for their names. Adding a column or model would be dead weight, and the existing adjustment pages (Page 3, Page 5) read this same model without any schema additions.
+
+**`src/queries.ts` — added Page 6, `getPersonAdjustments(adjustedBy, startDate, endDate)`**, built the same way as the neighbours:
+- Filters `inventoryAdjustment` by `adjustedBy` and an inclusive `adjustedAt` range (`gte`/`lte`).
+- Selects across all stores/products via the `store`/`product` relations — no store or product scoping.
+- Returns store name, product name, `unitsDelta`, `reason`, and `adjustedAt`, ordered most-recent-first (like Page 3's history).
+
+One choice worth flagging: the date range is **inclusive on both ends** and `adjustedBy` is an **exact string match** (consistent with how the other queries match `region`, `storeId`, etc.). If the analyst wants a half-open window (`< endDate`, the way Page 5 does its month bound) or fuzzy name matching, that's a one-line change — say the word.

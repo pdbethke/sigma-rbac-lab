@@ -1,0 +1,9 @@
+Typechecks clean.
+
+## Summary
+
+The data model already supported this, so I made no schema change — `InventoryDaily` already has `snapshotDate` and an `isStockout` boolean, with rows unique per `(snapshotDate, storeId, productId)`, so a stockout count per store on a date is just a count of those rows. Adding fields would have been redundant.
+
+I added one function to `src/queries.ts`, **`getStoreStockoutCounts(snapshotDate)`** (Page 7), returning `{ storeId, storeName, stockoutCount }[]`, one row per store, sorted by name. It follows the Page 4 (`getRegionalSummary`) pattern: `groupBy` store with `_count` over the stockout rows, then list **every** store and backfill zeros — so stores with no stockouts on the chosen date still appear, which is the coverage view a regional director wants.
+
+One thing worth flagging: the spec said "regional director" but described "every store" with no region filter, so I took the literal reading — the query spans the whole chain and takes only a date. If they actually want it scoped to their region, say the word and I'll add a `region` param (mirroring `getRegionLowStock` / `getRegionalSummary`).

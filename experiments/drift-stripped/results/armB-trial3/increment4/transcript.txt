@@ -1,0 +1,9 @@
+Done. Typecheck passes.
+
+**What I added** — `src/queries.ts` gains **Page 8 — `getProductCostOverTime(productId)`**, returning `{ snapshotDate, averageCostPerUnit }[]` ordered earliest → latest.
+
+**How it works:** it `groupBy` on `snapshotDate` filtered to the product, and averages `costPerUnit` across every store's row for that date (`_avg`) — that's the "combined across every store that carries it" step. This mirrors the aggregate pattern already used by the regional summary (page 4) and stockout counts (page 7), and uses `orderBy: { snapshotDate: "asc" }` for the earliest-to-latest ordering.
+
+**No schema change was needed:** `InventoryDaily` already holds `snapshotDate`, `productId`, `storeId`, and `costPerUnit`, which is everything this page reads. I left `prisma/schema.prisma` untouched rather than adding a redundant model.
+
+One design note worth surfacing: I interpreted "combined across every store" as an unweighted **average** of each store's recorded cost per unit on a given date. If the analyst instead wants a volume-weighted cost (weighting each store by `unitsOnHand` or `unitsReceived`), that's a small change to the mapping — say the word and I'll switch it.

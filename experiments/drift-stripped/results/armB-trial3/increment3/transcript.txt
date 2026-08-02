@@ -1,0 +1,7 @@
+Done. Type-checks clean (`tsc --noEmit` exits 0).
+
+**What I added** — a `getStoreStockoutCounts(snapshotDate)` query in `src/queries.ts` (Page 7), returning one row per store with `storeId`, `storeName`, and `stockoutCount`. It follows the exact idiom of the existing Page 4 regional summary: a `groupBy` over `storeId` for the snapshot date, then a name lookup, sorted by store name. The differences are filtering on `isStockout: true` (instead of a region) and using `_count` instead of `_sum`.
+
+**No `schema.prisma` change was needed.** Everything the page requires already exists on `InventoryDaily`: `snapshotDate`, `storeId`, and the `isStockout` boolean. Rather than add a gratuitous model, I built the page directly on those columns the way the other pages do.
+
+One behavioral note worth flagging for the regional director's page: like the existing summary page, this returns only stores that had *at least one* stockout on the date — a store with zero stockouts produces no row. If they'd prefer every store to appear with an explicit `0` on quiet days, that's a small follow-up (fetch all stores and left-merge the counts); say the word and I'll adjust.

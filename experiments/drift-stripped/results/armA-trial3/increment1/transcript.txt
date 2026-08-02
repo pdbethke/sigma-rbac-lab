@@ -1,0 +1,14 @@
+Typechecks clean. Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — no change needed. The existing `InventoryAdjustment` model already has every field the page requires: `adjustedBy`, the `product`/`store` relations, `unitsDelta`, `reason`, and `adjustedAt` for the month filter.
+
+**`src/queries.ts`** — added `getLargestAdjustmentsThisMonth()` plus its `LargestAdjustmentRow` interface, in the same shape as the other four pages (typed row interface + async function using `prisma.*.findMany` with nested relation `select`s, then a `.map()` to the flat row).
+
+The query:
+- Filters to the current calendar month via `[monthStart, nextMonthStart)` bounds computed from `new Date()`.
+- Ranks by **magnitude** of `unitsDelta` and takes the top 10 — because "largest adjustment" should treat a big downward recount the same as a big upward one, and Prisma's `orderBy` can't sort on `abs()`. This mirrors the in-JS sorting `getRegionalSummary` already does.
+- Returns who made it (`adjustedBy`), product name, store name, the signed amount the count changed by (`unitsDelta`), and the `reason`.
+
+One judgment call worth flagging: I read "largest" as largest by absolute magnitude and return the **signed** delta so the manager can see direction. If you'd rather rank only by the biggest *drops* (shrink/loss investigations) or biggest *increases*, that's a one-line change to the sort.

@@ -1,0 +1,3 @@
+N+1 scan: 2 candidate(s) in /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift-stripped/runs/armB-trial2/src
+  /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift-stripped/runs/armB-trial2/src/queries.ts:168  [unincluded-relation] Relation read on a record fetched without include or select. Each access may issue its own query.
+  /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/drift-stripped/runs/armB-trial2/src/queries.ts:312  [unincluded-relation] Relation read on a record fetched without include or select. Each access may issue its own query.
