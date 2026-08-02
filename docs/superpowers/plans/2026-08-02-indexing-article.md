@@ -1475,3 +1475,133 @@ Expected: all tests pass. Report the actual count.
 git add docs/posts/README.md docs/superpowers/specs/2026-08-02-indexing-article-design.md
 git commit -m "Record why the indexing piece is shaped the way it is"
 ```
+
+---
+
+### Task 12: Charts from the DuckDB metrics
+
+Added 2026-08-02 at the user's request. Two venues: static SVG uploaded into the LinkedIn article, and a self-contained HTML page for the Cloudflare demo.
+
+**Files:**
+- Modify: `package.json` (add `@observablehq/plot`, `jsdom`; add a `charts` script)
+- Create: `charts/shapeData.ts`
+- Create: `charts/shapeData.test.ts`
+- Create: `charts/renderCharts.ts`
+- Create: `charts/out/verdict-grid.svg`, `charts/out/index-count.svg` (generated, committed)
+- Create: `charts/out/charts.html` (generated, committed)
+
+**Interfaces:**
+- Consumes: `experiments/indexing/metrics.duckdb` from Task 4, and that task's DuckDB helper.
+- Produces: `verdictRows(trials): VerdictRow[]` and `countRows(trials): CountRow[]`, plus the rendered files.
+
+**The form is decided and is not a matter of taste.** `n` is 5 per arm. A bar chart of percentages would render "2 of 5" as "40%", which reads as a rate the sample cannot support. Both charts therefore plot **every individual trial**. Do not add an aggregate or summary chart, and do not compute percentages anywhere in the output.
+
+- **Verdict grid** — one row per trial (10 rows), two columns (`inventory_daily`, `adjustments`), each cell a status chip carrying an **icon and a text label**, not color alone.
+- **Index-count strip plot** — one dot per trial, `total_indexes` on one axis, faceted or colored by arm, with a reference line at the in-scope oracle target. One axis only; never a second y-scale.
+
+**Palette, already validated — use these values verbatim, do not substitute.**
+
+Status encoding for the verdict grid, three colors (validated 2026-08-02 with the dataviz validator, both modes):
+
+    match        good      #0ca30c
+    partial      warning   #fab219
+    wrong-order  warning   #fab219  + distinct texture and label
+    missing      critical  #d03b3b
+
+The four-status set was tested first and **failed**: reserved `serious` `#ec835a` sits at ΔE 13.6 from `warning` `#fab219` under normal vision, below the floor of 15 — two categories full-colour readers cannot reliably separate. Collapsing to three raises the worst adjacent pair to ΔE 27.6 and passes CVD separation in both modes. `#fab219` carries a contrast WARN on the light surface (1.79), which **obligates** the visible icon-plus-label on every chip and the table view below; that mitigation is not optional.
+
+Series palette for the strip plot (all checks pass, both modes):
+
+    arm 1   light #2a78d6   dark #3987e5
+    arm 2   light #eb6834   dark #d95926
+
+Surfaces: light `#fcfcfb`, dark `#1a1a19`. Dark mode is a selected set of steps, not an automatic inversion.
+
+- [ ] **Step 1: Add the dependencies**
+
+```bash
+npm install --save-dev @observablehq/plot jsdom
+```
+
+Add to scripts: `"charts": "node --experimental-strip-types charts/renderCharts.ts"`. If `--experimental-strip-types` was not the mechanism that worked in Task 4, use whichever one did — check the Task 4 report rather than assuming.
+
+- [ ] **Step 2: Write the failing tests for the data shaping**
+
+Rendering is verified by looking at it; the data shaping is verified by tests. Test `shapeData.ts` only.
+
+```typescript
+// charts/shapeData.test.ts
+import { describe, expect, it } from "vitest";
+import { countRows, verdictRows } from "./shapeData.ts";
+
+const TRIALS = [
+  { run: "arm1-trial1", arm: 1, trial: 1, gradeable: true, total_indexes: 2,
+    composite_count: 1, inventory_daily: "match", adjustments: "missing" },
+  { run: "arm2-trial1", arm: 2, trial: 1, gradeable: false, total_indexes: 0,
+    composite_count: 0, inventory_daily: "missing", adjustments: "missing" },
+];
+
+describe("verdictRows", () => {
+  it("emits one row per trial per target index", () => {
+    expect(verdictRows(TRIALS)).toHaveLength(4);
+  });
+
+  it("maps wrong-order to the warning status, not to serious", () => {
+    const rows = verdictRows([{ ...TRIALS[0], inventory_daily: "wrong-order" }]);
+    expect(rows.find((r) => r.target === "inventory_daily")?.status).toBe("warning");
+  });
+
+  it("gives every row a text label so colour is never the only channel", () => {
+    for (const row of verdictRows(TRIALS)) {
+      expect(row.label.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("marks ungradeable trials rather than dropping them", () => {
+    const rows = verdictRows(TRIALS).filter((r) => r.run === "arm2-trial1");
+    expect(rows.every((r) => r.gradeable === false)).toBe(true);
+  });
+});
+
+describe("countRows", () => {
+  it("keeps every trial, including ungradeable ones", () => {
+    expect(countRows(TRIALS)).toHaveLength(2);
+  });
+
+  it("computes no percentages", () => {
+    const serialized = JSON.stringify(countRows(TRIALS));
+    expect(serialized).not.toMatch(/percent|pct|rate/i);
+  });
+});
+```
+
+- [ ] **Step 3: Run the tests and watch them fail**
+
+Run: `npm test`. Expected: cannot resolve `./shapeData.ts`.
+
+- [ ] **Step 4: Implement `shapeData.ts`, then see the tests pass**
+
+Pure functions only — no DuckDB, no rendering, no file writes. `VerdictRow` carries `{ run, arm, trial, target, verdict, status, label, gradeable }`; `CountRow` carries `{ run, arm, trial, total_indexes, composite_count, gradeable }`.
+
+- [ ] **Step 5: Render, using the real metrics**
+
+`renderCharts.ts` reads `experiments/indexing/metrics.duckdb` through the Task 4 helper, shapes the rows, builds the two Plot figures, and renders them to SVG via jsdom (`document` supplied to Plot). Write both SVGs to `charts/out/`.
+
+An ungradeable trial is drawn, hatched and labeled — never silently omitted. If a run is missing from the database entirely, fail loudly rather than rendering a chart that quietly has fewer than ten rows.
+
+- [ ] **Step 6: Build the page**
+
+`charts/out/charts.html`: both SVGs inlined, a hover tooltip in hand-written JS (Plot is not shipped to the browser and no bundler is introduced), the light and dark surfaces above wired through `prefers-color-scheme` plus a `data-theme` override, and — below the charts — **a plain HTML table of the same numbers**. The table is the required relief for the contrast WARN, not a nicety.
+
+No external requests of any kind: no CDN, no web font, no remote image. The page must work opened from disk.
+
+- [ ] **Step 7: Look at it**
+
+The validator checks colour, not layout. Open the page and both SVGs and check for label collisions, clipped text, overflow, and that the dark surface actually applies. Fix what you see.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add package.json package-lock.json charts/
+git commit -m "Chart the trial metrics: every trial plotted, no aggregate rates"
+```
