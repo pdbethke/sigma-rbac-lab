@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Indexing experiment — chart data (Task 12)</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface: #fcfcfb;
+    --plane: #f9f9f7;
+    --ink-primary: #0b0b0b;
+    --ink-secondary: #52514e;
+    --ink-muted: #898781;
+    --border: rgba(11,11,11,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface: #1a1a19;
+      --plane: #0d0d0d;
+      --ink-primary: #ffffff;
+      --ink-secondary: #c3c2b7;
+      --ink-muted: #898781;
+      --border: rgba(255,255,255,0.10);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface: #1a1a19;
+    --plane: #0d0d0d;
+    --ink-primary: #ffffff;
+    --ink-secondary: #c3c2b7;
+    --ink-muted: #898781;
+    --border: rgba(255,255,255,0.10);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--plane);
+    color: var(--ink-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 24px 16px 64px;
+  }
+  main { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.lede { color: var(--ink-secondary); margin: 0 0 8px; max-width: 70ch; }
+  .toolbar { display: flex; gap: 8px; align-items: center; }
+  .toolbar button {
+    font: inherit; font-size: 12px; padding: 6px 10px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink-primary);
+    cursor: pointer;
+  }
+  .toolbar button[aria-pressed="true"] { border-color: var(--ink-secondary); font-weight: 600; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    overflow-x: auto;
+  }
+  .card svg { display: block; width: 100%; height: auto; }
+  .mode-dark { display: none; }
+  [data-theme="dark"] .mode-light { display: none; }
+  [data-theme="dark"] .mode-dark { display: block; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .mode-light { display: none; }
+    :root:not([data-theme="light"]) .mode-dark { display: block; }
+  }
+  table.data-table, table.mean-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  table.data-table th, table.data-table td,
+  table.mean-table th, table.mean-table td {
+    border-bottom: 1px solid var(--border);
+    padding: 6px 8px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  table.data-table { display: block; overflow-x: auto; }
+  caption, .table-caption { text-align: left; color: var(--ink-secondary); font-size: 12px; margin-bottom: 6px; }
+  #tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--ink-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 10;
+    max-width: 260px;
+  }
+  #tooltip .value { font-weight: 700; }
+  footer { color: var(--ink-muted); font-size: 11px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Indexing experiment — chart data</h1>
+    <p class="lede">
+      Every trial is plotted individually. No percentages anywhere — n is 5 per cell.
+      The cross-model batch (30 trials, interleaved) and the pilot batch (10 trials,
+      one model, arm-grouped) are shown as separate charts and are never pooled.
+    </p>
+    <div class="toolbar" role="group" aria-label="Theme">
+      <button type="button" data-theme-btn="system" aria-pressed="true">System</button>
+      <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-btn="dark" aria-pressed="false">Dark</button>
+    </div>
+  </div>
+
+  <section class="card" data-chart="verdict-cross">
+    <div class="mode-light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 874 1052" width="874" height="1052" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><rect x="0" y="0" width="874" height="1052" fill="#fcfcfb"></rect><text x="20" y="38" font-size="16" font-weight="600" fill="#0b0b0b">Verdict grid — cross-model replication (30 trials, interleaved)</text><text x="20" y="56" font-size="12" fill="#52514e">batch=crossmodel · claude-opus-4-8, gemini-3.6-flash, Codex · never pooled with the pilot batch below</text><g transform="translate(20, 70)"><rect x="0" y="-10" width="12" height="12" rx="3" fill="#0ca30c"></rect><text x="17" y="0" font-size="11" fill="#52514e">Match</text><rect x="65" y="-10" width="12" height="12" rx="3" fill="#fab219"></rect><text x="82" y="0" font-size="11" fill="#52514e">Partial</text><rect x="142" y="-10" width="12" height="12" rx="3" fill="#fab219"></rect><rect x="142" y="-10" width="12" height="12" rx="3" fill="url(#hatch-light)"></rect><text x="159" y="0" font-size="11" fill="#52514e">Wrong order (hatched)</text><rect x="303" y="-10" width="12" height="12" rx="3" fill="#d03b3b"></rect><text x="320" y="0" font-size="11" fill="#52514e">Missing</text></g><svg width="834" height="930" overflow="visible" x="20" y="102"><defs><pattern id="hatch-light" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#8a620e" stroke-width="2"></line></pattern><pattern id="hatch-gray-light" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#898781" stroke-width="2"></line></pattern></defs><text x="380" y="14" font-size="11" font-weight="600" text-anchor="middle" fill="#52514e">InventoryDaily (store_id, snapshot_date)</text><text x="682" y="14" font-size="11" font-weight="600" text-anchor="middle" fill="#52514e">Adjustments (store_id, product_id)</text><text x="0" y="38" font-size="12" font-weight="600" fill="#0b0b0b">claude-opus-4-8</text><text x="0" y="61" font-size="11" fill="#52514e">arm 1 · trial 1</text><rect x="230" y="44" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="61" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="44" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="61" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="89" font-size="11" fill="#52514e">arm 1 · trial 2</text><rect x="230" y="72" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="89" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="72" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="89" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="117" font-size="11" fill="#52514e">arm 1 · trial 3</text><rect x="230" y="100" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="117" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="100" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="117" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="145" font-size="11" fill="#52514e">arm 1 · trial 4</text><rect x="230" y="128" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="145" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="128" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="542" y="145" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><text x="0" y="173" font-size="11" fill="#52514e">arm 1 · trial 5</text><rect x="230" y="156" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="173" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="156" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="173" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="201" font-size="11" fill="#52514e">arm 2 · trial 1</text><rect x="230" y="184" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="201" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="184" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="201" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="229" font-size="11" fill="#52514e">arm 2 · trial 2</text><rect x="230" y="212" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="229" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="212" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="229" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="257" font-size="11" fill="#52514e">arm 2 · trial 3</text><rect x="230" y="240" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="257" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="240" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="257" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="285" font-size="11" fill="#52514e">arm 2 · trial 4</text><rect x="230" y="268" width="602" height="26" rx="4" fill="url(#hatch-gray-light)"></rect><rect x="230" y="268" width="602" height="26" rx="4" fill="none" stroke="#c3c2b7" stroke-width="1"></rect><text x="240" y="285" font-size="11" fill="#0b0b0b">Ungradeable — no prisma/schema.prisma produced</text><text x="0" y="313" font-size="11" fill="#52514e">arm 2 · trial 5</text><rect x="230" y="296" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="313" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="296" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="313" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="336" font-size="12" font-weight="600" fill="#0b0b0b">gemini-3.6-flash (fast tier)</text><text x="0" y="359" font-size="11" fill="#52514e">arm 1 · trial 1</text><rect x="230" y="342" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="359" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="342" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="359" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="387" font-size="11" fill="#52514e">arm 1 · trial 2</text><rect x="230" y="370" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="387" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="370" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="387" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="415" font-size="11" fill="#52514e">arm 1 · trial 3</text><rect x="230" y="398" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="240" y="415" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><rect x="532" y="398" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="415" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="443" font-size="11" fill="#52514e">arm 1 · trial 4</text><rect x="230" y="426" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="443" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="426" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="443" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="471" font-size="11" fill="#52514e">arm 1 · trial 5</text><rect x="230" y="454" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="471" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="454" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="471" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="499" font-size="11" fill="#52514e">arm 2 · trial 1</text><rect x="230" y="482" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="499" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="482" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="499" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="527" font-size="11" fill="#52514e">arm 2 · trial 2</text><rect x="230" y="510" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="527" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="510" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="542" y="527" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><text x="0" y="555" font-size="11" fill="#52514e">arm 2 · trial 3</text><rect x="230" y="538" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="555" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="538" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="555" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="583" font-size="11" fill="#52514e">arm 2 · trial 4</text><rect x="230" y="566" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="583" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="566" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="583" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="611" font-size="11" fill="#52514e">arm 2 · trial 5</text><rect x="230" y="594" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="611" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="594" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="611" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="634" font-size="12" font-weight="600" fill="#0b0b0b">Codex (codex-cli, self-reported GPT-5, unverified)</text><text x="0" y="657" font-size="11" fill="#52514e">arm 1 · trial 1</text><rect x="230" y="640" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="657" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="640" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="657" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="685" font-size="11" fill="#52514e">arm 1 · trial 2</text><rect x="230" y="668" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="685" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="668" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="685" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="713" font-size="11" fill="#52514e">arm 1 · trial 3</text><rect x="230" y="696" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="713" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="696" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="713" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="741" font-size="11" fill="#52514e">arm 1 · trial 4</text><rect x="230" y="724" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="741" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="724" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="741" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="769" font-size="11" fill="#52514e">arm 1 · trial 5</text><rect x="230" y="752" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="769" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="752" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="769" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="797" font-size="11" fill="#52514e">arm 2 · trial 1</text><rect x="230" y="780" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="797" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="780" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="797" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="825" font-size="11" fill="#52514e">arm 2 · trial 2</text><rect x="230" y="808" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="825" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="808" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="825" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="853" font-size="11" fill="#52514e">arm 2 · trial 3</text><rect x="230" y="836" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="853" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="836" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="853" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="881" font-size="11" fill="#52514e">arm 2 · trial 4</text><rect x="230" y="864" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="881" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="864" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="881" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="909" font-size="11" fill="#52514e">arm 2 · trial 5</text><rect x="230" y="892" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="909" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="892" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="909" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text></svg></svg></div>
+    <div class="mode-dark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 874 1052" width="874" height="1052" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><rect x="0" y="0" width="874" height="1052" fill="#1a1a19"></rect><text x="20" y="38" font-size="16" font-weight="600" fill="#ffffff">Verdict grid — cross-model replication (30 trials, interleaved)</text><text x="20" y="56" font-size="12" fill="#c3c2b7">batch=crossmodel · claude-opus-4-8, gemini-3.6-flash, Codex · never pooled with the pilot batch below</text><g transform="translate(20, 70)"><rect x="0" y="-10" width="12" height="12" rx="3" fill="#0ca30c"></rect><text x="17" y="0" font-size="11" fill="#c3c2b7">Match</text><rect x="65" y="-10" width="12" height="12" rx="3" fill="#fab219"></rect><text x="82" y="0" font-size="11" fill="#c3c2b7">Partial</text><rect x="142" y="-10" width="12" height="12" rx="3" fill="#fab219"></rect><rect x="142" y="-10" width="12" height="12" rx="3" fill="url(#hatch-dark)"></rect><text x="159" y="0" font-size="11" fill="#c3c2b7">Wrong order (hatched)</text><rect x="303" y="-10" width="12" height="12" rx="3" fill="#d03b3b"></rect><text x="320" y="0" font-size="11" fill="#c3c2b7">Missing</text></g><svg width="834" height="930" overflow="visible" x="20" y="102"><defs><pattern id="hatch-dark" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#8a620e" stroke-width="2"></line></pattern><pattern id="hatch-gray-dark" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#898781" stroke-width="2"></line></pattern></defs><text x="380" y="14" font-size="11" font-weight="600" text-anchor="middle" fill="#c3c2b7">InventoryDaily (store_id, snapshot_date)</text><text x="682" y="14" font-size="11" font-weight="600" text-anchor="middle" fill="#c3c2b7">Adjustments (store_id, product_id)</text><text x="0" y="38" font-size="12" font-weight="600" fill="#ffffff">claude-opus-4-8</text><text x="0" y="61" font-size="11" fill="#c3c2b7">arm 1 · trial 1</text><rect x="230" y="44" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="61" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="44" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="61" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="89" font-size="11" fill="#c3c2b7">arm 1 · trial 2</text><rect x="230" y="72" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="89" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="72" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="89" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="117" font-size="11" fill="#c3c2b7">arm 1 · trial 3</text><rect x="230" y="100" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="117" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="100" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="117" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="145" font-size="11" fill="#c3c2b7">arm 1 · trial 4</text><rect x="230" y="128" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="145" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="128" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="542" y="145" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><text x="0" y="173" font-size="11" fill="#c3c2b7">arm 1 · trial 5</text><rect x="230" y="156" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="173" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="156" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="173" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="201" font-size="11" fill="#c3c2b7">arm 2 · trial 1</text><rect x="230" y="184" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="201" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="184" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="201" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="229" font-size="11" fill="#c3c2b7">arm 2 · trial 2</text><rect x="230" y="212" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="229" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="212" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="229" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="257" font-size="11" fill="#c3c2b7">arm 2 · trial 3</text><rect x="230" y="240" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="257" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="240" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="257" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="285" font-size="11" fill="#c3c2b7">arm 2 · trial 4</text><rect x="230" y="268" width="602" height="26" rx="4" fill="url(#hatch-gray-dark)"></rect><rect x="230" y="268" width="602" height="26" rx="4" fill="none" stroke="#383835" stroke-width="1"></rect><text x="240" y="285" font-size="11" fill="#ffffff">Ungradeable — no prisma/schema.prisma produced</text><text x="0" y="313" font-size="11" fill="#c3c2b7">arm 2 · trial 5</text><rect x="230" y="296" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="313" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="296" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="313" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="336" font-size="12" font-weight="600" fill="#ffffff">gemini-3.6-flash (fast tier)</text><text x="0" y="359" font-size="11" fill="#c3c2b7">arm 1 · trial 1</text><rect x="230" y="342" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="359" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="342" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="359" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="387" font-size="11" fill="#c3c2b7">arm 1 · trial 2</text><rect x="230" y="370" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="387" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="370" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="387" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="415" font-size="11" fill="#c3c2b7">arm 1 · trial 3</text><rect x="230" y="398" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="240" y="415" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><rect x="532" y="398" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="415" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="443" font-size="11" fill="#c3c2b7">arm 1 · trial 4</text><rect x="230" y="426" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="443" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="426" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="443" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="471" font-size="11" fill="#c3c2b7">arm 1 · trial 5</text><rect x="230" y="454" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="471" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="454" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="471" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="499" font-size="11" fill="#c3c2b7">arm 2 · trial 1</text><rect x="230" y="482" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="499" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="482" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="499" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="527" font-size="11" fill="#c3c2b7">arm 2 · trial 2</text><rect x="230" y="510" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="527" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="510" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="542" y="527" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><text x="0" y="555" font-size="11" fill="#c3c2b7">arm 2 · trial 3</text><rect x="230" y="538" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="555" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="538" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="555" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="583" font-size="11" fill="#c3c2b7">arm 2 · trial 4</text><rect x="230" y="566" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="583" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="566" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="583" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="611" font-size="11" fill="#c3c2b7">arm 2 · trial 5</text><rect x="230" y="594" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="611" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="594" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="611" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="634" font-size="12" font-weight="600" fill="#ffffff">Codex (codex-cli, self-reported GPT-5, unverified)</text><text x="0" y="657" font-size="11" fill="#c3c2b7">arm 1 · trial 1</text><rect x="230" y="640" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="657" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="640" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="657" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="685" font-size="11" fill="#c3c2b7">arm 1 · trial 2</text><rect x="230" y="668" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="685" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="668" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="685" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="713" font-size="11" fill="#c3c2b7">arm 1 · trial 3</text><rect x="230" y="696" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="713" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="696" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="713" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="741" font-size="11" fill="#c3c2b7">arm 1 · trial 4</text><rect x="230" y="724" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="741" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="724" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="741" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="769" font-size="11" fill="#c3c2b7">arm 1 · trial 5</text><rect x="230" y="752" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="769" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="752" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="769" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="797" font-size="11" fill="#c3c2b7">arm 2 · trial 1</text><rect x="230" y="780" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="797" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="780" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="797" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="825" font-size="11" fill="#c3c2b7">arm 2 · trial 2</text><rect x="230" y="808" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="825" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="808" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="825" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="853" font-size="11" fill="#c3c2b7">arm 2 · trial 3</text><rect x="230" y="836" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="853" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="836" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="853" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="881" font-size="11" fill="#c3c2b7">arm 2 · trial 4</text><rect x="230" y="864" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="881" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="864" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="881" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="909" font-size="11" fill="#c3c2b7">arm 2 · trial 5</text><rect x="230" y="892" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="909" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="892" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="909" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text></svg></svg></div>
+  </section>
+
+  <section class="card" data-chart="verdict-pilot">
+    <div class="mode-light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 874 472" width="874" height="472" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><rect x="0" y="0" width="874" height="472" fill="#fcfcfb"></rect><text x="20" y="38" font-size="16" font-weight="600" fill="#0b0b0b">Verdict grid — pilot (10 trials, one model)</text><text x="20" y="56" font-size="12" fill="#52514e">batch=pilot · claude-opus-5[1m] · arm 1 run entirely before arm 2 (not interleaved) · shown separately, not comparable to the chart</text><text x="20" y="72" font-size="12" fill="#52514e">above</text><g transform="translate(20, 86)"><rect x="0" y="-10" width="12" height="12" rx="3" fill="#0ca30c"></rect><text x="17" y="0" font-size="11" fill="#52514e">Match</text><rect x="65" y="-10" width="12" height="12" rx="3" fill="#fab219"></rect><text x="82" y="0" font-size="11" fill="#52514e">Partial</text><rect x="142" y="-10" width="12" height="12" rx="3" fill="#fab219"></rect><rect x="142" y="-10" width="12" height="12" rx="3" fill="url(#hatch-light)"></rect><text x="159" y="0" font-size="11" fill="#52514e">Wrong order (hatched)</text><rect x="303" y="-10" width="12" height="12" rx="3" fill="#d03b3b"></rect><text x="320" y="0" font-size="11" fill="#52514e">Missing</text></g><svg width="834" height="334" overflow="visible" x="20" y="118"><defs><pattern id="hatch-light" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#8a620e" stroke-width="2"></line></pattern><pattern id="hatch-gray-light" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#898781" stroke-width="2"></line></pattern></defs><text x="380" y="14" font-size="11" font-weight="600" text-anchor="middle" fill="#52514e">InventoryDaily (store_id, snapshot_date)</text><text x="682" y="14" font-size="11" font-weight="600" text-anchor="middle" fill="#52514e">Adjustments (store_id, product_id)</text><text x="0" y="38" font-size="12" font-weight="600" fill="#0b0b0b">claude-opus-5[1m] — pilot batch</text><text x="0" y="61" font-size="11" fill="#52514e">arm 1 · trial 1</text><rect x="230" y="44" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="61" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="44" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="61" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="89" font-size="11" fill="#52514e">arm 1 · trial 2</text><rect x="230" y="72" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="89" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="72" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="89" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="117" font-size="11" fill="#52514e">arm 1 · trial 3</text><rect x="230" y="100" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="117" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="100" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="117" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="145" font-size="11" fill="#52514e">arm 1 · trial 4</text><rect x="230" y="128" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="145" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="128" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="145" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="173" font-size="11" fill="#52514e">arm 1 · trial 5</text><rect x="230" y="156" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="173" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="156" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="173" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="201" font-size="11" fill="#52514e">arm 2 · trial 1</text><rect x="230" y="184" width="300" height="26" rx="4" fill="#fab219"></rect><rect x="230" y="184" width="300" height="26" rx="4" fill="url(#hatch-light)"></rect><text x="240" y="201" font-size="11" font-weight="600" fill="#0b0b0b">◐ Wrong order</text><rect x="532" y="184" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="201" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="229" font-size="11" fill="#52514e">arm 2 · trial 2</text><rect x="230" y="212" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="229" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="212" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="229" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="257" font-size="11" fill="#52514e">arm 2 · trial 3</text><rect x="230" y="240" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="257" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="240" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="257" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="285" font-size="11" fill="#52514e">arm 2 · trial 4</text><rect x="230" y="268" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="285" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="268" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="285" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="313" font-size="11" fill="#52514e">arm 2 · trial 5</text><rect x="230" y="296" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="313" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="296" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="313" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text></svg></svg></div>
+    <div class="mode-dark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 874 472" width="874" height="472" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><rect x="0" y="0" width="874" height="472" fill="#1a1a19"></rect><text x="20" y="38" font-size="16" font-weight="600" fill="#ffffff">Verdict grid — pilot (10 trials, one model)</text><text x="20" y="56" font-size="12" fill="#c3c2b7">batch=pilot · claude-opus-5[1m] · arm 1 run entirely before arm 2 (not interleaved) · shown separately, not comparable to the chart</text><text x="20" y="72" font-size="12" fill="#c3c2b7">above</text><g transform="translate(20, 86)"><rect x="0" y="-10" width="12" height="12" rx="3" fill="#0ca30c"></rect><text x="17" y="0" font-size="11" fill="#c3c2b7">Match</text><rect x="65" y="-10" width="12" height="12" rx="3" fill="#fab219"></rect><text x="82" y="0" font-size="11" fill="#c3c2b7">Partial</text><rect x="142" y="-10" width="12" height="12" rx="3" fill="#fab219"></rect><rect x="142" y="-10" width="12" height="12" rx="3" fill="url(#hatch-dark)"></rect><text x="159" y="0" font-size="11" fill="#c3c2b7">Wrong order (hatched)</text><rect x="303" y="-10" width="12" height="12" rx="3" fill="#d03b3b"></rect><text x="320" y="0" font-size="11" fill="#c3c2b7">Missing</text></g><svg width="834" height="334" overflow="visible" x="20" y="118"><defs><pattern id="hatch-dark" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#8a620e" stroke-width="2"></line></pattern><pattern id="hatch-gray-dark" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"></rect><line x1="0" y1="0" x2="0" y2="6" stroke="#898781" stroke-width="2"></line></pattern></defs><text x="380" y="14" font-size="11" font-weight="600" text-anchor="middle" fill="#c3c2b7">InventoryDaily (store_id, snapshot_date)</text><text x="682" y="14" font-size="11" font-weight="600" text-anchor="middle" fill="#c3c2b7">Adjustments (store_id, product_id)</text><text x="0" y="38" font-size="12" font-weight="600" fill="#ffffff">claude-opus-5[1m] — pilot batch</text><text x="0" y="61" font-size="11" fill="#c3c2b7">arm 1 · trial 1</text><rect x="230" y="44" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="61" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="44" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="61" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="89" font-size="11" fill="#c3c2b7">arm 1 · trial 2</text><rect x="230" y="72" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="89" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="72" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="89" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="117" font-size="11" fill="#c3c2b7">arm 1 · trial 3</text><rect x="230" y="100" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="117" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="100" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="117" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="145" font-size="11" fill="#c3c2b7">arm 1 · trial 4</text><rect x="230" y="128" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="145" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="128" width="300" height="26" rx="4" fill="#d03b3b"></rect><text x="542" y="145" font-size="11" font-weight="600" fill="#0b0b0b">✕ Missing</text><text x="0" y="173" font-size="11" fill="#c3c2b7">arm 1 · trial 5</text><rect x="230" y="156" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="173" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="156" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="173" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="201" font-size="11" fill="#c3c2b7">arm 2 · trial 1</text><rect x="230" y="184" width="300" height="26" rx="4" fill="#fab219"></rect><rect x="230" y="184" width="300" height="26" rx="4" fill="url(#hatch-dark)"></rect><text x="240" y="201" font-size="11" font-weight="600" fill="#0b0b0b">◐ Wrong order</text><rect x="532" y="184" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="201" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="229" font-size="11" fill="#c3c2b7">arm 2 · trial 2</text><rect x="230" y="212" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="229" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="212" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="229" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="257" font-size="11" fill="#c3c2b7">arm 2 · trial 3</text><rect x="230" y="240" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="257" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="240" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="257" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="285" font-size="11" fill="#c3c2b7">arm 2 · trial 4</text><rect x="230" y="268" width="300" height="26" rx="4" fill="#fab219"></rect><text x="240" y="285" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><rect x="532" y="268" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="285" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text><text x="0" y="313" font-size="11" fill="#c3c2b7">arm 2 · trial 5</text><rect x="230" y="296" width="300" height="26" rx="4" fill="#0ca30c"></rect><text x="240" y="313" font-size="11" font-weight="600" fill="#0b0b0b">✓ Match</text><rect x="532" y="296" width="300" height="26" rx="4" fill="#fab219"></rect><text x="542" y="313" font-size="11" font-weight="600" fill="#0b0b0b">◐ Partial</text></svg></svg></div>
+  </section>
+
+  <section class="card" data-chart="strip-cross">
+    <div class="mode-light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 494" width="800" height="494" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><rect x="0" y="0" width="800" height="494" fill="#fcfcfb"></rect><text x="20" y="38" font-size="16" font-weight="600" fill="#0b0b0b">Index counts by trial — cross-model replication</text><text x="20" y="56" font-size="12" fill="#52514e">Every dot is one trial, n=5 per cell. Explicit = total minus CREATE UNIQUE INDEX; in-scope = explicit, restricted to the</text><text x="20" y="72" font-size="12" fill="#52514e">two graded tables. gemini-3.6-flash is a fast tier beside two frontier-tier tools — a tier gap, not evidence Gemini</text><text x="20" y="88" font-size="12" fill="#52514e">reasons worse about indexes.</text><g transform="translate(20, 102)"><circle cx="5" cy="-4" r="5" fill="#2a78d6"></circle><text x="15" y="0" font-size="11" fill="#52514e">Arm 1 (no “production scale” sentence)</text><circle cx="256.79999999999995" cy="-4" r="5" fill="#eb6834"></circle><text x="266.79999999999995" y="0" font-size="11" fill="#52514e">Arm 2 (+ “production scale” sentence)</text></g><svg class="plot-d6a7b5" fill="currentColor" font-family="system-ui, sans-serif" font-size="10" text-anchor="middle" width="760" height="340" viewBox="0 0 760 340" style="background: none; color: rgb(11, 11, 11); font-family: system-ui, -apple-system, &quot;Segoe UI&quot;, sans-serif;" x="20" y="134"><style>:where(.plot-d6a7b5) {
+  --plot-background: white;
+  display: block;
+  height: auto;
+  height: intrinsic;
+  max-width: 100%;
+}
+:where(.plot-d6a7b5 text),
+:where(.plot-d6a7b5 tspan) {
+  white-space: pre;
+}</style><g aria-label="fy-axis tick label" transform="translate(9,0)"><g text-anchor="start" transform="translate(451,0)"><text y="0.32em" transform="translate(249,95.5)">Explicit</text></g><g text-anchor="start" transform="translate(451,145)"><text y="0.32em" transform="translate(249,95.5)">In-scope</text></g></g><g aria-label="fx-axis tick label" transform="translate(0,-9)"><g transform="translate(1,0)"><text transform="translate(147.5,30)">claude-opus-4-8</text></g><g transform="translate(226,0)"><text transform="translate(147.5,30)">gemini-3.6-flash (fast tier)</text></g><g transform="translate(451,0)"><text transform="translate(147.5,30)">Codex (codex-cli, self-reported GPT-5, unverified)</text></g></g><g aria-label="y-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(1,0)"><path transform="translate(46,161)" d="M0,0L-6,0"></path><path transform="translate(46,114.2142857142857)" d="M0,0L-6,0"></path><path transform="translate(46,67.42857142857143)" d="M0,0L-6,0"></path></g><g fill="none" stroke="currentColor" transform="translate(1,145)"><path transform="translate(46,161)" d="M0,0L-6,0"></path><path transform="translate(46,114.2142857142857)" d="M0,0L-6,0"></path><path transform="translate(46,67.42857142857143)" d="M0,0L-6,0"></path></g></g><g aria-label="y-axis tick label" transform="translate(-9,0)"><g text-anchor="end" font-variant="tabular-nums" transform="translate(1,0)"><text y="0.32em" transform="translate(46,161)">0</text><text y="0.32em" transform="translate(46,114.2142857142857)">5</text><text y="0.32em" transform="translate(46,67.42857142857143)">10</text></g><g text-anchor="end" font-variant="tabular-nums" transform="translate(1,145)"><text y="0.32em" transform="translate(46,161)">0</text><text y="0.32em" transform="translate(46,114.2142857142857)">5</text><text y="0.32em" transform="translate(46,67.42857142857143)">10</text></g></g><g aria-label="y-axis label" text-anchor="start" transform="translate(-43,-27)"><text y="0.71em" transform="translate(47,30)">↑ index count</text></g><g aria-label="x-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(1,145)"><path transform="translate(68,161)" d="M0,0L0,6"></path><path transform="translate(108,161)" d="M0,0L0,6"></path><path transform="translate(148,161)" d="M0,0L0,6"></path><path transform="translate(188,161)" d="M0,0L0,6"></path><path transform="translate(228,161)" d="M0,0L0,6"></path></g><g fill="none" stroke="currentColor" transform="translate(226,145)"><path transform="translate(68,161)" d="M0,0L0,6"></path><path transform="translate(108,161)" d="M0,0L0,6"></path><path transform="translate(148,161)" d="M0,0L0,6"></path><path transform="translate(188,161)" d="M0,0L0,6"></path><path transform="translate(228,161)" d="M0,0L0,6"></path></g><g fill="none" stroke="currentColor" transform="translate(451,145)"><path transform="translate(68,161)" d="M0,0L0,6"></path><path transform="translate(108,161)" d="M0,0L0,6"></path><path transform="translate(148,161)" d="M0,0L0,6"></path><path transform="translate(188,161)" d="M0,0L0,6"></path><path transform="translate(228,161)" d="M0,0L0,6"></path></g></g><g aria-label="x-axis tick label" transform="translate(0,9)"><g transform="translate(1,145)"><text y="0.71em" transform="translate(68,161)">1</text><text y="0.71em" transform="translate(108,161)">2</text><text y="0.71em" transform="translate(148,161)">3</text><text y="0.71em" transform="translate(188,161)">4</text><text y="0.71em" transform="translate(228,161)">5</text></g><g transform="translate(226,145)"><text y="0.71em" transform="translate(68,161)">1</text><text y="0.71em" transform="translate(108,161)">2</text><text y="0.71em" transform="translate(148,161)">3</text><text y="0.71em" transform="translate(188,161)">4</text><text y="0.71em" transform="translate(228,161)">5</text></g><g transform="translate(451,145)"><text y="0.71em" transform="translate(68,161)">1</text><text y="0.71em" transform="translate(108,161)">2</text><text y="0.71em" transform="translate(148,161)">3</text><text y="0.71em" transform="translate(188,161)">4</text><text y="0.71em" transform="translate(228,161)">5</text></g></g><g aria-label="x-axis label" transform="translate(0,31)"><text transform="translate(373.5,306)">trial (run order within arm)</text></g><g aria-label="y-grid" aria-hidden="true"><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(1,0)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(1,145)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(226,0)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(226,145)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(451,0)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(451,145)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g></g><g aria-label="frame"><rect fill="none" stroke="#c3c2b7" x="46" y="30" width="203" height="131" transform="translate(1,0)"></rect><rect fill="none" stroke="#c3c2b7" x="46" y="30" width="203" height="131" transform="translate(1,145)"></rect><rect fill="none" stroke="#c3c2b7" x="46" y="30" width="203" height="131" transform="translate(226,0)"></rect><rect fill="none" stroke="#c3c2b7" x="46" y="30" width="203" height="131" transform="translate(226,145)"></rect><rect fill="none" stroke="#c3c2b7" x="46" y="30" width="203" height="131" transform="translate(451,0)"></rect><rect fill="none" stroke="#c3c2b7" x="46" y="30" width="203" height="131" transform="translate(451,145)"></rect></g><g aria-label="dot"><g stroke="#fcfcfb" stroke-width="2" transform="translate(1,0)"><circle cx="68" cy="86.14285714285714" r="5" fill="#2a78d6"><title>claude/arm1-trial1
+Explicit: 8
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="67.42857142857143" r="5" fill="#2a78d6"><title>claude/arm1-trial2
+Explicit: 10
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="48.71428571428572" r="5" fill="#2a78d6"><title>claude/arm1-trial3
+Explicit: 12
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="48.71428571428572" r="5" fill="#2a78d6"><title>claude/arm1-trial4
+Explicit: 12
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="67.42857142857143" r="5" fill="#2a78d6"><title>claude/arm1-trial5
+Explicit: 10
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="95.5" r="5" fill="#eb6834"><title>claude/arm2-trial1
+Explicit: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="67.42857142857143" r="5" fill="#eb6834"><title>claude/arm2-trial2
+Explicit: 10
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="76.78571428571428" r="5" fill="#eb6834"><title>claude/arm2-trial3
+Explicit: 9
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="67.42857142857143" r="5" fill="#eb6834"><title>claude/arm2-trial5
+Explicit: 10
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#fcfcfb" stroke-width="2" transform="translate(1,145)"><circle cx="68" cy="132.92857142857142" r="5" fill="#2a78d6"><title>claude/arm1-trial1
+In-scope: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="123.57142857142857" r="5" fill="#2a78d6"><title>claude/arm1-trial2
+In-scope: 4
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="104.85714285714286" r="5" fill="#2a78d6"><title>claude/arm1-trial3
+In-scope: 6
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="95.5" r="5" fill="#2a78d6"><title>claude/arm1-trial4
+In-scope: 7
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="114.2142857142857" r="5" fill="#2a78d6"><title>claude/arm1-trial5
+In-scope: 5
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="142.28571428571428" r="5" fill="#eb6834"><title>claude/arm2-trial1
+In-scope: 2
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="114.2142857142857" r="5" fill="#eb6834"><title>claude/arm2-trial2
+In-scope: 5
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="123.57142857142857" r="5" fill="#eb6834"><title>claude/arm2-trial3
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="114.2142857142857" r="5" fill="#eb6834"><title>claude/arm2-trial5
+In-scope: 5
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#fcfcfb" stroke-width="2" transform="translate(226,0)"><circle cx="68" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial1
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial2
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial3
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial4
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial5
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="76.78571428571428" r="5" fill="#eb6834"><title>gemini/arm2-trial1
+Explicit: 9
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="58.07142857142857" r="5" fill="#eb6834"><title>gemini/arm2-trial2
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="58.07142857142857" r="5" fill="#eb6834"><title>gemini/arm2-trial3
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="188" cy="58.07142857142857" r="5" fill="#eb6834"><title>gemini/arm2-trial4
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="67.42857142857143" r="5" fill="#eb6834"><title>gemini/arm2-trial5
+Explicit: 10
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#fcfcfb" stroke-width="2" transform="translate(226,145)"><circle cx="68" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial1
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial2
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial3
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial4
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="161" r="5" fill="#2a78d6"><title>gemini/arm1-trial5
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="123.57142857142857" r="5" fill="#eb6834"><title>gemini/arm2-trial1
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="104.85714285714286" r="5" fill="#eb6834"><title>gemini/arm2-trial2
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="104.85714285714286" r="5" fill="#eb6834"><title>gemini/arm2-trial3
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="188" cy="104.85714285714286" r="5" fill="#eb6834"><title>gemini/arm2-trial4
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="114.2142857142857" r="5" fill="#eb6834"><title>gemini/arm2-trial5
+In-scope: 5
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#fcfcfb" stroke-width="2" transform="translate(451,0)"><circle cx="68" cy="132.92857142857142" r="5" fill="#2a78d6"><title>codex/arm1-trial1
+Explicit: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="132.92857142857142" r="5" fill="#2a78d6"><title>codex/arm1-trial2
+Explicit: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="95.5" r="5" fill="#2a78d6"><title>codex/arm1-trial3
+Explicit: 7
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="76.78571428571428" r="5" fill="#2a78d6"><title>codex/arm1-trial4
+Explicit: 9
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="76.78571428571428" r="5" fill="#2a78d6"><title>codex/arm1-trial5
+Explicit: 9
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="58.07142857142857" r="5" fill="#eb6834"><title>codex/arm2-trial1
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="76.78571428571428" r="5" fill="#eb6834"><title>codex/arm2-trial2
+Explicit: 9
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="48.71428571428572" r="5" fill="#eb6834"><title>codex/arm2-trial3
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="188" cy="48.71428571428572" r="5" fill="#eb6834"><title>codex/arm2-trial4
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="58.07142857142857" r="5" fill="#eb6834"><title>codex/arm2-trial5
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#fcfcfb" stroke-width="2" transform="translate(451,145)"><circle cx="68" cy="132.92857142857142" r="5" fill="#2a78d6"><title>codex/arm1-trial1
+In-scope: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="132.92857142857142" r="5" fill="#2a78d6"><title>codex/arm1-trial2
+In-scope: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="123.57142857142857" r="5" fill="#2a78d6"><title>codex/arm1-trial3
+In-scope: 4
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="123.57142857142857" r="5" fill="#2a78d6"><title>codex/arm1-trial4
+In-scope: 4
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="123.57142857142857" r="5" fill="#2a78d6"><title>codex/arm1-trial5
+In-scope: 4
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="104.85714285714286" r="5" fill="#eb6834"><title>codex/arm2-trial1
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="123.57142857142857" r="5" fill="#eb6834"><title>codex/arm2-trial2
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="95.5" r="5" fill="#eb6834"><title>codex/arm2-trial3
+In-scope: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="188" cy="104.85714285714286" r="5" fill="#eb6834"><title>codex/arm2-trial4
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="104.85714285714286" r="5" fill="#eb6834"><title>codex/arm2-trial5
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle></g></g><g aria-label="dot"><g fill="none" stroke="#898781" stroke-width="2" stroke-dasharray="2,2" transform="translate(1,0)"><circle cx="188" cy="161" r="6"></circle></g><g fill="none" stroke="#898781" stroke-width="2" stroke-dasharray="2,2" transform="translate(1,145)"><circle cx="188" cy="161" r="6"></circle></g></g><g aria-label="text" transform="translate(0,14)"><g fill="#898781" font-size="9" transform="translate(1,0)"><text y="0.32em" transform="translate(188,161)">ungradeable</text></g><g fill="#898781" font-size="9" transform="translate(1,145)"><text y="0.32em" transform="translate(188,161)">ungradeable</text></g></g><g aria-label="text"><g fill="#fab219" font-size="10" font-weight="600" transform="translate(226,0)"><text y="0.32em" transform="translate(148,30)">fast tier ↑</text></g></g></svg></svg></div>
+    <div class="mode-dark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 494" width="800" height="494" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><rect x="0" y="0" width="800" height="494" fill="#1a1a19"></rect><text x="20" y="38" font-size="16" font-weight="600" fill="#ffffff">Index counts by trial — cross-model replication</text><text x="20" y="56" font-size="12" fill="#c3c2b7">Every dot is one trial, n=5 per cell. Explicit = total minus CREATE UNIQUE INDEX; in-scope = explicit, restricted to the</text><text x="20" y="72" font-size="12" fill="#c3c2b7">two graded tables. gemini-3.6-flash is a fast tier beside two frontier-tier tools — a tier gap, not evidence Gemini</text><text x="20" y="88" font-size="12" fill="#c3c2b7">reasons worse about indexes.</text><g transform="translate(20, 102)"><circle cx="5" cy="-4" r="5" fill="#3987e5"></circle><text x="15" y="0" font-size="11" fill="#c3c2b7">Arm 1 (no “production scale” sentence)</text><circle cx="256.79999999999995" cy="-4" r="5" fill="#d95926"></circle><text x="266.79999999999995" y="0" font-size="11" fill="#c3c2b7">Arm 2 (+ “production scale” sentence)</text></g><svg class="plot-d6a7b5" fill="currentColor" font-family="system-ui, sans-serif" font-size="10" text-anchor="middle" width="760" height="340" viewBox="0 0 760 340" style="background: none; color: rgb(255, 255, 255); font-family: system-ui, -apple-system, &quot;Segoe UI&quot;, sans-serif;" x="20" y="134"><style>:where(.plot-d6a7b5) {
+  --plot-background: white;
+  display: block;
+  height: auto;
+  height: intrinsic;
+  max-width: 100%;
+}
+:where(.plot-d6a7b5 text),
+:where(.plot-d6a7b5 tspan) {
+  white-space: pre;
+}</style><g aria-label="fy-axis tick label" transform="translate(9,0)"><g text-anchor="start" transform="translate(451,0)"><text y="0.32em" transform="translate(249,95.5)">Explicit</text></g><g text-anchor="start" transform="translate(451,145)"><text y="0.32em" transform="translate(249,95.5)">In-scope</text></g></g><g aria-label="fx-axis tick label" transform="translate(0,-9)"><g transform="translate(1,0)"><text transform="translate(147.5,30)">claude-opus-4-8</text></g><g transform="translate(226,0)"><text transform="translate(147.5,30)">gemini-3.6-flash (fast tier)</text></g><g transform="translate(451,0)"><text transform="translate(147.5,30)">Codex (codex-cli, self-reported GPT-5, unverified)</text></g></g><g aria-label="y-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(1,0)"><path transform="translate(46,161)" d="M0,0L-6,0"></path><path transform="translate(46,114.2142857142857)" d="M0,0L-6,0"></path><path transform="translate(46,67.42857142857143)" d="M0,0L-6,0"></path></g><g fill="none" stroke="currentColor" transform="translate(1,145)"><path transform="translate(46,161)" d="M0,0L-6,0"></path><path transform="translate(46,114.2142857142857)" d="M0,0L-6,0"></path><path transform="translate(46,67.42857142857143)" d="M0,0L-6,0"></path></g></g><g aria-label="y-axis tick label" transform="translate(-9,0)"><g text-anchor="end" font-variant="tabular-nums" transform="translate(1,0)"><text y="0.32em" transform="translate(46,161)">0</text><text y="0.32em" transform="translate(46,114.2142857142857)">5</text><text y="0.32em" transform="translate(46,67.42857142857143)">10</text></g><g text-anchor="end" font-variant="tabular-nums" transform="translate(1,145)"><text y="0.32em" transform="translate(46,161)">0</text><text y="0.32em" transform="translate(46,114.2142857142857)">5</text><text y="0.32em" transform="translate(46,67.42857142857143)">10</text></g></g><g aria-label="y-axis label" text-anchor="start" transform="translate(-43,-27)"><text y="0.71em" transform="translate(47,30)">↑ index count</text></g><g aria-label="x-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(1,145)"><path transform="translate(68,161)" d="M0,0L0,6"></path><path transform="translate(108,161)" d="M0,0L0,6"></path><path transform="translate(148,161)" d="M0,0L0,6"></path><path transform="translate(188,161)" d="M0,0L0,6"></path><path transform="translate(228,161)" d="M0,0L0,6"></path></g><g fill="none" stroke="currentColor" transform="translate(226,145)"><path transform="translate(68,161)" d="M0,0L0,6"></path><path transform="translate(108,161)" d="M0,0L0,6"></path><path transform="translate(148,161)" d="M0,0L0,6"></path><path transform="translate(188,161)" d="M0,0L0,6"></path><path transform="translate(228,161)" d="M0,0L0,6"></path></g><g fill="none" stroke="currentColor" transform="translate(451,145)"><path transform="translate(68,161)" d="M0,0L0,6"></path><path transform="translate(108,161)" d="M0,0L0,6"></path><path transform="translate(148,161)" d="M0,0L0,6"></path><path transform="translate(188,161)" d="M0,0L0,6"></path><path transform="translate(228,161)" d="M0,0L0,6"></path></g></g><g aria-label="x-axis tick label" transform="translate(0,9)"><g transform="translate(1,145)"><text y="0.71em" transform="translate(68,161)">1</text><text y="0.71em" transform="translate(108,161)">2</text><text y="0.71em" transform="translate(148,161)">3</text><text y="0.71em" transform="translate(188,161)">4</text><text y="0.71em" transform="translate(228,161)">5</text></g><g transform="translate(226,145)"><text y="0.71em" transform="translate(68,161)">1</text><text y="0.71em" transform="translate(108,161)">2</text><text y="0.71em" transform="translate(148,161)">3</text><text y="0.71em" transform="translate(188,161)">4</text><text y="0.71em" transform="translate(228,161)">5</text></g><g transform="translate(451,145)"><text y="0.71em" transform="translate(68,161)">1</text><text y="0.71em" transform="translate(108,161)">2</text><text y="0.71em" transform="translate(148,161)">3</text><text y="0.71em" transform="translate(188,161)">4</text><text y="0.71em" transform="translate(228,161)">5</text></g></g><g aria-label="x-axis label" transform="translate(0,31)"><text transform="translate(373.5,306)">trial (run order within arm)</text></g><g aria-label="y-grid" aria-hidden="true"><g stroke="#2c2c2a" stroke-opacity="0.1" transform="translate(1,0)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#2c2c2a" stroke-opacity="0.1" transform="translate(1,145)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#2c2c2a" stroke-opacity="0.1" transform="translate(226,0)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#2c2c2a" stroke-opacity="0.1" transform="translate(226,145)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#2c2c2a" stroke-opacity="0.1" transform="translate(451,0)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g><g stroke="#2c2c2a" stroke-opacity="0.1" transform="translate(451,145)"><line x1="46" x2="249" y1="161" y2="161"></line><line x1="46" x2="249" y1="114.2142857142857" y2="114.2142857142857"></line><line x1="46" x2="249" y1="67.42857142857143" y2="67.42857142857143"></line></g></g><g aria-label="frame"><rect fill="none" stroke="#383835" x="46" y="30" width="203" height="131" transform="translate(1,0)"></rect><rect fill="none" stroke="#383835" x="46" y="30" width="203" height="131" transform="translate(1,145)"></rect><rect fill="none" stroke="#383835" x="46" y="30" width="203" height="131" transform="translate(226,0)"></rect><rect fill="none" stroke="#383835" x="46" y="30" width="203" height="131" transform="translate(226,145)"></rect><rect fill="none" stroke="#383835" x="46" y="30" width="203" height="131" transform="translate(451,0)"></rect><rect fill="none" stroke="#383835" x="46" y="30" width="203" height="131" transform="translate(451,145)"></rect></g><g aria-label="dot"><g stroke="#1a1a19" stroke-width="2" transform="translate(1,0)"><circle cx="68" cy="86.14285714285714" r="5" fill="#3987e5"><title>claude/arm1-trial1
+Explicit: 8
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="67.42857142857143" r="5" fill="#3987e5"><title>claude/arm1-trial2
+Explicit: 10
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="48.71428571428572" r="5" fill="#3987e5"><title>claude/arm1-trial3
+Explicit: 12
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="48.71428571428572" r="5" fill="#3987e5"><title>claude/arm1-trial4
+Explicit: 12
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="67.42857142857143" r="5" fill="#3987e5"><title>claude/arm1-trial5
+Explicit: 10
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="95.5" r="5" fill="#d95926"><title>claude/arm2-trial1
+Explicit: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="67.42857142857143" r="5" fill="#d95926"><title>claude/arm2-trial2
+Explicit: 10
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="76.78571428571428" r="5" fill="#d95926"><title>claude/arm2-trial3
+Explicit: 9
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="67.42857142857143" r="5" fill="#d95926"><title>claude/arm2-trial5
+Explicit: 10
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#1a1a19" stroke-width="2" transform="translate(1,145)"><circle cx="68" cy="132.92857142857142" r="5" fill="#3987e5"><title>claude/arm1-trial1
+In-scope: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="123.57142857142857" r="5" fill="#3987e5"><title>claude/arm1-trial2
+In-scope: 4
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="104.85714285714286" r="5" fill="#3987e5"><title>claude/arm1-trial3
+In-scope: 6
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="95.5" r="5" fill="#3987e5"><title>claude/arm1-trial4
+In-scope: 7
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="114.2142857142857" r="5" fill="#3987e5"><title>claude/arm1-trial5
+In-scope: 5
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="142.28571428571428" r="5" fill="#d95926"><title>claude/arm2-trial1
+In-scope: 2
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="114.2142857142857" r="5" fill="#d95926"><title>claude/arm2-trial2
+In-scope: 5
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="123.57142857142857" r="5" fill="#d95926"><title>claude/arm2-trial3
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="114.2142857142857" r="5" fill="#d95926"><title>claude/arm2-trial5
+In-scope: 5
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#1a1a19" stroke-width="2" transform="translate(226,0)"><circle cx="68" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial1
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial2
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial3
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial4
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial5
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="76.78571428571428" r="5" fill="#d95926"><title>gemini/arm2-trial1
+Explicit: 9
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="58.07142857142857" r="5" fill="#d95926"><title>gemini/arm2-trial2
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="58.07142857142857" r="5" fill="#d95926"><title>gemini/arm2-trial3
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="188" cy="58.07142857142857" r="5" fill="#d95926"><title>gemini/arm2-trial4
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="67.42857142857143" r="5" fill="#d95926"><title>gemini/arm2-trial5
+Explicit: 10
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#1a1a19" stroke-width="2" transform="translate(226,145)"><circle cx="68" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial1
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial2
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial3
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial4
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="161" r="5" fill="#3987e5"><title>gemini/arm1-trial5
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="123.57142857142857" r="5" fill="#d95926"><title>gemini/arm2-trial1
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="104.85714285714286" r="5" fill="#d95926"><title>gemini/arm2-trial2
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="104.85714285714286" r="5" fill="#d95926"><title>gemini/arm2-trial3
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="188" cy="104.85714285714286" r="5" fill="#d95926"><title>gemini/arm2-trial4
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="114.2142857142857" r="5" fill="#d95926"><title>gemini/arm2-trial5
+In-scope: 5
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#1a1a19" stroke-width="2" transform="translate(451,0)"><circle cx="68" cy="132.92857142857142" r="5" fill="#3987e5"><title>codex/arm1-trial1
+Explicit: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="132.92857142857142" r="5" fill="#3987e5"><title>codex/arm1-trial2
+Explicit: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="95.5" r="5" fill="#3987e5"><title>codex/arm1-trial3
+Explicit: 7
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="76.78571428571428" r="5" fill="#3987e5"><title>codex/arm1-trial4
+Explicit: 9
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="76.78571428571428" r="5" fill="#3987e5"><title>codex/arm1-trial5
+Explicit: 9
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="58.07142857142857" r="5" fill="#d95926"><title>codex/arm2-trial1
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="76.78571428571428" r="5" fill="#d95926"><title>codex/arm2-trial2
+Explicit: 9
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="48.71428571428572" r="5" fill="#d95926"><title>codex/arm2-trial3
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="188" cy="48.71428571428572" r="5" fill="#d95926"><title>codex/arm2-trial4
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="58.07142857142857" r="5" fill="#d95926"><title>codex/arm2-trial5
+Explicit: 11
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#1a1a19" stroke-width="2" transform="translate(451,145)"><circle cx="68" cy="132.92857142857142" r="5" fill="#3987e5"><title>codex/arm1-trial1
+In-scope: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="108" cy="132.92857142857142" r="5" fill="#3987e5"><title>codex/arm1-trial2
+In-scope: 3
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="148" cy="123.57142857142857" r="5" fill="#3987e5"><title>codex/arm1-trial3
+In-scope: 4
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="188" cy="123.57142857142857" r="5" fill="#3987e5"><title>codex/arm1-trial4
+In-scope: 4
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="228" cy="123.57142857142857" r="5" fill="#3987e5"><title>codex/arm1-trial5
+In-scope: 4
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="68" cy="104.85714285714286" r="5" fill="#d95926"><title>codex/arm2-trial1
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="108" cy="123.57142857142857" r="5" fill="#d95926"><title>codex/arm2-trial2
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="148" cy="95.5" r="5" fill="#d95926"><title>codex/arm2-trial3
+In-scope: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="188" cy="104.85714285714286" r="5" fill="#d95926"><title>codex/arm2-trial4
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="228" cy="104.85714285714286" r="5" fill="#d95926"><title>codex/arm2-trial5
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle></g></g><g aria-label="dot"><g fill="none" stroke="#898781" stroke-width="2" stroke-dasharray="2,2" transform="translate(1,0)"><circle cx="188" cy="161" r="6"></circle></g><g fill="none" stroke="#898781" stroke-width="2" stroke-dasharray="2,2" transform="translate(1,145)"><circle cx="188" cy="161" r="6"></circle></g></g><g aria-label="text" transform="translate(0,14)"><g fill="#898781" font-size="9" transform="translate(1,0)"><text y="0.32em" transform="translate(188,161)">ungradeable</text></g><g fill="#898781" font-size="9" transform="translate(1,145)"><text y="0.32em" transform="translate(188,161)">ungradeable</text></g></g><g aria-label="text"><g fill="#fab219" font-size="10" font-weight="600" transform="translate(226,0)"><text y="0.32em" transform="translate(148,30)">fast tier ↑</text></g></g></svg></svg></div>
+  </section>
+
+  <section class="card" data-chart="strip-pilot">
+    <div class="mode-light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 486" width="460" height="486" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><rect x="0" y="0" width="460" height="486" fill="#fcfcfb"></rect><text x="20" y="38" font-size="16" font-weight="600" fill="#0b0b0b">Index counts by trial — pilot</text><text x="20" y="56" font-size="12" fill="#52514e">batch=pilot, n=5 per arm. Explicit = total minus CREATE UNIQUE</text><text x="20" y="72" font-size="12" fill="#52514e">INDEX; in-scope = explicit, restricted to the two graded tables.</text><text x="20" y="88" font-size="12" fill="#52514e">Arm 1 ran entirely before arm 2 — run order and arm are confounded</text><text x="20" y="104" font-size="12" fill="#52514e">here (see RESULTS.md).</text><g transform="translate(20, 118)"><circle cx="5" cy="-4" r="5" fill="#2a78d6"></circle><text x="15" y="0" font-size="11" fill="#52514e">Arm 1 (no “production scale” sentence)</text><circle cx="5" cy="12" r="5" fill="#eb6834"></circle><text x="15" y="16" font-size="11" fill="#52514e">Arm 2 (+ “production scale” sentence)</text></g><svg class="plot-d6a7b5" fill="currentColor" font-family="system-ui, sans-serif" font-size="10" text-anchor="middle" width="420" height="300" viewBox="0 0 420 300" style="background: none; color: rgb(11, 11, 11); font-family: system-ui, -apple-system, &quot;Segoe UI&quot;, sans-serif;" x="20" y="166"><style>:where(.plot-d6a7b5) {
+  --plot-background: white;
+  display: block;
+  height: auto;
+  height: intrinsic;
+  max-width: 100%;
+}
+:where(.plot-d6a7b5 text),
+:where(.plot-d6a7b5 tspan) {
+  white-space: pre;
+}</style><g aria-label="fy-axis tick label" transform="translate(9,0)"><g text-anchor="start" transform="translate(0,0)"><text y="0.32em" transform="translate(360,78)">Explicit</text></g><g text-anchor="start" transform="translate(0,129)"><text y="0.32em" transform="translate(360,78)">In-scope</text></g></g><g aria-label="y-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(0,0)"><path transform="translate(46,136)" d="M0,0L-6,0"></path><path transform="translate(46,103.77777777777777)" d="M0,0L-6,0"></path><path transform="translate(46,71.55555555555556)" d="M0,0L-6,0"></path><path transform="translate(46,39.33333333333333)" d="M0,0L-6,0"></path></g><g fill="none" stroke="currentColor" transform="translate(0,129)"><path transform="translate(46,136)" d="M0,0L-6,0"></path><path transform="translate(46,103.77777777777777)" d="M0,0L-6,0"></path><path transform="translate(46,71.55555555555556)" d="M0,0L-6,0"></path><path transform="translate(46,39.33333333333333)" d="M0,0L-6,0"></path></g></g><g aria-label="y-axis tick label" transform="translate(-9,0)"><g text-anchor="end" font-variant="tabular-nums" transform="translate(0,0)"><text y="0.32em" transform="translate(46,136)">0</text><text y="0.32em" transform="translate(46,103.77777777777777)">5</text><text y="0.32em" transform="translate(46,71.55555555555556)">10</text><text y="0.32em" transform="translate(46,39.33333333333333)">15</text></g><g text-anchor="end" font-variant="tabular-nums" transform="translate(0,129)"><text y="0.32em" transform="translate(46,136)">0</text><text y="0.32em" transform="translate(46,103.77777777777777)">5</text><text y="0.32em" transform="translate(46,71.55555555555556)">10</text><text y="0.32em" transform="translate(46,39.33333333333333)">15</text></g></g><g aria-label="y-axis label" text-anchor="start" transform="translate(-43,-17)"><text y="0.71em" transform="translate(46,20)">↑ index count</text></g><g aria-label="x-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(0,129)"><path transform="translate(79,136)" d="M0,0L0,6"></path><path transform="translate(141,136)" d="M0,0L0,6"></path><path transform="translate(203,136)" d="M0,0L0,6"></path><path transform="translate(265,136)" d="M0,0L0,6"></path><path transform="translate(327,136)" d="M0,0L0,6"></path></g></g><g aria-label="x-axis tick label" transform="translate(0,9)"><g transform="translate(0,129)"><text y="0.71em" transform="translate(79,136)">1</text><text y="0.71em" transform="translate(141,136)">2</text><text y="0.71em" transform="translate(203,136)">3</text><text y="0.71em" transform="translate(265,136)">4</text><text y="0.71em" transform="translate(327,136)">5</text></g></g><g aria-label="x-axis label" transform="translate(0,31)"><text transform="translate(203,265)">trial (run order within arm)</text></g><g aria-label="y-grid" aria-hidden="true"><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(0,0)"><line x1="46" x2="360" y1="136" y2="136"></line><line x1="46" x2="360" y1="103.77777777777777" y2="103.77777777777777"></line><line x1="46" x2="360" y1="71.55555555555556" y2="71.55555555555556"></line><line x1="46" x2="360" y1="39.33333333333333" y2="39.33333333333333"></line></g><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(0,129)"><line x1="46" x2="360" y1="136" y2="136"></line><line x1="46" x2="360" y1="103.77777777777777" y2="103.77777777777777"></line><line x1="46" x2="360" y1="71.55555555555556" y2="71.55555555555556"></line><line x1="46" x2="360" y1="39.33333333333333" y2="39.33333333333333"></line></g></g><g aria-label="frame"><rect fill="none" stroke="#c3c2b7" x="46" y="20" width="314" height="116" transform="translate(0,0)"></rect><rect fill="none" stroke="#c3c2b7" x="46" y="20" width="314" height="116" transform="translate(0,129)"></rect></g><g aria-label="dot"><g stroke="#fcfcfb" stroke-width="2" transform="translate(0,0)"><circle cx="79" cy="136" r="5" fill="#2a78d6"><title>arm1-trial1
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="141" cy="71.55555555555556" r="5" fill="#2a78d6"><title>arm1-trial2
+Explicit: 10
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="203" cy="65.11111111111111" r="5" fill="#2a78d6"><title>arm1-trial3
+Explicit: 11
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="265" cy="136" r="5" fill="#2a78d6"><title>arm1-trial4
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="327" cy="26.44444444444445" r="5" fill="#2a78d6"><title>arm1-trial5
+Explicit: 17
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="79" cy="58.66666666666667" r="5" fill="#eb6834"><title>arm2-trial1
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="141" cy="78" r="5" fill="#eb6834"><title>arm2-trial2
+Explicit: 9
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="203" cy="71.55555555555556" r="5" fill="#eb6834"><title>arm2-trial3
+Explicit: 10
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="265" cy="90.88888888888889" r="5" fill="#eb6834"><title>arm2-trial4
+Explicit: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="327" cy="58.66666666666667" r="5" fill="#eb6834"><title>arm2-trial5
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#fcfcfb" stroke-width="2" transform="translate(0,129)"><circle cx="79" cy="136" r="5" fill="#2a78d6"><title>arm1-trial1
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="141" cy="103.77777777777777" r="5" fill="#2a78d6"><title>arm1-trial2
+In-scope: 5
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="203" cy="97.33333333333334" r="5" fill="#2a78d6"><title>arm1-trial3
+In-scope: 6
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="265" cy="136" r="5" fill="#2a78d6"><title>arm1-trial4
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="327" cy="78" r="5" fill="#2a78d6"><title>arm1-trial5
+In-scope: 9
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="79" cy="90.88888888888889" r="5" fill="#eb6834"><title>arm2-trial1
+In-scope: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="141" cy="110.22222222222223" r="5" fill="#eb6834"><title>arm2-trial2
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="203" cy="103.77777777777777" r="5" fill="#eb6834"><title>arm2-trial3
+In-scope: 5
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="265" cy="110.22222222222223" r="5" fill="#eb6834"><title>arm2-trial4
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="327" cy="97.33333333333334" r="5" fill="#eb6834"><title>arm2-trial5
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle></g></g></svg></svg></div>
+    <div class="mode-dark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 486" width="460" height="486" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><rect x="0" y="0" width="460" height="486" fill="#1a1a19"></rect><text x="20" y="38" font-size="16" font-weight="600" fill="#ffffff">Index counts by trial — pilot</text><text x="20" y="56" font-size="12" fill="#c3c2b7">batch=pilot, n=5 per arm. Explicit = total minus CREATE UNIQUE</text><text x="20" y="72" font-size="12" fill="#c3c2b7">INDEX; in-scope = explicit, restricted to the two graded tables.</text><text x="20" y="88" font-size="12" fill="#c3c2b7">Arm 1 ran entirely before arm 2 — run order and arm are confounded</text><text x="20" y="104" font-size="12" fill="#c3c2b7">here (see RESULTS.md).</text><g transform="translate(20, 118)"><circle cx="5" cy="-4" r="5" fill="#3987e5"></circle><text x="15" y="0" font-size="11" fill="#c3c2b7">Arm 1 (no “production scale” sentence)</text><circle cx="5" cy="12" r="5" fill="#d95926"></circle><text x="15" y="16" font-size="11" fill="#c3c2b7">Arm 2 (+ “production scale” sentence)</text></g><svg class="plot-d6a7b5" fill="currentColor" font-family="system-ui, sans-serif" font-size="10" text-anchor="middle" width="420" height="300" viewBox="0 0 420 300" style="background: none; color: rgb(255, 255, 255); font-family: system-ui, -apple-system, &quot;Segoe UI&quot;, sans-serif;" x="20" y="166"><style>:where(.plot-d6a7b5) {
+  --plot-background: white;
+  display: block;
+  height: auto;
+  height: intrinsic;
+  max-width: 100%;
+}
+:where(.plot-d6a7b5 text),
+:where(.plot-d6a7b5 tspan) {
+  white-space: pre;
+}</style><g aria-label="fy-axis tick label" transform="translate(9,0)"><g text-anchor="start" transform="translate(0,0)"><text y="0.32em" transform="translate(360,78)">Explicit</text></g><g text-anchor="start" transform="translate(0,129)"><text y="0.32em" transform="translate(360,78)">In-scope</text></g></g><g aria-label="y-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(0,0)"><path transform="translate(46,136)" d="M0,0L-6,0"></path><path transform="translate(46,103.77777777777777)" d="M0,0L-6,0"></path><path transform="translate(46,71.55555555555556)" d="M0,0L-6,0"></path><path transform="translate(46,39.33333333333333)" d="M0,0L-6,0"></path></g><g fill="none" stroke="currentColor" transform="translate(0,129)"><path transform="translate(46,136)" d="M0,0L-6,0"></path><path transform="translate(46,103.77777777777777)" d="M0,0L-6,0"></path><path transform="translate(46,71.55555555555556)" d="M0,0L-6,0"></path><path transform="translate(46,39.33333333333333)" d="M0,0L-6,0"></path></g></g><g aria-label="y-axis tick label" transform="translate(-9,0)"><g text-anchor="end" font-variant="tabular-nums" transform="translate(0,0)"><text y="0.32em" transform="translate(46,136)">0</text><text y="0.32em" transform="translate(46,103.77777777777777)">5</text><text y="0.32em" transform="translate(46,71.55555555555556)">10</text><text y="0.32em" transform="translate(46,39.33333333333333)">15</text></g><g text-anchor="end" font-variant="tabular-nums" transform="translate(0,129)"><text y="0.32em" transform="translate(46,136)">0</text><text y="0.32em" transform="translate(46,103.77777777777777)">5</text><text y="0.32em" transform="translate(46,71.55555555555556)">10</text><text y="0.32em" transform="translate(46,39.33333333333333)">15</text></g></g><g aria-label="y-axis label" text-anchor="start" transform="translate(-43,-17)"><text y="0.71em" transform="translate(46,20)">↑ index count</text></g><g aria-label="x-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(0,129)"><path transform="translate(79,136)" d="M0,0L0,6"></path><path transform="translate(141,136)" d="M0,0L0,6"></path><path transform="translate(203,136)" d="M0,0L0,6"></path><path transform="translate(265,136)" d="M0,0L0,6"></path><path transform="translate(327,136)" d="M0,0L0,6"></path></g></g><g aria-label="x-axis tick label" transform="translate(0,9)"><g transform="translate(0,129)"><text y="0.71em" transform="translate(79,136)">1</text><text y="0.71em" transform="translate(141,136)">2</text><text y="0.71em" transform="translate(203,136)">3</text><text y="0.71em" transform="translate(265,136)">4</text><text y="0.71em" transform="translate(327,136)">5</text></g></g><g aria-label="x-axis label" transform="translate(0,31)"><text transform="translate(203,265)">trial (run order within arm)</text></g><g aria-label="y-grid" aria-hidden="true"><g stroke="#2c2c2a" stroke-opacity="0.1" transform="translate(0,0)"><line x1="46" x2="360" y1="136" y2="136"></line><line x1="46" x2="360" y1="103.77777777777777" y2="103.77777777777777"></line><line x1="46" x2="360" y1="71.55555555555556" y2="71.55555555555556"></line><line x1="46" x2="360" y1="39.33333333333333" y2="39.33333333333333"></line></g><g stroke="#2c2c2a" stroke-opacity="0.1" transform="translate(0,129)"><line x1="46" x2="360" y1="136" y2="136"></line><line x1="46" x2="360" y1="103.77777777777777" y2="103.77777777777777"></line><line x1="46" x2="360" y1="71.55555555555556" y2="71.55555555555556"></line><line x1="46" x2="360" y1="39.33333333333333" y2="39.33333333333333"></line></g></g><g aria-label="frame"><rect fill="none" stroke="#383835" x="46" y="20" width="314" height="116" transform="translate(0,0)"></rect><rect fill="none" stroke="#383835" x="46" y="20" width="314" height="116" transform="translate(0,129)"></rect></g><g aria-label="dot"><g stroke="#1a1a19" stroke-width="2" transform="translate(0,0)"><circle cx="79" cy="136" r="5" fill="#3987e5"><title>arm1-trial1
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="141" cy="71.55555555555556" r="5" fill="#3987e5"><title>arm1-trial2
+Explicit: 10
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="203" cy="65.11111111111111" r="5" fill="#3987e5"><title>arm1-trial3
+Explicit: 11
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="265" cy="136" r="5" fill="#3987e5"><title>arm1-trial4
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="327" cy="26.44444444444445" r="5" fill="#3987e5"><title>arm1-trial5
+Explicit: 17
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="79" cy="58.66666666666667" r="5" fill="#d95926"><title>arm2-trial1
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="141" cy="78" r="5" fill="#d95926"><title>arm2-trial2
+Explicit: 9
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="203" cy="71.55555555555556" r="5" fill="#d95926"><title>arm2-trial3
+Explicit: 10
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="265" cy="90.88888888888889" r="5" fill="#d95926"><title>arm2-trial4
+Explicit: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="327" cy="58.66666666666667" r="5" fill="#d95926"><title>arm2-trial5
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#1a1a19" stroke-width="2" transform="translate(0,129)"><circle cx="79" cy="136" r="5" fill="#3987e5"><title>arm1-trial1
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="141" cy="103.77777777777777" r="5" fill="#3987e5"><title>arm1-trial2
+In-scope: 5
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="203" cy="97.33333333333334" r="5" fill="#3987e5"><title>arm1-trial3
+In-scope: 6
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="265" cy="136" r="5" fill="#3987e5"><title>arm1-trial4
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="327" cy="78" r="5" fill="#3987e5"><title>arm1-trial5
+In-scope: 9
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="79" cy="90.88888888888889" r="5" fill="#d95926"><title>arm2-trial1
+In-scope: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="141" cy="110.22222222222223" r="5" fill="#d95926"><title>arm2-trial2
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="203" cy="103.77777777777777" r="5" fill="#d95926"><title>arm2-trial3
+In-scope: 5
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="265" cy="110.22222222222223" r="5" fill="#d95926"><title>arm2-trial4
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="327" cy="97.33333333333334" r="5" fill="#d95926"><title>arm2-trial5
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle></g></g></svg></svg></div>
+  </section>
+
+  <section>
+    <div class="table-caption">
+      Gradeable-only means, n printed beside every one. total_indexes (not shown here as a
+      mean) includes CREATE UNIQUE INDEX rows Prisma emits mechanically plus indexes outside
+      the two graded tables — explicit_indexes and in_scope_indexes are the measures this
+      project treats as primary.
+    </div>
+    <table class="mean-table">
+      <thead><tr><th>model</th><th>arm</th><th>n (gradeable)</th><th>mean explicit_indexes</th><th>mean in_scope_indexes</th></tr></thead>
+      <tbody><tr><td>claude-opus-4-8</td><td>arm 1</td><td>5</td><td>10.4</td><td>5</td></tr>
+<tr><td>claude-opus-4-8</td><td>arm 2</td><td>4</td><td>9</td><td>4</td></tr>
+<tr><td>gemini-3.6-flash (fast tier)</td><td>arm 1</td><td>5</td><td>0</td><td>0</td></tr>
+<tr><td>gemini-3.6-flash (fast tier)</td><td>arm 2</td><td>5</td><td>10.4</td><td>5.4</td></tr>
+<tr><td>Codex (codex-cli, self-reported GPT-5, unverified)</td><td>arm 1</td><td>5</td><td>6.2</td><td>3.6</td></tr>
+<tr><td>Codex (codex-cli, self-reported GPT-5, unverified)</td><td>arm 2</td><td>5</td><td>11</td><td>5.8</td></tr>
+<tr><td>claude-opus-5[1m] (pilot)</td><td>arm 1</td><td>5</td><td>7.6</td><td>4</td></tr>
+<tr><td>claude-opus-5[1m] (pilot)</td><td>arm 2</td><td>5</td><td>10</td><td>5.2</td></tr></tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="table-caption">
+      Every trial, both batches — the relief view for the warning color's sub-3:1 light-mode
+      contrast. "—" marks fields not meaningful for an ungradeable trial.
+    </div>
+    <table class="data-table">
+    <thead><tr><th>batch</th><th>model</th><th>run</th><th>arm</th><th>trial</th><th>gradeable</th><th>total_indexes</th><th>explicit_indexes</th><th>in_scope_indexes</th><th>composite_count</th><th>inventory_daily</th><th>adjustments</th></tr></thead>
+    <tbody><tr><td>crossmodel</td><td>claude</td><td>claude/arm1-trial1</td><td>1</td><td>1</td><td>yes</td><td>11</td><td>8</td><td>3</td><td>4</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>claude</td><td>claude/arm1-trial2</td><td>1</td><td>2</td><td>yes</td><td>18</td><td>10</td><td>4</td><td>5</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>claude</td><td>claude/arm1-trial3</td><td>1</td><td>3</td><td>yes</td><td>20</td><td>12</td><td>6</td><td>5</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>claude</td><td>claude/arm1-trial4</td><td>1</td><td>4</td><td>yes</td><td>15</td><td>12</td><td>7</td><td>2</td><td>partial</td><td>match</td></tr>
+<tr><td>crossmodel</td><td>claude</td><td>claude/arm1-trial5</td><td>1</td><td>5</td><td>yes</td><td>15</td><td>10</td><td>5</td><td>3</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>claude</td><td>claude/arm2-trial1</td><td>2</td><td>1</td><td>yes</td><td>11</td><td>7</td><td>2</td><td>3</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>claude</td><td>claude/arm2-trial2</td><td>2</td><td>2</td><td>yes</td><td>16</td><td>10</td><td>5</td><td>4</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>claude</td><td>claude/arm2-trial3</td><td>2</td><td>3</td><td>yes</td><td>12</td><td>9</td><td>4</td><td>3</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>claude</td><td>claude/arm2-trial4</td><td>2</td><td>4</td><td>no</td><td>0</td><td>—</td><td>—</td><td>0</td><td>ungradeable</td><td>ungradeable</td></tr>
+<tr><td>crossmodel</td><td>claude</td><td>claude/arm2-trial5</td><td>2</td><td>5</td><td>yes</td><td>14</td><td>10</td><td>5</td><td>5</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm1-trial1</td><td>1</td><td>1</td><td>yes</td><td>10</td><td>3</td><td>3</td><td>6</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm1-trial2</td><td>1</td><td>2</td><td>yes</td><td>10</td><td>3</td><td>3</td><td>6</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm1-trial3</td><td>1</td><td>3</td><td>yes</td><td>11</td><td>7</td><td>4</td><td>5</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm1-trial4</td><td>1</td><td>4</td><td>yes</td><td>15</td><td>9</td><td>4</td><td>6</td><td>partial</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm1-trial5</td><td>1</td><td>5</td><td>yes</td><td>13</td><td>9</td><td>4</td><td>6</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm2-trial1</td><td>2</td><td>1</td><td>yes</td><td>16</td><td>11</td><td>6</td><td>9</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm2-trial2</td><td>2</td><td>2</td><td>yes</td><td>13</td><td>9</td><td>4</td><td>6</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm2-trial3</td><td>2</td><td>3</td><td>yes</td><td>19</td><td>12</td><td>7</td><td>10</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm2-trial4</td><td>2</td><td>4</td><td>yes</td><td>17</td><td>12</td><td>6</td><td>10</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>codex</td><td>codex/arm2-trial5</td><td>2</td><td>5</td><td>yes</td><td>15</td><td>11</td><td>6</td><td>8</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm1-trial1</td><td>1</td><td>1</td><td>yes</td><td>3</td><td>0</td><td>0</td><td>1</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm1-trial2</td><td>1</td><td>2</td><td>yes</td><td>3</td><td>0</td><td>0</td><td>1</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm1-trial3</td><td>1</td><td>3</td><td>yes</td><td>2</td><td>0</td><td>0</td><td>0</td><td>missing</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm1-trial4</td><td>1</td><td>4</td><td>yes</td><td>3</td><td>0</td><td>0</td><td>1</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm1-trial5</td><td>1</td><td>5</td><td>yes</td><td>5</td><td>0</td><td>0</td><td>1</td><td>partial</td><td>missing</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm2-trial1</td><td>2</td><td>1</td><td>yes</td><td>12</td><td>9</td><td>4</td><td>5</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm2-trial2</td><td>2</td><td>2</td><td>yes</td><td>14</td><td>11</td><td>6</td><td>6</td><td>match</td><td>match</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm2-trial3</td><td>2</td><td>3</td><td>yes</td><td>16</td><td>11</td><td>6</td><td>6</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm2-trial4</td><td>2</td><td>4</td><td>yes</td><td>14</td><td>11</td><td>6</td><td>4</td><td>match</td><td>partial</td></tr>
+<tr><td>crossmodel</td><td>gemini</td><td>gemini/arm2-trial5</td><td>2</td><td>5</td><td>yes</td><td>13</td><td>10</td><td>5</td><td>5</td><td>match</td><td>partial</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm1-trial1</td><td>1</td><td>1</td><td>yes</td><td>6</td><td>0</td><td>0</td><td>1</td><td>partial</td><td>missing</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm1-trial2</td><td>1</td><td>2</td><td>yes</td><td>16</td><td>10</td><td>5</td><td>3</td><td>match</td><td>partial</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm1-trial3</td><td>1</td><td>3</td><td>yes</td><td>17</td><td>11</td><td>6</td><td>4</td><td>match</td><td>partial</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm1-trial4</td><td>1</td><td>4</td><td>yes</td><td>6</td><td>0</td><td>0</td><td>1</td><td>partial</td><td>missing</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm1-trial5</td><td>1</td><td>5</td><td>yes</td><td>25</td><td>17</td><td>9</td><td>9</td><td>match</td><td>partial</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm2-trial1</td><td>2</td><td>1</td><td>yes</td><td>21</td><td>12</td><td>7</td><td>8</td><td>wrong-order</td><td>partial</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm2-trial2</td><td>2</td><td>2</td><td>yes</td><td>17</td><td>9</td><td>4</td><td>5</td><td>partial</td><td>partial</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm2-trial3</td><td>2</td><td>3</td><td>yes</td><td>19</td><td>10</td><td>5</td><td>7</td><td>match</td><td>partial</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm2-trial4</td><td>2</td><td>4</td><td>yes</td><td>15</td><td>7</td><td>4</td><td>7</td><td>partial</td><td>partial</td></tr>
+<tr><td>pilot</td><td>claude-opus-5[1m]</td><td>arm2-trial5</td><td>2</td><td>5</td><td>yes</td><td>19</td><td>12</td><td>6</td><td>9</td><td>match</td><td>partial</td></tr></tbody>
+  </table>
+  </section>
+
+  <footer>
+    experiments/indexing/metrics.duckdb · batch=pilot (10 trials) and batch=crossmodel (30 trials) ·
+    see experiments/indexing/RESULTS.md for full caveats and confounds.
+  </footer>
+</main>
+
+<div id="tooltip" role="tooltip"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var root = document.documentElement;
+  var buttons = document.querySelectorAll("[data-theme-btn]");
+  buttons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var choice = btn.getAttribute("data-theme-btn");
+      if (choice === "system") {
+        root.removeAttribute("data-theme");
+      } else {
+        root.setAttribute("data-theme", choice);
+      }
+      buttons.forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b === btn));
+      });
+    });
+  });
+
+  var tooltip = document.getElementById("tooltip");
+
+  function showTooltip(evt, text) {
+    tooltip.textContent = "";
+    var lines = text.split("\n");
+    lines.forEach(function (line, i) {
+      var div = document.createElement("div");
+      if (i === 1) div.className = "value";
+      div.textContent = line;
+      tooltip.appendChild(div);
+    });
+    tooltip.style.display = "block";
+    positionTooltip(evt);
+  }
+
+  function positionTooltip(evt) {
+    var x = evt.clientX + 14;
+    var y = evt.clientY + 14;
+    tooltip.style.left = x + "px";
+    tooltip.style.top = y + "px";
+  }
+
+  function hideTooltip() {
+    tooltip.style.display = "none";
+  }
+
+  document.querySelectorAll("section.card").forEach(function (card) {
+    card.addEventListener("pointermove", function (evt) {
+      var target = evt.target;
+      if (target && target.tagName === "title") return;
+      var titled = target && target.closest ? target.closest("[aria-label], title") : null;
+      var withTitle = target && target.closest ? target.closest("g") : null;
+      var titleEl = withTitle ? withTitle.querySelector("title") : null;
+      if (titleEl && titleEl.textContent) {
+        showTooltip(evt, titleEl.textContent);
+      } else if (target && target.querySelector && target.querySelector("title")) {
+        showTooltip(evt, target.querySelector("title").textContent);
+      } else {
+        hideTooltip();
+      }
+    });
+    card.addEventListener("pointerleave", hideTooltip);
+  });
+})();
+</script>
+</body>
+</html>

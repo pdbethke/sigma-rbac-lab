@@ -5,11 +5,14 @@
   "scripts": {
     "test": "vitest run",
     "scan": "node --experimental-strip-types .claude/skills/performance/scanNPlusOne.ts app",
-    "duckdb": "node --experimental-strip-types experiments/indexing/duckdbQuery.ts"
+    "duckdb": "node --experimental-strip-types experiments/indexing/duckdbQuery.ts",
+    "charts": "node --experimental-strip-types charts/renderCharts.ts"
   },
   "devDependencies": {
     "@duckdb/node-api": "1.5.5-r.3",
+    "@observablehq/plot": "^0.6.17",
     "@typescript-eslint/typescript-estree": "^8.0.0",
+    "jsdom": "^30.0.1",
     "prisma": "^6.0.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"

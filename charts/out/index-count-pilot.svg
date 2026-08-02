@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 486" width="460" height="486" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"><rect x="0" y="0" width="460" height="486" fill="#fcfcfb"></rect><text x="20" y="38" font-size="16" font-weight="600" fill="#0b0b0b">Index counts by trial — pilot</text><text x="20" y="56" font-size="12" fill="#52514e">batch=pilot, n=5 per arm. Explicit = total minus CREATE UNIQUE</text><text x="20" y="72" font-size="12" fill="#52514e">INDEX; in-scope = explicit, restricted to the two graded tables.</text><text x="20" y="88" font-size="12" fill="#52514e">Arm 1 ran entirely before arm 2 — run order and arm are confounded</text><text x="20" y="104" font-size="12" fill="#52514e">here (see RESULTS.md).</text><g transform="translate(20, 118)"><circle cx="5" cy="-4" r="5" fill="#2a78d6"></circle><text x="15" y="0" font-size="11" fill="#52514e">Arm 1 (no “production scale” sentence)</text><circle cx="5" cy="12" r="5" fill="#eb6834"></circle><text x="15" y="16" font-size="11" fill="#52514e">Arm 2 (+ “production scale” sentence)</text></g><svg class="plot-d6a7b5" fill="currentColor" font-family="system-ui, sans-serif" font-size="10" text-anchor="middle" width="420" height="300" viewBox="0 0 420 300" style="background: none; color: rgb(11, 11, 11); font-family: system-ui, -apple-system, &quot;Segoe UI&quot;, sans-serif;" x="20" y="166"><style>:where(.plot-d6a7b5) {
+  --plot-background: white;
+  display: block;
+  height: auto;
+  height: intrinsic;
+  max-width: 100%;
+}
+:where(.plot-d6a7b5 text),
+:where(.plot-d6a7b5 tspan) {
+  white-space: pre;
+}</style><g aria-label="fy-axis tick label" transform="translate(9,0)"><g text-anchor="start" transform="translate(0,0)"><text y="0.32em" transform="translate(360,78)">Explicit</text></g><g text-anchor="start" transform="translate(0,129)"><text y="0.32em" transform="translate(360,78)">In-scope</text></g></g><g aria-label="y-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(0,0)"><path transform="translate(46,136)" d="M0,0L-6,0"></path><path transform="translate(46,103.77777777777777)" d="M0,0L-6,0"></path><path transform="translate(46,71.55555555555556)" d="M0,0L-6,0"></path><path transform="translate(46,39.33333333333333)" d="M0,0L-6,0"></path></g><g fill="none" stroke="currentColor" transform="translate(0,129)"><path transform="translate(46,136)" d="M0,0L-6,0"></path><path transform="translate(46,103.77777777777777)" d="M0,0L-6,0"></path><path transform="translate(46,71.55555555555556)" d="M0,0L-6,0"></path><path transform="translate(46,39.33333333333333)" d="M0,0L-6,0"></path></g></g><g aria-label="y-axis tick label" transform="translate(-9,0)"><g text-anchor="end" font-variant="tabular-nums" transform="translate(0,0)"><text y="0.32em" transform="translate(46,136)">0</text><text y="0.32em" transform="translate(46,103.77777777777777)">5</text><text y="0.32em" transform="translate(46,71.55555555555556)">10</text><text y="0.32em" transform="translate(46,39.33333333333333)">15</text></g><g text-anchor="end" font-variant="tabular-nums" transform="translate(0,129)"><text y="0.32em" transform="translate(46,136)">0</text><text y="0.32em" transform="translate(46,103.77777777777777)">5</text><text y="0.32em" transform="translate(46,71.55555555555556)">10</text><text y="0.32em" transform="translate(46,39.33333333333333)">15</text></g></g><g aria-label="y-axis label" text-anchor="start" transform="translate(-43,-17)"><text y="0.71em" transform="translate(46,20)">↑ index count</text></g><g aria-label="x-axis tick" aria-hidden="true"><g fill="none" stroke="currentColor" transform="translate(0,129)"><path transform="translate(79,136)" d="M0,0L0,6"></path><path transform="translate(141,136)" d="M0,0L0,6"></path><path transform="translate(203,136)" d="M0,0L0,6"></path><path transform="translate(265,136)" d="M0,0L0,6"></path><path transform="translate(327,136)" d="M0,0L0,6"></path></g></g><g aria-label="x-axis tick label" transform="translate(0,9)"><g transform="translate(0,129)"><text y="0.71em" transform="translate(79,136)">1</text><text y="0.71em" transform="translate(141,136)">2</text><text y="0.71em" transform="translate(203,136)">3</text><text y="0.71em" transform="translate(265,136)">4</text><text y="0.71em" transform="translate(327,136)">5</text></g></g><g aria-label="x-axis label" transform="translate(0,31)"><text transform="translate(203,265)">trial (run order within arm)</text></g><g aria-label="y-grid" aria-hidden="true"><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(0,0)"><line x1="46" x2="360" y1="136" y2="136"></line><line x1="46" x2="360" y1="103.77777777777777" y2="103.77777777777777"></line><line x1="46" x2="360" y1="71.55555555555556" y2="71.55555555555556"></line><line x1="46" x2="360" y1="39.33333333333333" y2="39.33333333333333"></line></g><g stroke="#e1e0d9" stroke-opacity="0.1" transform="translate(0,129)"><line x1="46" x2="360" y1="136" y2="136"></line><line x1="46" x2="360" y1="103.77777777777777" y2="103.77777777777777"></line><line x1="46" x2="360" y1="71.55555555555556" y2="71.55555555555556"></line><line x1="46" x2="360" y1="39.33333333333333" y2="39.33333333333333"></line></g></g><g aria-label="frame"><rect fill="none" stroke="#c3c2b7" x="46" y="20" width="314" height="116" transform="translate(0,0)"></rect><rect fill="none" stroke="#c3c2b7" x="46" y="20" width="314" height="116" transform="translate(0,129)"></rect></g><g aria-label="dot"><g stroke="#fcfcfb" stroke-width="2" transform="translate(0,0)"><circle cx="79" cy="136" r="5" fill="#2a78d6"><title>arm1-trial1
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="141" cy="71.55555555555556" r="5" fill="#2a78d6"><title>arm1-trial2
+Explicit: 10
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="203" cy="65.11111111111111" r="5" fill="#2a78d6"><title>arm1-trial3
+Explicit: 11
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="265" cy="136" r="5" fill="#2a78d6"><title>arm1-trial4
+Explicit: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="327" cy="26.44444444444445" r="5" fill="#2a78d6"><title>arm1-trial5
+Explicit: 17
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="79" cy="58.66666666666667" r="5" fill="#eb6834"><title>arm2-trial1
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="141" cy="78" r="5" fill="#eb6834"><title>arm2-trial2
+Explicit: 9
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="203" cy="71.55555555555556" r="5" fill="#eb6834"><title>arm2-trial3
+Explicit: 10
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="265" cy="90.88888888888889" r="5" fill="#eb6834"><title>arm2-trial4
+Explicit: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="327" cy="58.66666666666667" r="5" fill="#eb6834"><title>arm2-trial5
+Explicit: 12
+Arm 2 (+ “production scale” sentence)</title></circle></g><g stroke="#fcfcfb" stroke-width="2" transform="translate(0,129)"><circle cx="79" cy="136" r="5" fill="#2a78d6"><title>arm1-trial1
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="141" cy="103.77777777777777" r="5" fill="#2a78d6"><title>arm1-trial2
+In-scope: 5
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="203" cy="97.33333333333334" r="5" fill="#2a78d6"><title>arm1-trial3
+In-scope: 6
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="265" cy="136" r="5" fill="#2a78d6"><title>arm1-trial4
+In-scope: 0
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="327" cy="78" r="5" fill="#2a78d6"><title>arm1-trial5
+In-scope: 9
+Arm 1 (no “production scale” sentence)</title></circle><circle cx="79" cy="90.88888888888889" r="5" fill="#eb6834"><title>arm2-trial1
+In-scope: 7
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="141" cy="110.22222222222223" r="5" fill="#eb6834"><title>arm2-trial2
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="203" cy="103.77777777777777" r="5" fill="#eb6834"><title>arm2-trial3
+In-scope: 5
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="265" cy="110.22222222222223" r="5" fill="#eb6834"><title>arm2-trial4
+In-scope: 4
+Arm 2 (+ “production scale” sentence)</title></circle><circle cx="327" cy="97.33333333333334" r="5" fill="#eb6834"><title>arm2-trial5
+In-scope: 6
+Arm 2 (+ “production scale” sentence)</title></circle></g></g></svg></svg>
