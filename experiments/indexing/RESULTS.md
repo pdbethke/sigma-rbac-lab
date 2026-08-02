@@ -1,15 +1,28 @@
 # Results: the index-count test
 
-**Finding, one sentence:** across 10 gradeable trials (5 per arm, 0 ungradeable), 8 of
-10 sessions declared explicit, non-unique indexes on `InventoryDaily` and/or
-`InventoryAdjustment` that reason about the prompt's access patterns without being
-told the word "performance," "index," or "slow" — but 2 of 10 (both arm 1) declared
-**zero** explicit indexes, and their transcripts never mention indexing at all;
-`total_indexes` (the count previously reported as 14.0 → 18.2) includes
-`CREATE UNIQUE INDEX` rows Prisma emits mechanically from `@unique`/`@@unique` and
-indexes on tables outside the oracle's graded pair, and overstates the gap between
+**This section covers the pilot only: one model, `claude-opus-5[1m]`, n=10 gradeable
+trials (5 per arm), stored in `metrics.duckdb` as `batch = 'pilot'`.** A second,
+interleaved 30-trial run comparing three models — `claude-opus-4-8`,
+`gemini-3.6-flash`, and Codex under ChatGPT-account auth — exists in the same database
+as `batch = 'crossmodel'` and is reported separately, in "Cross-model replication
+(Task 14)" below. **The two batches are never pooled** — every query in this file
+filters on `batch` explicitly for exactly that reason; a query that omits the filter
+mixes a different model under a different (non-interleaved) design into these numbers
+and will not reproduce the table below.
+
+**Finding, one sentence:** across 10 gradeable `claude-opus-5[1m]` pilot trials (5 per
+arm, 0 ungradeable), 8 of 10 sessions declared explicit, non-unique indexes on
+`InventoryDaily` and/or `InventoryAdjustment` that reason about the prompt's access
+patterns without being told the word "performance," "index," or "slow" — but 2 of 10
+(both arm 1) declared **zero** explicit indexes, and their transcripts never mention
+indexing at all; `total_indexes` (the count previously reported as 14.0 → 18.2)
+includes `CREATE UNIQUE INDEX` rows Prisma emits mechanically from `@unique`/`@@unique`
+and indexes on tables outside the oracle's graded pair, and overstates the gap between
 arms by roughly 3.5x once those are excluded (raw: 14.0 → 18.2; explicit-only:
-7.6 → 10.0; in-scope-only: 4.0 → 5.2 — all three are reported below, not just one).
+7.6 → 10.0; in-scope-only: 4.0 → 5.2 — all three are reported below, not just one; n=5
+per arm throughout, restated at every mean since this file was found to have a table
+elsewhere reporting a mean with an ungradeable trial silently counted as a zero in the
+denominator — see the Task 14 section for that correction).
 
 ## CAVEATS THAT MATTER MORE THAN ANY NUMBER BELOW
 
@@ -93,6 +106,14 @@ Query run via `npm run duckdb -- experiments/indexing/metrics.duckdb "<sql>"` ag
 `experiments/indexing/metrics.duckdb`, output saved verbatim to
 `experiments/indexing/summary.txt`:
 
+**`WHERE batch = 'pilot'` is required** — `metrics.duckdb`'s `trials` table now also
+holds the Task 14 cross-model run (`batch = 'crossmodel'`); omitting the filter pools a
+different model under a different, non-interleaved design into these numbers and will
+not reproduce the table below. Every `AVG` below is also `FILTER (WHERE gradeable)`,
+so an ungradeable trial (none exist in this pilot batch, but the pattern is kept
+consistent with the Task 14 section) cannot silently count as a zero in the
+denominator.
+
 ```sql
 SELECT arm,
        COUNT(*) FILTER (WHERE gradeable) AS n,
@@ -101,11 +122,11 @@ SELECT arm,
        SUM(CASE WHEN inventory_daily = 'partial' THEN 1 ELSE 0 END) AS partial,
        SUM(CASE WHEN inventory_daily = 'wrong-order' THEN 1 ELSE 0 END) AS wrong_order,
        SUM(CASE WHEN inventory_daily = 'missing' THEN 1 ELSE 0 END) AS missing,
-       ROUND(AVG(total_indexes), 2) AS avg_total_indexes,
-       ROUND(AVG(explicit_indexes), 2) AS avg_explicit_indexes,
-       ROUND(AVG(in_scope_indexes), 2) AS avg_in_scope_indexes,
+       ROUND(AVG(total_indexes) FILTER (WHERE gradeable), 2) AS avg_total_indexes,
+       ROUND(AVG(explicit_indexes) FILTER (WHERE gradeable), 2) AS avg_explicit_indexes,
+       ROUND(AVG(in_scope_indexes) FILTER (WHERE gradeable), 2) AS avg_in_scope_indexes,
        SUM(CASE WHEN explicit_indexes = 0 THEN 1 ELSE 0 END) AS trials_with_zero_explicit
-FROM trials GROUP BY arm ORDER BY arm;
+FROM trials WHERE batch = 'pilot' GROUP BY arm ORDER BY arm;
 ```
 
 ```
@@ -332,9 +353,112 @@ npm run duckdb -- experiments/indexing/metrics.duckdb "
   SELECT arm,
          COUNT(*) FILTER (WHERE gradeable) AS n,
          COUNT(*) FILTER (WHERE NOT gradeable) AS ungradeable,
-         ROUND(AVG(total_indexes), 2) AS avg_total_indexes,
-         ROUND(AVG(explicit_indexes), 2) AS avg_explicit_indexes,
-         ROUND(AVG(in_scope_indexes), 2) AS avg_in_scope_indexes
-  FROM trials GROUP BY arm ORDER BY arm;
+         ROUND(AVG(total_indexes) FILTER (WHERE gradeable), 2) AS avg_total_indexes,
+         ROUND(AVG(explicit_indexes) FILTER (WHERE gradeable), 2) AS avg_explicit_indexes,
+         ROUND(AVG(in_scope_indexes) FILTER (WHERE gradeable), 2) AS avg_in_scope_indexes
+  FROM trials WHERE batch = 'pilot' GROUP BY arm ORDER BY arm;
 "
 ```
+
+`WHERE batch = 'pilot'` is required for the reason stated above — `tally.ts`'s own
+`recordMetrics()` only ever writes `batch = 'pilot'` rows when re-run against a fresh
+`trials` table (it does not know about `batch = 'crossmodel'`), but this file's copy of
+the query must filter explicitly since it runs against the *shared* `metrics.duckdb`
+that also holds the Task 14 data.
+
+## Cross-model replication (Task 14) — Claude, Gemini, Codex
+
+**A second, separate, interleaved run** compares three models on the identical prompt
+pair used above: `claude-opus-4-8`, `gemini-3.6-flash`, and Codex under a
+ChatGPT-account entitlement. 30 trials (3 models x 2 arms x 5 trials), stored in the
+same `metrics.duckdb` `trials` table as `batch = 'crossmodel'` — **never pooled with
+the pilot's 10 `batch = 'pilot'` rows above**, both because it is a different model
+and because this run is genuinely interleaved (claude/arm1/1, gemini/arm1/1,
+codex/arm1/1, claude/arm2/1, ...) while the pilot ran all of arm 1 before all of arm 2.
+`grade()`, `countIndexes()`, `extractDdl()`, and `parseIndexes()` are byte-identical to
+the pilot's; prompts are byte-identical across all three models.
+
+**Tier caveat, stated once here and not repeated as a hedge below:** `claude-opus-4-8`
+and Codex's underlying model (self-reported "GPT-5" inside its own transcript — **not
+independently verified**, and this project does not treat a model's self-report as
+evidence; see the provenance note below) are frontier-tier; `gemini-3.6-flash` is a
+fast tier. Any gap involving Gemini in this section confounds model family with model
+tier and cannot support a claim of the form "Claude/Codex is better than Gemini."
+
+**Codex provenance, stated once here and not repeated as a hedge below:** recorded in
+`metrics.duckdb`'s `model_version` column as exactly `codex-cli 0.142.5 default under
+ChatGPT-account auth; underlying model self-reported as GPT-5, not independently
+verified` — never a bare "GPT-5." No `-m`/model flag was passed to Codex; this
+machine's ChatGPT-account entitlement rejects every explicit model id with a 400, so
+only the CLI's default is exercised here.
+
+### n, gradeable, ungradeable
+
+| model | n attempted | n gradeable | ungradeable | reason |
+| --- | --- | --- | --- | --- |
+| `claude-opus-4-8` | 10 | 9 | 1 | `arm2-trial4`: CLI exited 0, but the session proposed a design and asked a clarifying question instead of writing any files — no `prisma/schema.prisma` anywhere in the trial directory. Not a crash; a real failure mode of a one-shot, non-interactive invocation with no second turn to answer on. |
+| `gemini-3.6-flash` | 10 | 10 | 0 | — |
+| Codex | 10 | 10 | 0 | — |
+
+### Index counts — every mean stated beside its n
+
+**Every mean below is computed only over that row's gradeable trials
+(`AVG(...) FILTER (WHERE gradeable)`), never over all 5 attempted.** This matters
+concretely for `claude-opus-4-8` arm 2, n=4 (not 5): the naive query
+`AVG(explicit_indexes)` with no gradeable filter silently counts the one ungradeable
+trial's stored `0` as a real data point in a denominator of 5 and returns **7.2**
+explicit / **3.2** in-scope — both wrong. The correct, gradeable-only figures are
+**9.0** explicit / **4.0** in-scope, n=4.
+
+| model | arm | n gradeable | avg total_indexes | avg explicit_indexes | avg in_scope_indexes |
+| --- | --- | --- | --- | --- | --- |
+| `claude-opus-4-8` | 1 | 5 | 15.8 | 10.4 | 5.0 |
+| `claude-opus-4-8` | 2 | **4** | 13.25 | **9.0** | **4.0** |
+| `gemini-3.6-flash` | 1 | 5 | 3.2 | 0.0 | 0.0 |
+| `gemini-3.6-flash` | 2 | 5 | 13.8 | 10.4 | 5.4 |
+| Codex | 1 | 5 | 11.8 | 6.2 | 3.6 |
+| Codex | 2 | 5 | 16.0 | 11.0 | 5.8 |
+
+**`claude-opus-4-8`'s arm effect is reversed from every other model in this file**
+(arm 1 higher than arm 2: 10.4 → 9.0 explicit, 5.0 → 4.0 in-scope) — opposite of the
+pilot's `claude-opus-5[1m]` (7.6 → 10.0) and of both `gemini-3.6-flash` (0.0 → 10.4) and
+Codex (6.2 → 11.0) in this same run. **This is explicitly not a finding at n=4-5 per
+arm** — it is as consistent with one trial's placement as with any real effect, and is
+reported here only so it isn't mistaken for silence rather than a checked, reversed
+result.
+
+**`gemini-3.6-flash` is 5 of 5 zero-explicit in arm 1 and 5 of 5 non-zero (9-12
+explicit) in arm 2** — the starkest split in either run, and because this run is
+genuinely interleaved, it is not subject to the pilot's time-of-run confound. Still
+n=5 per arm, one schema, one prompt: a strong correlational signal in this one run, not
+proof the "production scale" sentence causes the behavior.
+
+**Codex's arm-1 mean (6.2) is not a clean shift — it rests on 2 of 5 near-zero
+trials.** Codex arm-1 `explicit_indexes` by trial order: 3, 3, 7, 9, 9. Two trials
+declared almost nothing (3 each, both scoring `partial`/`missing` or worse on the
+graded tables) while the other three were comparable to arm 2. Reporting only the mean
+(6.2) obscures that this is a bimodal split within arm 1, not five trials clustered
+near the average.
+
+### Reasoning visibility — an observation about the CLIs' transcripts, not the models
+
+**Claude's CLI surfaced index reasoning in prose in every gradeable trial** (0 of 9
+gradeable trials had `explicit_indexes = 0`) — an observation about what
+`claude`'s `-p` transcript output shows, not a comparative claim about what the
+underlying models "considered." Codex declared comparable index *counts* to Claude in
+many trials, but its transcripts (~60x larger, ~154 KB vs. ~2.5 KB average) carry
+almost no visible natural-language justification for column choices — this may be a
+logging/verbosity difference between the CLIs rather than a difference in what Codex's
+underlying model reasoned through, and is reported as a transcript-visibility fact, not
+as "Claude reasoned better than Codex."
+
+### What this section supports and does not
+
+Same limits as the pilot, plus: this measures **these three CLI tools as invoked
+here** — one prompt each, no retries, the exact flags in the Task 14 brief — not the
+three models in isolation, since scaffolding, tool permissions, verbosity, and even
+whether the CLI runs `npm install` at all (Codex never did; Claude and Gemini always
+did) differ by tool. No causal claim about the "production scale" sentence is
+supported for any model at n=5/cell, even under this interleaved design. Full detail,
+every per-trial row, and verbatim transcript quotes are in the Task 14 workspace
+report (not committed to this repo — see that report for the file path).
