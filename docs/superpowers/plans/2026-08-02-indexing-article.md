@@ -1745,3 +1745,49 @@ Invocation (note `</dev/null` — without it the CLI blocks reading stdin, and `
 **Codex's model provenance is weaker than the other two, and this must be disclosed in the results.** Claude and Gemini are pinned to exact ids that echo back verifiably. Codex is not: verified 2026-08-02, this machine's ChatGPT-account entitlement rejects every explicit `-m` value tried (`gpt-5`, `gpt-5-codex`, `gpt-5.1-codex`) with "not supported when using Codex with a ChatGPT account", so only the CLI default is usable. The session log records only an internal `codex-auto-review` slug, and the model self-reports as "GPT-5" — a self-report, which is not evidence by this project's own standard. Record it as "codex-cli 0.142.5 default under ChatGPT-account auth; underlying model self-reported as GPT-5, not independently verified" and never as a bare "GPT-5" column.
 
 The CLI does validate model ids — an invented one is rejected with a 400 — so the rejections above are real entitlement limits, not typos.
+
+---
+
+### Task 15: The drift experiment — does the index set survive incremental additions?
+
+Added 2026-08-02, after the cross-model run measured **origination** and found agents mostly competent at it: 8 of 10 declared composite indexes unprompted, and zero N+1s appeared in page-serving code. That is not what practitioners report. The user's own experience across many projects is that asking an agent to find N+1 patterns routinely turns them up.
+
+Both are consistent, because Task 14 tested the easy case: a greenfield schema with **all four queries supplied in the same prompt**, written once, in a single session. The access pattern was given, not discovered, and nothing was ever edited afterwards. Real work accumulates — features get added across sessions, and nobody re-derives the index set.
+
+**This task tests accumulation, which is where the hypothesis most likely holds.**
+
+**The design is two-arm, and the arms are the mechanism under test:**
+
+    arm A  one continuous session performs every increment (context retained)
+    arm B  a FRESH session performs each increment (context lost, handoff simulated)
+
+If B degrades relative to A, the loss-of-context mechanism is demonstrated rather than asserted — and the `SessionStart`/`compact` re-scan stops being a plausible-sounding prescription and becomes a targeted fix for a measured failure.
+
+- [ ] **Step 1: Pre-register the expected index for each increment, BEFORE running anything**
+
+Four or five feature requests, each introducing a genuinely new access pattern, described in business terms with no performance vocabulary. For example: adjustments made by a given user over a date range (wants `(adjusted_by, adjusted_at)`); low-stock products by brand within a region; a product's price history across stores.
+
+For each increment, write down in `experiments/drift/EXPECTED.md` the index a human who knew the pattern would declare, and commit it **before the first session runs**. This is the same discipline as fixing `grade()` before seeing data — it makes post-hoc rationalisation impossible.
+
+- [ ] **Step 2: Establish the baseline**
+
+Start each trial from an identical known-good project (a committed copy of a Task 14 trial that graded well and has no N+1). Record its index set and scanner output as increment 0.
+
+- [ ] **Step 3: Run the increments, serially and interleaved by arm**
+
+One increment at a time. Arm A continues its session; arm B starts fresh with only the repository as context — no transcript, no memory. Both receive byte-identical increment prompts.
+
+- [ ] **Step 4: Measure two things after every increment, not just at the end**
+
+1. **Did the index set change?** Extract DDL, diff against the previous increment, and compare to the pre-registered expectation. Three outcomes: declared the expected index, declared something else, declared nothing.
+2. **Was an N+1 introduced?** Run the scanner and judge every candidate by hand. Critically, note whether any N+1 appears in code that was **correct at a previous increment** — an N+1 introduced by a later edit is the exact failure mode Task 14 could not produce and the one practitioners report.
+
+- [ ] **Step 5: Report per increment, per arm, with the trajectory visible**
+
+The interesting shape is not a total; it is whether the index set stops being revisited as increments accumulate, and whether arm B stops sooner than arm A. Report increment-by-increment so a reader can see drift rather than an average that hides it.
+
+- [ ] **Step 6: State what it does not support**
+
+One domain, one baseline project, one model unless extended. And note the obvious limit: a fresh session with the repository available is not the same as a compacted session that has partial context — arm B is the harsher case.
+
+**If drift does not appear, report that too.** It would mean the fundamentals survive accumulation better than practitioners expect, which contradicts widely held belief and is worth more than a confirmation.
