@@ -1,0 +1,23 @@
+Everything works. All four pages verified against seeded data.
+
+## Summary
+
+Built a TypeScript + Prisma + SQLite retail-inventory project in the current directory. Typecheck passes, migration created the DB, and the demo confirms each query returns correct results.
+
+**`prisma/schema.prisma`** — all eight models:
+- `Store`, `ProductType` → `ProductFamily` → `ProductLine`, `Brand`, `Product` (belongs to a line + a brand), `InventoryDaily`, `InventoryAdjustment`.
+- `InventoryDaily` has a `@@unique([snapshotDate, storeId, productId])` (one row per date/store/product) plus indexes on `[storeId, snapshotDate]`, `snapshotDate`, and `isLowStock` to back the queries.
+
+**`src/queries.ts`** — one exported function per page, each taking a `PrismaClient` and returning a typed row shape:
+1. `getStoreCurrentInventory(prisma, storeId)` — resolves the store's latest snapshot date, then returns product name, brand, family, and units on hand.
+2. `getRegionLowStock(prisma, region)` — low-stock products across a region, returning store name / product name / units on hand. Defaults to each store's *latest* snapshot (so the page shows "currently low"); pass `{ allDates: true }` for full history.
+3. `getProductAdjustmentHistory(prisma, storeId, productId)` — adjustments newest-first, including `adjustedBy` (who made each one).
+4. `getRegionInventorySummary(prisma, region, snapshotDate)` — total inventory value per store on a date, via a grouped SUM.
+
+Also included so the work is runnable/verifiable: `package.json`, `tsconfig.json`, `.env` (`DATABASE_URL="file:./dev.db"`), a deterministic `src/seed.ts`, and `src/demo.ts` (the output above).
+
+A couple of interpretive decisions worth flagging:
+- **"Latest snapshot date" is resolved per-store**, not globally — so a store that didn't report yesterday still shows its most recent real snapshot.
+- **Page 2 defaults to current low-stock** rather than every historical flag; the `allDates` flag covers the other reading if that's what the page actually wants. Let me know if either should flip.
+
+One note on process: your `superpowers:brainstorming` skill nominally fires on "let's build X," but since you handed over a fully-specified schema and query list, I read this as a spec-execution task and implemented directly rather than re-opening design questions. Say the word if you'd rather I run requirements through brainstorming first next time.

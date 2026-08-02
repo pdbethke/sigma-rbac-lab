@@ -1,0 +1,34 @@
+Everything is built and verified. Here's what's in place.
+
+## Files
+- **`prisma/schema.prisma`** — all 8 models with relations
+- **`src/queries.ts`** — one exported function per page
+- **`package.json`**, **`tsconfig.json`**, **`.env`**, **`.gitignore`**
+
+## Verification (not just assertions)
+- `prisma validate` → schema valid; client generated; `db push` created `dev.db`
+- `tsc --noEmit` → **queries typecheck clean** against the generated client
+- `EXPLAIN QUERY PLAN` confirms the hot queries use indexes, **no table scans**:
+  - Q1 → `SEARCH ... USING INDEX InventoryDaily_storeId_snapshotDate_idx`
+  - Q4 → `SEARCH ... USING INDEX ...snapshotDate_storeId_productId_key`
+  - Q3 → `SEARCH ... USING INDEX ...storeId_productId_adjustedAt` (the index also satisfies the `ORDER BY adjustedAt`, so no separate sort)
+
+## The functions
+| Page | Function |
+|---|---|
+| 1. Store's current inventory | `getStoreCurrentInventory(storeId)` → product/brand/family/unitsOnHand on the store's latest snapshot |
+| 2. Region low stock | `getRegionLowStock(region)` → store/product/unitsOnHand, low-stock on the latest snapshot |
+| 3. Adjustment history | `getProductAdjustmentHistory(storeId, productId)` → who + detail, newest first |
+| 4. Regional summary | `getRegionalSummary(region, snapshotDate)` → total inventory value per store (DB-side `groupBy _sum`) |
+
+## The decision that matters at your scale
+`InventoryDaily` is the giant write-heavy table (stores × products × days). Rather than one index per query, I reused composite prefixes so **three indexes cover all four pages** and the daily bulk load stays cheap:
+- `@@unique([snapshotDate, storeId, productId])` — natural key *and* serves date-scoped Q2/Q4
+- `@@index([storeId, snapshotDate])` — serves Q1 and Q2's per-store lookup
+- `@@index([productId])` — FK join safety
+
+A couple of things I decided rather than ask about, flag if you'd want them different:
+- **Q1/Q2 use the *latest* snapshot** ("current inventory"). Q1 uses the latest date *for that store*; Q2 uses the global latest date.
+- **Money is `Float`** — SQLite has no real decimal type, and Prisma's `Decimal` maps to it there anyway. If exact cents ever matter, store integer cents instead.
+
+To run migrations for real production history instead of `db push`, use `npx prisma migrate dev`.

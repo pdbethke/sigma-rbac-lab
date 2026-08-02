@@ -1,0 +1,40 @@
+Everything is built and verified. Here's what I delivered.
+
+## Files
+
+- **`prisma/schema.prisma`** — all eight models with proper relations, plus indexes tuned to the four pages.
+- **`src/queries.ts`** — one exported function per page, each fully typed with a return-row interface.
+- `package.json`, `tsconfig.json`, `.env` (`DATABASE_URL="file:./dev.db"`), `.gitignore`.
+
+## Verification (not just claims)
+
+- `prisma generate` → client generated ✔
+- `tsc --noEmit` → exit 0, no type errors ✔
+- `prisma db push` → schema is valid SQL, database created ✔
+- Queried `sqlite_master` — all 11 indexes exist on disk (listed above) ✔
+
+## The functions
+
+| Page | Function | Signature |
+|---|---|---|
+| 1 | `getStoreCurrentInventory` | `(client, storeId)` → product/brand/family/units on the store's latest snapshot |
+| 2 | `getLowStockByRegion` | `(client, region)` → store, product, units for every low-stock row in the region |
+| 3 | `getProductAdjustmentHistory` | `(client, storeId, productId)` → who adjusted it + detail, newest first |
+| 4 | `getRegionalInventoryValue` | `(client, region, snapshotDate)` → total inventory value per store |
+
+## Indexing decisions (the point of this)
+
+Since SQLite doesn't auto-index foreign keys, every join/filter column is indexed explicitly, and composites are ordered **equality-columns-first, range/sort-column-last** to match each page's access path:
+
+- `InventoryDaily @@index([storeId, snapshotDate])` — page 1's "max snapshot date for a store, then read that store+date".
+- `@@unique([snapshotDate, storeId, productId])` — the natural key, and it doubles as page 4's index because `snapshotDate` leads it.
+- `@@index([storeId, isLowStock])` — page 2's low-stock filter after the region's stores are resolved.
+- `InventoryAdjustment @@index([storeId, productId, adjustedAt])` — page 3's exact filter + sort.
+- `Store @@index([region])` for pages 2 and 4; FK indexes on `Product`, `ProductFamily`, `ProductLine` for the hierarchy joins.
+
+## Two judgment calls worth flagging
+
+- **Page 1 "latest snapshot date"** — I interpreted this as the latest date *that store* has data for (a two-step query: find max date, then read it), rather than a global max date. If you'd rather use one chain-wide snapshot date, that's a small change.
+- **Page 2 date scope** — the spec says "flagged low stock at any store," with no date qualifier, so this returns every low-stock row across all snapshots. If you want only the *current* snapshot's low-stock rows, say so and I'll add the date restriction.
+
+To run migrations for real (versioned) instead of `db push`, use `npm run prisma:migrate`.

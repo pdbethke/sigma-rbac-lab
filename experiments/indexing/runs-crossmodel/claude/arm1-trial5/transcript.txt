@@ -1,0 +1,31 @@
+All four query functions return correct results, verified against seeded data:
+
+1. **Store current inventory** — Austin's *latest* snapshot (Aug 1), showing 8 units on hand for headphones (not the Aug 1's prior-day 40), with correct brand and product-family names via the `Product → ProductLine → ProductFamily` chain. ✓
+2. **Low stock across region** — Only South-region low-stock rows (Austin headphones, Dallas headphones + laptop); Seattle's low-stock speaker correctly excluded as Northwest. ✓
+3. **Adjustment history** — Both Austin/headphones adjustments, most recent first, with the adjuster. ✓
+4. **Regional summary** — Per-store `inventoryValue` sums for the given date (Austin 28,740 = 8×80 + 22×50 + 30×900; Dallas 5,460), region-scoped. ✓
+
+## What was built
+
+```
+arm1-trial5/
+├── package.json          # @prisma/client, prisma, ts-node, typescript
+├── tsconfig.json         # strict mode
+├── .env                  # DATABASE_URL="file:./dev.db"
+├── prisma/
+│   ├── schema.prisma     # all 8 models + indexes
+│   ├── seed.ts           # sample data across 3 stores / 2 regions / 2 dates
+│   └── migrations/       # init migration (applied)
+└── src/
+    ├── queries.ts        # the 4 exported page functions
+    └── smoke.ts          # demonstrates each function (bonus)
+```
+
+## Notes on design choices
+
+- **`prisma/schema.prisma`** models the full `ProductType → ProductFamily → ProductLine → Product` hierarchy, plus `Brand`, `Store`, `InventoryDaily` (all specified fields), and `InventoryAdjustment`. `InventoryDaily` has a `@@unique([snapshotDate, storeId, productId])` (one row per snapshot/store/product) and indexes tuned to the four pages (`[storeId, snapshotDate]`, `[isLowStock]`, `store.region`, etc.).
+- **`src/queries.ts`** exports one typed function per page, each returning exactly the fields the page asks for. Query 1 first resolves the store's latest snapshot date, then fetches that date's rows. Query 4 uses `groupBy` with `_sum` on `inventoryValue`, then resolves store names.
+
+Everything typechecks (`tsc --noEmit` clean) and runs. To reproduce from scratch: `npm install && npx prisma migrate dev && npx prisma db seed`, then `npx ts-node src/smoke.ts`.
+
+Two small additions beyond the letter of the spec — the seed and smoke test — exist only so the queries could be *verified*, not just written. Say the word if you'd rather I strip them down to just `schema.prisma` + `queries.ts`.

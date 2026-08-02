@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id                   Int                   @id @default(autoincrement())
+  storeKey             String                @unique
+  name                 String
+  region               String
+  state                String
+  city                 String
+  zipCode              String
+  latitude             Float
+  longitude            Float
+  tier                 String
+  inventoryDailies     InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  @@index([region])
+}
+
+model ProductType {
+  id              Int             @id @default(autoincrement())
+  name            String
+  productFamilies ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int           @id @default(autoincrement())
+  name          String
+  productTypeId Int
+  productType   ProductType   @relation(fields: [productTypeId], references: [id])
+  productLines  ProductLine[]
+
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int           @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+  productFamily   ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products        Product[]
+
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  name     String
+  products Product[]
+}
+
+model Product {
+  id                   Int                   @id @default(autoincrement())
+  sku                  String                @unique
+  name                 String
+  productLineId        Int
+  productLine          ProductLine           @relation(fields: [productLineId], references: [id])
+  brandId              Int
+  brand                Brand                 @relation(fields: [brandId], references: [id])
+  inventoryDailies     InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id             Int      @id @default(autoincrement())
+  snapshotDate   DateTime
+  storeId        Int
+  store          Store    @relation(fields: [storeId], references: [id])
+  productId      Int
+  product        Product  @relation(fields: [productId], references: [id])
+  costPerUnit    Float
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Float
+  inventoryValue Float
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Float
+  leadTimeDays   Int
+  merchantId     String
+
+  @@unique([snapshotDate, storeId, productId])
+  @@index([storeId, snapshotDate])
+  @@index([snapshotDate, storeId])
+  @@index([isLowStock, storeId])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  store        Store    @relation(fields: [storeId], references: [id])
+  productId    Int
+  product      Product  @relation(fields: [productId], references: [id])
+  adjustedBy   String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String?
+
+  @@index([storeId, productId, adjustedAt])
+  @@index([adjustedBy])
+}

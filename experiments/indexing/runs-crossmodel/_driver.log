@@ -1,0 +1,93 @@
+=== work list (30 trials) ===
+claude/arm1/1
+gemini/arm1/1
+codex/arm1/1
+claude/arm2/1
+gemini/arm2/1
+codex/arm2/1
+claude/arm1/2
+gemini/arm1/2
+codex/arm1/2
+claude/arm2/2
+gemini/arm2/2
+codex/arm2/2
+claude/arm1/3
+gemini/arm1/3
+codex/arm1/3
+claude/arm2/3
+gemini/arm2/3
+codex/arm2/3
+claude/arm1/4
+gemini/arm1/4
+codex/arm1/4
+claude/arm2/4
+gemini/arm2/4
+codex/arm2/4
+claude/arm1/5
+gemini/arm1/5
+codex/arm1/5
+claude/arm2/5
+gemini/arm2/5
+codex/arm2/5
+==========================================
+[2026-08-02T13:42:02-04:00] START claude arm1 trial1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm1-trial1
+[2026-08-02T13:44:43-04:00] DONE claude arm1 trial1 ok
+[2026-08-02T13:44:43-04:00] START gemini arm1 trial1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm1-trial1
+[2026-08-02T13:46:36-04:00] DONE gemini arm1 trial1 ok
+[2026-08-02T13:46:36-04:00] START codex arm1 trial1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm1-trial1
+[2026-08-02T13:49:50-04:00] DONE codex arm1 trial1 ok
+[2026-08-02T13:49:50-04:00] START claude arm2 trial1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm2-trial1
+[2026-08-02T13:53:22-04:00] DONE claude arm2 trial1 ok
+[2026-08-02T13:53:22-04:00] START gemini arm2 trial1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm2-trial1
+[2026-08-02T13:55:01-04:00] DONE gemini arm2 trial1 ok
+[2026-08-02T13:55:01-04:00] START codex arm2 trial1 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial1
+[2026-08-02T13:58:31-04:00] DONE codex arm2 trial1 ok
+[2026-08-02T13:58:31-04:00] START claude arm1 trial2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm1-trial2
+[2026-08-02T14:01:11-04:00] DONE claude arm1 trial2 ok
+[2026-08-02T14:01:11-04:00] START gemini arm1 trial2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm1-trial2
+[2026-08-02T14:02:23-04:00] DONE gemini arm1 trial2 ok
+[2026-08-02T14:02:23-04:00] START codex arm1 trial2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm1-trial2
+[2026-08-02T14:06:14-04:00] DONE codex arm1 trial2 ok
+[2026-08-02T14:06:14-04:00] START claude arm2 trial2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm2-trial2
+[2026-08-02T14:10:24-04:00] DONE claude arm2 trial2 ok
+[2026-08-02T14:10:24-04:00] START gemini arm2 trial2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm2-trial2
+[2026-08-02T14:12:13-04:00] DONE gemini arm2 trial2 ok
+[2026-08-02T14:12:13-04:00] START codex arm2 trial2 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2
+[2026-08-02T14:14:42-04:00] DONE codex arm2 trial2 ok
+[2026-08-02T14:14:42-04:00] START claude arm1 trial3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm1-trial3
+[2026-08-02T14:17:01-04:00] DONE claude arm1 trial3 ok
+[2026-08-02T14:17:01-04:00] START gemini arm1 trial3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm1-trial3
+[2026-08-02T14:18:48-04:00] DONE gemini arm1 trial3 ok
+[2026-08-02T14:18:48-04:00] START codex arm1 trial3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm1-trial3
+[2026-08-02T14:22:59-04:00] DONE codex arm1 trial3 ok
+[2026-08-02T14:23:00-04:00] START claude arm2 trial3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm2-trial3
+[2026-08-02T14:26:23-04:00] DONE claude arm2 trial3 ok
+[2026-08-02T14:26:23-04:00] START gemini arm2 trial3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm2-trial3
+[2026-08-02T14:27:35-04:00] DONE gemini arm2 trial3 ok
+[2026-08-02T14:27:35-04:00] START codex arm2 trial3 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial3
+[2026-08-02T14:30:11-04:00] DONE codex arm2 trial3 ok
+[2026-08-02T14:30:11-04:00] START claude arm1 trial4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm1-trial4
+[2026-08-02T14:33:17-04:00] DONE claude arm1 trial4 ok
+[2026-08-02T14:33:17-04:00] START gemini arm1 trial4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm1-trial4
+[2026-08-02T14:34:17-04:00] DONE gemini arm1 trial4 ok
+[2026-08-02T14:34:17-04:00] START codex arm1 trial4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm1-trial4
+[2026-08-02T14:37:10-04:00] DONE codex arm1 trial4 ok
+[2026-08-02T14:37:10-04:00] START claude arm2 trial4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm2-trial4
+[2026-08-02T14:38:18-04:00] DONE claude arm2 trial4 ok
+[2026-08-02T14:38:18-04:00] START gemini arm2 trial4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm2-trial4
+[2026-08-02T14:39:39-04:00] DONE gemini arm2 trial4 ok
+[2026-08-02T14:39:39-04:00] START codex arm2 trial4 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial4
+[2026-08-02T14:43:16-04:00] DONE codex arm2 trial4 ok
+[2026-08-02T14:43:16-04:00] START claude arm1 trial5 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm1-trial5
+[2026-08-02T14:45:41-04:00] DONE claude arm1 trial5 ok
+[2026-08-02T14:45:41-04:00] START gemini arm1 trial5 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm1-trial5
+[2026-08-02T14:47:17-04:00] DONE gemini arm1 trial5 ok
+[2026-08-02T14:47:17-04:00] START codex arm1 trial5 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm1-trial5
+[2026-08-02T14:53:33-04:00] DONE codex arm1 trial5 ok
+[2026-08-02T14:53:33-04:00] START claude arm2 trial5 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/claude/arm2-trial5
+[2026-08-02T14:56:19-04:00] DONE claude arm2 trial5 ok
+[2026-08-02T14:56:19-04:00] START gemini arm2 trial5 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/gemini/arm2-trial5
+[2026-08-02T14:58:07-04:00] DONE gemini arm2 trial5 ok
+[2026-08-02T14:58:07-04:00] START codex arm2 trial5 -> /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial5
+[2026-08-02T15:02:14-04:00] DONE codex arm2 trial5 ok
+ALL DONE. results under /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel

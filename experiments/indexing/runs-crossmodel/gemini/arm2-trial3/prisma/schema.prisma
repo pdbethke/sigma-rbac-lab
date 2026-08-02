@@ -1,0 +1,119 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Store {
+  id                   String                @id @default(uuid())
+  storeKey             String                @unique
+  name                 String
+  region               String
+  state                String
+  city                 String
+  zipCode              String
+  latitude             Float
+  longitude            Float
+  tier                 String
+  inventoryDailies     InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  @@index([region])
+}
+
+model ProductType {
+  id              String          @id @default(uuid())
+  name            String          @unique
+  productFamilies ProductFamily[]
+}
+
+model ProductFamily {
+  id            String        @id @default(uuid())
+  name          String
+  productTypeId String
+  productType   ProductType   @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+  productLines  ProductLine[]
+
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              String        @id @default(uuid())
+  name            String
+  productFamilyId String
+  productFamily   ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Cascade)
+  products        Product[]
+
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id                   String                @id @default(uuid())
+  sku                  String                @unique
+  name                 String
+  productLineId        String
+  productLine          ProductLine           @relation(fields: [productLineId], references: [id], onDelete: Cascade)
+  brandId              String
+  brand                Brand                 @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  inventoryDailies     InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id             String   @id @default(uuid())
+  snapshotDate   DateTime
+  storeId        String
+  store          Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  costPerUnit    Float
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Float
+  inventoryValue Float
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Float
+  leadTimeDays   Int
+  merchantId     String
+
+  @@unique([storeId, productId, snapshotDate])
+  @@index([storeId, snapshotDate])
+  @@index([snapshotDate, storeId])
+  @@index([isLowStock, snapshotDate])
+  @@index([isLowStock, storeId])
+  @@index([productId])
+}
+
+model InventoryAdjustment {
+  id          String   @id @default(uuid())
+  storeId     String
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  adjustedBy  String
+  adjustedAt  DateTime
+  unitsDelta  Int
+  reason      String
+  serialNumber String?
+
+  @@index([storeId, productId, adjustedAt])
+}

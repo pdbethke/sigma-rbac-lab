@@ -1,0 +1,145 @@
+// Retail inventory for a chain of stores.
+//
+// Indexing note: SQLite (like most engines) does NOT automatically create an
+// index for a foreign-key column, so every relation column that is used to
+// join or filter is indexed explicitly below. Composite indexes are ordered to
+// match the access patterns in src/queries.ts (equality columns first, then the
+// range/sort column last) so each of the four pages can be served from an index.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        Int    @id @default(autoincrement())
+  storeKey  String @unique
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventory   InventoryDaily[]
+  adjustments InventoryAdjustment[]
+
+  // Pages 2 and 4 filter stores by region.
+  @@index([region])
+}
+
+model ProductType {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int    @id @default(autoincrement())
+  name          String
+  productTypeId Int
+
+  productType ProductType   @relation(fields: [productTypeId], references: [id])
+  lines       ProductLine[]
+
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int    @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products      Product[]
+
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id        Int    @id @default(autoincrement())
+  brandName String
+
+  products Product[]
+}
+
+model Product {
+  id            Int    @id @default(autoincrement())
+  skuNumber     String @unique
+  productName   String
+  productLineId Int
+  brandId       Int
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id])
+  brand       Brand       @relation(fields: [brandId], references: [id])
+
+  inventory   InventoryDaily[]
+  adjustments InventoryAdjustment[]
+
+  // Join columns for the product hierarchy / brand lookups on every page.
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id             Int      @id @default(autoincrement())
+  snapshotDate   DateTime
+  storeId        Int
+  productId      Int
+  costPerUnit    Float
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Float
+  inventoryValue Float
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Float
+  leadTimeDays   Int
+  merchantId     Int
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // One snapshot per (date, store, product). This unique constraint doubles as
+  // the covering index for page 4 (region summary for a snapshotDate) because
+  // snapshotDate leads it.
+  @@unique([snapshotDate, storeId, productId])
+
+  // Page 1: latest snapshot at a store -> find max(snapshotDate) for a store,
+  // then read that store+date. storeId equality + snapshotDate sort/range.
+  @@index([storeId, snapshotDate])
+
+  // Page 2: low-stock rows at the stores in a region. Once the region's stores
+  // are resolved, this filters storeId + isLowStock.
+  @@index([storeId, isLowStock])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjustedBy   String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Page 3: a product's adjustment history at a store, newest first.
+  @@index([storeId, productId, adjustedAt])
+}

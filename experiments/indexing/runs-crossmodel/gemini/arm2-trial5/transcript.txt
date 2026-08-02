@@ -1,0 +1,23 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+I will run `npm init -y` to initialize a Node.js project package configuration in the current directory.
+I will install Prisma, TypeScript, and `@prisma/client` along with development dependencies.
+I will run `npx prisma db push` to initialize the SQLite database schema and generate the Prisma client.
+I will install Prisma 5.22.0 to ensure schema compatibility with standard Prisma schema configuration.
+I will run `npx prisma db push` to generate the SQLite database and Prisma client.
+I will execute `npx tsx test-queries.ts` to seed test data and verify all four query functions.
+I will run `npx tsc --noEmit` to verify type checking across the project.
+I will run `npx tsc --noEmit` again to check for any compilation issues.
+I will run `npx tsc --noEmit` to verify type checking passes.
+I will run `npx tsx test-queries.ts` to confirm all tests run cleanly.
+I have built the TypeScript project using Prisma with SQLite for retail inventory management.
+
+### Key Components Created:
+1. **`prisma/schema.prisma`**:
+   - Includes data models for `Store`, `ProductType`, `ProductFamily`, `ProductLine`, `Brand`, `Product`, `InventoryDaily`, and `InventoryAdjustment`.
+   - Optimized with targeted composite indexes (`[storeId, snapshotDate]`, `[snapshotDate, storeId]`, `[isLowStock, storeId]`, `[storeId, productId, adjustedAt]`) to handle high query volume over years of daily snapshots.
+
+2. **`src/queries.ts`**:
+   - `getStoreCurrentInventory(storeId)`: Returns current inventory for a store on its latest snapshot date (product name, brand name, product family name, and units on hand).
+   - `getLowStockAcrossRegion(region, snapshotDate?)`: Returns every product flagged low stock across a region (store name, product name, units on hand).
+   - `getProductAdjustmentHistory(storeId, productId)`: Returns adjustment history for a product at a store (including who made each adjustment).
+   - `getRegionalSummary(region, snapshotDate)`: Returns total inventory value per store in a region for a given snapshot date.

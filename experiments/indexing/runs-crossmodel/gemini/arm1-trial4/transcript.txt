@@ -1,0 +1,13 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+I will run `npm install` to install project dependencies including Prisma and TypeScript, then generate the Prisma client and build the TypeScript project.
+I will initialize the SQLite database schema using `prisma db push` and run the build and test script to verify query behavior.
+I will check the git status to see modified and new files.
+The TypeScript project with Prisma and SQLite has been created and verified.
+
+### Created Files
+- `prisma/schema.prisma`: Data model covering `Store`, `ProductType`, `ProductFamily`, `ProductLine`, `Brand`, `Product`, `InventoryDaily`, and `InventoryAdjustment`.
+- `src/queries.ts`: Exported functions corresponding to each requested query:
+  1. `getStoreCurrentInventory` – Returns product name, brand name, product family name, and units on hand for the latest snapshot date at a store.
+  2. `getLowStockAcrossRegion` – Returns store name, product name, and units on hand for low-stock items in a region.
+  3. `getProductAdjustmentHistory` – Returns adjustment history including who adjusted it.
+  4. `getRegionalSummary` – Returns total inventory value per store in a region for a snapshot date.

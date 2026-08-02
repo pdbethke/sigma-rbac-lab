@@ -1,0 +1,16 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+I will now install the project dependencies specified in `package.json` using `npm install`.
+I will run `npx prisma generate` to generate the TypeScript Prisma Client from `prisma/schema.prisma`.
+I will run `npx prisma db push` to create the database schema in the SQLite database (`dev.db`).
+I will run `npm test` to execute the query tests in `tests/queries.test.ts`.
+I will run `npm run build` to verify TypeScript compilation.
+The TypeScript retail inventory project has been set up with Prisma and SQLite.
+
+### Created Files
+- `prisma/schema.prisma`: Schema defining `Store`, `ProductType`, `ProductFamily`, `ProductLine`, `Brand`, `Product`, `InventoryDaily`, and `InventoryAdjustment` with foreign key relations and composite indexes optimized for large-scale snapshot queries.
+- `src/queries.ts`: Exports four query functions matching the requested requirements:
+  1. `getStoreCurrentInventory`: Retrieves current inventory for a store on the latest snapshot date.
+  2. `getLowStockInRegion`: Retrieves low-stock products across stores in a region on the latest snapshot date.
+  3. `getProductAdjustmentHistory`: Retrieves product adjustment history at a store, including who made each adjustment.
+  4. `getRegionalSummary`: Aggregates total inventory value per store in a region for a specified snapshot date.
+- `tests/queries.test.ts`: Integration test suite verifying schema migrations and query execution.

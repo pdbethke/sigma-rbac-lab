@@ -1,0 +1,19 @@
+{
+  "name": "arm2-trial5",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@prisma/client": "5.22.0",
+    "@types/node": "^26.1.2",
+    "prisma": "5.22.0",
+    "tsx": "^4.23.4",
+    "typescript": "^7.0.2"
+  }
+}

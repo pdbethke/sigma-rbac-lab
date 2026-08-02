@@ -1,0 +1,157 @@
+// Retail inventory for a chain of stores.
+//
+// Scale note: this runs in production against several years of daily snapshots
+// for hundreds of stores, so `InventoryDaily` is by far the largest table
+// (stores x products x days = tens of millions of rows). Every index below is
+// justified against one of the four query pages in ../src/queries.ts; the
+// bare foreign keys carry indexes too, because SQLite does not create them
+// automatically and unindexed FKs turn every join into a table scan.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        Int    @id @default(autoincrement())
+  storeKey  String @unique
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventoryDaily      InventoryDaily[]
+  inventoryAdjustment InventoryAdjustment[]
+
+  // Query 2 (low stock across a region) and query 4 (regional summary) both
+  // start by selecting the stores in a region.
+  @@index([region])
+}
+
+model ProductType {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int    @id @default(autoincrement())
+  name          String
+  productTypeId Int
+
+  productType ProductType   @relation(fields: [productTypeId], references: [id])
+  lines       ProductLine[]
+
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int    @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products      Product[]
+
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  products Product[]
+}
+
+model Product {
+  id            Int    @id @default(autoincrement())
+  sku           String @unique
+  name          String
+  productLineId Int
+  brandId       Int
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id])
+  brand       Brand       @relation(fields: [brandId], references: [id])
+
+  inventoryDaily      InventoryDaily[]
+  inventoryAdjustment InventoryAdjustment[]
+
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id           Int      @id @default(autoincrement())
+  snapshotDate DateTime
+  storeId      Int
+  productId    Int
+
+  costPerUnit    Float
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Float
+  inventoryValue Float
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Float
+  leadTimeDays   Int
+  merchantId     Int
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Natural key: one row per (date, store, product). Prevents duplicate
+  // snapshots and, because snapshotDate leads, is the index that serves
+  // query 4 (regional summary: scan a single date, sum per store).
+  @@unique([snapshotDate, storeId, productId], name: "snapshot_store_product")
+
+  // Query 1 (a store's current inventory): find the store's latest snapshot
+  // date and scan that store's rows for it. storeId-leading so the whole
+  // access path is one index range per store.
+  @@index([storeId, snapshotDate])
+
+  // Query 2 (low stock across a region): after selecting stores in the region,
+  // pull their low-stock rows for the current date. Date-leading lets us pin
+  // the latest snapshot first, then filter the low-stock flag.
+  @@index([snapshotDate, isLowStock])
+
+  // Product-centric lookups (one SKU across stores / over time) and the
+  // productId foreign key.
+  @@index([productId, snapshotDate])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjustedBy   String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String   @unique
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Query 3 (a product's adjustment history at a store, newest first):
+  // exact match on (store, product), ordered scan by time.
+  @@index([storeId, productId, adjustedAt])
+
+  // productId foreign key (storeId is covered by the composite above).
+  @@index([productId])
+}

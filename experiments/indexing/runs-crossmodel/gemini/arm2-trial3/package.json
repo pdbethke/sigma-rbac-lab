@@ -1,0 +1,22 @@
+{
+  "name": "retail-inventory",
+  "version": "1.0.0",
+  "description": "Retail inventory system using Prisma with SQLite",
+  "main": "dist/queries.js",
+  "types": "dist/queries.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prisma:generate": "prisma generate",
+    "prisma:db-push": "prisma db push",
+    "test": "tsx src/test.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "prisma": "^5.22.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}

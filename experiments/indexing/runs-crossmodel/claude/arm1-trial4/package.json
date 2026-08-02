@@ -1,0 +1,25 @@
+{
+  "name": "retail-inventory",
+  "version": "1.0.0",
+  "description": "Retail inventory for a chain of stores (Prisma + SQLite)",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "seed": "ts-node prisma/seed.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}

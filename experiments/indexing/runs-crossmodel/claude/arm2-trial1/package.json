@@ -1,0 +1,19 @@
+{
+  "name": "retail-inventory",
+  "version": "1.0.0",
+  "description": "Retail inventory model for a chain of stores, on Prisma + SQLite.",
+  "license": "MIT",
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "prisma": "^6.2.1",
+    "typescript": "^5.7.3",
+    "@types/node": "^22.10.7"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1"
+  }
+}

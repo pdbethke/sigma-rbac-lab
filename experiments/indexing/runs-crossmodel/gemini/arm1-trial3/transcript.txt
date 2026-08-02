@@ -1,0 +1,29 @@
+YOLO mode is enabled. All tool calls will be automatically approved.
+I will initialize a new Node.js project and install Prisma and TypeScript dependencies.
+I will install `@prisma/client` as a production dependency.
+I will write `tsconfig.json` for TypeScript configuration.
+I will write `prisma/schema.prisma` defining the data model.
+I will run `npx prisma db push` to generate the Prisma client and apply the schema to the SQLite database.
+I will install Prisma 5 to maintain standard SQLite file URL schema support.
+I will run `npx prisma db push` to generate the Prisma client and create the SQLite database schema.
+I will write `src/queries.ts` containing the functions for all 4 required query reports.
+I will run `npx tsc --noEmit` to verify type checking.
+I will update `tsconfig.json` to use modern TypeScript module settings.
+I will run `npx tsc --noEmit` to verify type checking.
+I will install `ts-node` to run tests and verification scripts.
+I will write `src/test.ts` to test all 4 query functions with seed data.
+I will execute `npx ts-node src/test.ts` to verify data seeding and all 4 queries against SQLite.
+I will compile TypeScript code using `npx tsc` and run the test script.
+I will add `"rootDir": "./src"` to `tsconfig.json`.
+I will compile TypeScript code and run the test script.
+I will update `tsconfig.json` to include `"types": ["node"]`.
+I will compile TypeScript code and run the test suite.
+I have built the TypeScript retail inventory project using Prisma with SQLite.
+
+### Created Files:
+1. **`prisma/schema.prisma`**: Defines models for `Store`, `ProductType`, `ProductFamily`, `ProductLine`, `Brand`, `Product`, `InventoryDaily`, and `InventoryAdjustment` connected to SQLite.
+2. **`src/queries.ts`**: Exports four functions corresponding to the requested pages:
+   - `getStoreCurrentInventory(storeIdOrKey, prisma?)`: Retrieves all products held at a store on the latest snapshot date with product name, brand name, product family name, and units on hand.
+   - `getLowStockInRegion(region, prisma?)`: Retrieves all products flagged low stock in a specified region with store name, product name, and units on hand.
+   - `getProductAdjustmentHistory(storeIdOrKey, productIdOrSku, prisma?)`: Retrieves adjustment history for a product at a store including who made each adjustment.
+   - `getRegionalSummary(region, snapshotDate, prisma?)`: Computes total inventory value per store in a region for a snapshot date.

@@ -1,0 +1,39 @@
+Every planned index is in the migration DDL. Done — here's what was built and verified.
+
+## What's in the project
+
+```
+prisma/schema.prisma        # data model + indexes
+prisma/seed.ts              # small demonstration dataset
+prisma/migrations/…/        # generated DDL (indexes confirmed present)
+src/queries.ts              # the four page functions (the deliverable)
+src/smoke.ts                # runs all four against seeded data
+package.json / tsconfig.json / .env / .gitignore
+```
+
+**The four functions** in `src/queries.ts`:
+1. `getStoreCurrentInventory(storeId)` → product name, brand, family, units on hand for the store's latest snapshot.
+2. `getLowStockByRegion(region)` → store name, product name, units on hand for low-stock rows region-wide on the latest snapshot.
+3. `getProductAdjustmentHistory(storeId, productId)` → adjustments newest-first, including who made each.
+4. `getRegionalInventoryValue(region, snapshotDate)` → total inventory value per store, summed in the database via `groupBy`.
+
+**Verified, not asserted:** migration applied cleanly, `tsc --noEmit` passes, and the smoke test printed correct output for all four (e.g. Q4 East on 2026‑08‑01 = Downtown East 378, Harborside 17.5; West correctly excluded).
+
+## The indexing story (your production-scale flag)
+
+`InventoryDaily` is the giant table (stores × products × days), so each query is written to seek an index rather than scan:
+
+| Query | Index it rides |
+|---|---|
+| Q1 store's latest inventory | `InventoryDaily(storeId, snapshotDate)` |
+| Q2 low stock in region | `InventoryDaily(snapshotDate, isLowStock)` + `Store(region)` |
+| Q3 adjustment history | `InventoryAdjustment(storeId, productId, adjustedAt)` — seek **and** sort from one index |
+| Q4 regional value for a date | `InventoryDaily(snapshotDate, storeId, productId)` unique key + `Store(region)` |
+
+FK columns are indexed explicitly because **SQLite doesn't auto-index foreign keys and Prisma won't add them for you** — without those, the relation joins in Q1/Q2/Q4 would scan.
+
+## Two decisions worth surfacing
+- **"Latest snapshot" = global max `snapshotDate`** (Q1/Q2), on the assumption daily snapshots land for all stores together. If a store can lag a day, Q2 should switch to per-store latest — say the word and I'll adjust.
+- **Money is `Decimal`** (cost, inventory value, lost-sales value); lat/long is `Float`. Sums stay exact.
+
+Run it yourself with `npm run migrate` (already done) then `npm run smoke`.

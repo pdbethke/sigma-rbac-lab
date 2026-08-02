@@ -1,0 +1,146 @@
+// Retail inventory for a chain of stores.
+//
+// Scale assumption baked into the indexes: several years of DAILY snapshots for
+// hundreds of stores. That makes InventoryDaily by far the largest table
+// (stores x products x days), so every query below is written to hit an index
+// rather than scan it. Note that SQLite does NOT auto-create indexes for
+// foreign keys, and Prisma does not add them for you, so relation columns that
+// get filtered or joined are indexed explicitly.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        Int    @id @default(autoincrement())
+  storeKey  String @unique
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventoryDaily      InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  // Q2 (low stock across a region) and Q4 (regional summary) filter by region.
+  @@index([region])
+}
+
+model ProductType {
+  id       Int             @id @default(autoincrement())
+  name     String          @unique
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int         @id @default(autoincrement())
+  name          String
+  productTypeId Int
+  productType   ProductType @relation(fields: [productTypeId], references: [id])
+  lines         ProductLine[]
+
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int           @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+  productFamily   ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products        Product[]
+
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id            Int         @id @default(autoincrement())
+  sku           String      @unique
+  name          String
+  productLineId Int
+  brandId       Int
+  productLine   ProductLine @relation(fields: [productLineId], references: [id])
+  brand         Brand       @relation(fields: [brandId], references: [id])
+
+  inventoryDaily       InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id             Int      @id @default(autoincrement())
+  snapshotDate   DateTime
+  storeId        Int
+  productId      Int
+  costPerUnit    Decimal
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Int
+  inventoryValue Decimal
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Decimal
+  leadTimeDays   Int
+  merchantId     Int
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Natural key: one row per (date, store, product). Blocks duplicate
+  // snapshots and, being date-leading, backs Q4's "all rows for one date".
+  @@unique([snapshotDate, storeId, productId])
+
+  // Q1: a store's inventory on its latest date. Leading storeId narrows to the
+  // store, then snapshotDate finds/filters the date without touching other stores.
+  @@index([storeId, snapshotDate])
+
+  // Q2: low-stock rows on the latest snapshot. Date-leading so the planner can
+  // seek to one day, then filter the isLowStock flag within it.
+  @@index([snapshotDate, isLowStock])
+
+  // FK index for joins/lookups by product.
+  @@index([productId])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjustedBy   String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String   @unique
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Q3: adjustment history for one product at one store, newest first. All
+  // three columns in one index so the store+product seek and the time sort are
+  // both served without a filesort.
+  @@index([storeId, productId, adjustedAt])
+
+  @@index([productId])
+}

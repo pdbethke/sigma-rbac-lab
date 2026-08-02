@@ -1,0 +1,33 @@
+Everything builds, runs, and uses the indexes. Done.
+
+## What I built
+
+A TypeScript + Prisma + SQLite project in the current directory:
+
+```
+package.json  tsconfig.json  .env  .gitignore
+prisma/schema.prisma          # all 8 models + documented indexes
+prisma/migrations/…/          # init migration (applied to dev.db)
+src/queries.ts                # 4 exported functions, one per page
+```
+
+**Verified, not just written:** `prisma validate` passed, the client generated, the migration applied, `tsc --noEmit` is clean, and a seeded smoke test ran all four functions returning correct data.
+
+## The design decision that mattered
+
+The spec's parting line — *"several years of daily snapshots for hundreds of stores"* — means `InventoryDaily` is a hundreds-of-millions-of-rows table, so every index is a claim about an access pattern. I wrote each one down in the schema against the query it serves:
+
+| Index | Serves |
+|---|---|
+| `InventoryDaily @@unique([snapshotDate, storeId, productId])` | Page 4's per-date read + the "latest date" MAX lookups (snapshotDate leads) |
+| `InventoryDaily @@index([storeId, snapshotDate])` | Page 1: a store's latest snapshot — **storeId must lead**, the unique index can't answer "latest date for *this* store" without a scan |
+| `InventoryAdjustment @@index([storeId, productId, adjustedAt])` | Page 3: equality on store+product, already sorted by time — no separate sort |
+| `Store @@index([region])` | Pages 2 & 4: resolving a region's stores |
+
+Two deliberate *non*-indexes are documented too: `isLowStock` (a low-selectivity boolean — filtered from the already-bounded store-day set rather than led on), and no extra FK gymnastics beyond what the joins need.
+
+`EXPLAIN QUERY PLAN` confirms it — the store-inventory query resolves via `InventoryDaily_storeId_snapshotDate_idx` and the adjustment history via `InventoryAdjustment_storeId_productId_adjustedAt_idx`, both index seeks, no table scans.
+
+The four functions each take a `PrismaClient` (testable, caller owns the connection) and use `select`/`include` to avoid N+1 round trips — page 4 in particular is one grouped aggregate plus one name lookup, not a query per store.
+
+One interpretation I made explicit in the code: pages 1 and 2 read the **latest** snapshot ("current inventory" / "flagged low stock"), while page 4 takes the snapshot date as a parameter as the spec states. If you'd rather page 2 also take an explicit date, that's a one-line change.

@@ -1,0 +1,165 @@
+// Retail inventory for a chain of stores.
+//
+// Scale note that drives every index decision below: this runs in production
+// against several years of DAILY snapshots for HUNDREDS of stores. InventoryDaily
+// is therefore the one enormous table — roughly (stores * products * days) rows,
+// easily hundreds of millions. Every filter/order on that table needs an index
+// that names the access pattern it serves. The small dimension tables (Store,
+// Product, and the type/family/line/brand hierarchy) are read-heavy but tiny, so
+// they get indexes only on the foreign keys and lookup columns actually queried.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        Int    @id @default(autoincrement())
+  storeKey  String @unique // natural key from the source system
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventory   InventoryDaily[]
+  adjustments InventoryAdjustment[]
+
+  // Queries 2 (low stock across a region) and 4 (regional summary) both start by
+  // selecting the stores in a region, so region must be indexed. Without it, every
+  // regional page scans the full store list — small today, but it also determines
+  // the set of storeIds fed into the InventoryDaily lookups, so keep it sharp.
+  @@index([region])
+}
+
+model ProductType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int    @id @default(autoincrement())
+  name          String
+  productTypeId Int
+
+  productType ProductType   @relation(fields: [productTypeId], references: [id])
+  lines       ProductLine[]
+
+  // Foreign key: joined when walking the type -> family -> line hierarchy.
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int    @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products      Product[]
+
+  // Foreign key: joined from Product up to family (query 1 returns family name).
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  products Product[]
+}
+
+model Product {
+  id            Int    @id @default(autoincrement())
+  sku           String @unique // SKU number, natural key
+  name          String
+  productLineId Int
+  brandId       Int
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id])
+  brand       Brand       @relation(fields: [brandId], references: [id])
+
+  inventory   InventoryDaily[]
+  adjustments InventoryAdjustment[]
+
+  // Foreign keys: joined from InventoryDaily/InventoryAdjustment to resolve line
+  // and brand names.
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id            Int      @id @default(autoincrement())
+  snapshotDate  DateTime
+  storeId       Int
+  productId     Int
+  costPerUnit   Float
+  unitsOnHand   Int
+  unitsOnOrder  Int
+  unitsInTransit Int
+  unitsReceived Int
+  unitsShrunk   Int
+  reorderPoint  Int
+  maxStockLevel Int
+  daysOfSupply  Int
+  inventoryValue Float
+  isStockout    Boolean
+  isLowStock    Boolean
+  lostSalesUnits Int
+  lostSalesValue Float
+  leadTimeDays  Int
+  merchantId    Int
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // One snapshot row per (date, store, product). This unique constraint is also
+  // the workhorse index: because snapshotDate leads, it serves query 4 (all rows
+  // for a given snapshotDate, then summed per store) and the "what is the latest
+  // snapshotDate?" MAX lookup used by queries 1 and 2 — an index-only scan of the
+  // tail of the index rather than a scan of the whole table.
+  @@unique([snapshotDate, storeId, productId])
+
+  // Query 1 (a store's current inventory): filter storeId, then take its latest
+  // snapshotDate. storeId must LEAD here — the unique index above leads with
+  // snapshotDate and cannot answer "latest date for THIS store" without a scan.
+  // With storeId leading, "max snapshotDate where storeId = ?" and "all rows for
+  // that store on that date" are both a bounded range read.
+  @@index([storeId, snapshotDate])
+
+  // Query 2 (low stock across a region): after resolving the region's stores and
+  // the latest snapshotDate, fetch rows where storeId IN (...) AND snapshotDate = ?
+  // AND isLowStock. The [storeId, snapshotDate] index above already bounds the read
+  // to one store-day; isLowStock is a low-selectivity boolean best filtered from
+  // that bounded set rather than led on, so no separate index is warranted for it.
+  //
+  // Query 3's access pattern lives on InventoryAdjustment, not here.
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjustedBy   String   // who made the adjustment
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  // Query 3 (a product's adjustment history at a store): filter (storeId, productId)
+  // and order by adjustedAt. This composite matches the equality columns first and
+  // then supplies adjustedAt already sorted, so the page reads a contiguous range
+  // with no separate sort step.
+  @@index([storeId, productId, adjustedAt])
+}

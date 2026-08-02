@@ -1,0 +1,26 @@
+Empty/greenfield directory (just two empty harness artifacts). This is a clean build. The spec is concrete, so I'll keep design to the decisions that actually matter here — indexing is the crux, given "several years of daily snapshots for hundreds of stores."
+
+Here's my proposed design. One section, since the data model is fully specified — the real content is the indexing and a few ambiguities I want to resolve.
+
+## Design
+
+**Stack:** TypeScript + Prisma + SQLite. Files: `prisma/schema.prisma`, `src/queries.ts`, plus `package.json`/`tsconfig.json` and a seed so it actually runs. Money fields (`costPerUnit`, `inventoryValue`, `lostSalesValue`) as `Decimal`; unit counts as `Int`; lat/long/`daysOfSupply` as `Float`.
+
+**The big table is `InventoryDaily`** (stores × products × days = the only table that grows unboundedly). Everything hinges on its indexes:
+
+- Natural key: `@@unique([snapshotDate, storeId, productId])` — enforces "one row per date/store/product" and serves date-scoped scans.
+- `@@index([storeId, snapshotDate])` — Query 1 (a store's latest snapshot) and finding `MAX(snapshotDate)` for a store.
+- `@@index([snapshotDate, storeId])` — Query 4 (regional value totals for a given date; joins to Store for region filter).
+- Query 2 (low stock in a region): `@@index([storeId, isLowStock, snapshotDate])` so we filter by store set + `isLowStock` on the latest date without scanning history.
+- `InventoryAdjustment`: `@@index([storeId, productId, adjustedAt])` for Query 3.
+- `Store`: `@@index([region])` so region-scoped queries don't table-scan stores.
+
+**Ambiguities — my proposed resolutions (tell me if any are wrong):**
+1. **"Latest snapshot date"** = per-store `MAX(snapshotDate)` (each query 1/2 scopes to the relevant store's latest, robust to stores loading on different days).
+2. **Query 2** ("low stock across a region") returns rows on each store's *latest* snapshot only — not every historical low-stock row (which over years would be enormous).
+3. **Query 4** takes `(region, snapshotDate)` as params and returns per-store summed `inventoryValue`.
+4. Each function takes a Prisma client + its params and returns typed rows. Money returned as `Decimal` (not coerced to JS number).
+
+**Testing:** a seed script with a couple of stores/products across a few snapshot dates, and a smoke script that runs all four functions and prints results.
+
+Does this look right — particularly the three ambiguity calls and the index set? Once you confirm I'll write the spec and build it.

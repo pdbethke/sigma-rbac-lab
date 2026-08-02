@@ -11,3 +11,8 @@ experiments/indexing/engines.duckdb
 experiments/indexing/runs/*/node_modules/
 .gemini/
 experiments/indexing/runs-crossmodel/*/node_modules/
+experiments/indexing/runs-crossmodel/*/*/node_modules/
+experiments/indexing/runs-crossmodel/*/*/.git/
+experiments/indexing/runs-crossmodel/*/*/.codex/
+experiments/indexing/runs-crossmodel/*/*/.agents/
+metrics.duckdb.bak

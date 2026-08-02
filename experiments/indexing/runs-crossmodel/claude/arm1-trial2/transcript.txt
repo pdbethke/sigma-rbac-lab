@@ -1,0 +1,25 @@
+All four pages work correctly, including the tricky edge cases. Everything is built and verified.
+
+## Done
+
+Built a TypeScript + Prisma + SQLite retail-inventory project in the current directory. It installs, generates the client, creates the SQLite DB, type-checks clean, and all four query functions run correctly against seeded data.
+
+**Files:**
+- `prisma/schema.prisma` — all nine models: `Store`, the `ProductType → ProductFamily → ProductLine → Product` hierarchy, `Brand`, `InventoryDaily`, `InventoryAdjustment`. Notable choices:
+  - `InventoryDaily` has `@@unique([snapshotDate, storeId, productId])` — enforces "one row per snapshot date, store and product" — plus indexes on `(storeId, snapshotDate)`, `snapshotDate`, and `isLowStock` for the query patterns.
+  - Money fields (`costPerUnit`, `inventoryValue`, `lostSalesValue`) are `Decimal`; lat/long and `daysOfSupply` are `Float`.
+  - `serialNumber` on adjustments is `@unique`.
+- `src/queries.ts` — one exported function per page, each with a typed return shape:
+  1. `getStoreCurrentInventory(storeId)` — resolves the store's *own* latest snapshot date, returns product/brand/family name + units on hand.
+  2. `getLowStockAcrossRegion(region)` — computes each store's latest snapshot via `groupBy`, then returns low-stock rows (store, product, units on hand).
+  3. `getProductAdjustmentHistory(storeId, productId)` — newest-first, includes `adjustedBy` (who).
+  4. `getRegionalSummary(region, snapshotDate)` — `_sum` of `inventoryValue` per store for the date.
+- `package.json`, `tsconfig.json` (strict), `.gitignore`, `.env` (`DATABASE_URL="file:./dev.db"`).
+
+**Smoke-test confirmed the non-obvious behaviors:** page 1 ignored an older snapshot and returned only the latest; page 2 correctly used *per-store* latest dates (one store on day1, another on day2); page 4 excluded a store with no rows on the requested date.
+
+**Two design decisions worth flagging** (easy to change if you'd prefer otherwise):
+- Functions take numeric `storeId`/`productId`. I can switch to `storeKey`/`sku` lookups if the pages address stores/products by their business keys.
+- Pages 2 and 4 use "each store's latest snapshot" / a caller-supplied date respectively. If page 2 should instead pin to one global snapshot date, that's a small tweak.
+
+To run migrations for real instead of `db push`: `npm run prisma:migrate`.

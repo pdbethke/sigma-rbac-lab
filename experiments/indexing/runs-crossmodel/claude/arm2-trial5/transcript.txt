@@ -1,0 +1,42 @@
+Everything compiles and the migration applied cleanly. Done.
+
+## What I built
+
+A TypeScript + Prisma + SQLite project in the current directory:
+
+```
+prisma/schema.prisma          data model + indexes
+prisma/migrations/…/init      applied migration (db in sync)
+src/queries.ts                one exported function per page
+package.json / tsconfig.json / .env / .gitignore
+```
+
+Verified: `npm install` ✓, `prisma migrate dev` ✓ (DB in sync, client generated), `tsc --noEmit` ✓ (queries typecheck against the real generated client).
+
+## The exported functions (`src/queries.ts`)
+
+| Page | Function |
+|------|----------|
+| 1. Store's current inventory | `getStoreCurrentInventory(storeId)` → product name, brand, family, units on hand |
+| 2. Low stock across a region | `getLowStockInRegion(region)` → store name, product name, units on hand |
+| 3. Product adjustment history at a store | `getProductAdjustmentHistory(storeId, productId)` → who + when/delta/reason/serial |
+| 4. Regional summary | `getRegionalSummary(region, snapshotDate)` → total inventory value per store |
+
+## Indexing — the part that matters at your scale
+
+You said this runs in production against *several years of daily snapshots for hundreds of stores*, so `InventoryDaily` is the giant table (stores × products × days ≈ tens of millions of rows). Every index is tied to a query's access path:
+
+- **`@@unique([snapshotDate, storeId, productId])`** — natural key (blocks duplicate snapshots) and, date-leading, serves **Page 4**'s per-store sum on one day.
+- **`@@index([storeId, snapshotDate])`** — **Page 1**: find a store's latest date, then read that one store/date slice. No history scan.
+- **`@@index([snapshotDate, isLowStock])`** — **Page 2**: pin the current date, then the low-stock flag.
+- **`@@index([productId, snapshotDate])`** — product-across-stores lookups + the FK.
+- **`@@index([storeId, productId, adjustedAt])`** on adjustments — **Page 3** end-to-end (match + time-ordered scan).
+- **`Store.region`** index — the region filter that starts Pages 2 and 4.
+- FK indexes throughout, since SQLite doesn't auto-create them and an unindexed FK turns a join into a table scan.
+
+## Two interpretation calls I made (flag if you'd prefer otherwise)
+
+- **Page 2 "low stock"** = low *on the latest snapshot date* (currently low), not "low at any point in years of history" — the historical set would be enormous and meaningless for a stock page.
+- Both `getStoreCurrentInventory` and `getLowStockInRegion` do a cheap **two-step** (resolve the latest date, then read that slice) rather than a correlated subquery — it's simpler in Prisma and each step is a single indexed lookup.
+
+No seed data or query runner was requested, so I left those out; say the word and I'll add a seed script to exercise the four functions against sample data.

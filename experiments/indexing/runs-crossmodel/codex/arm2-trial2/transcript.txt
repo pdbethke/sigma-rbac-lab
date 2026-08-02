@@ -1,0 +1,2074 @@
+Reading additional input from stdin...
+OpenAI Codex v0.142.5
+--------
+workdir: /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2
+model: codex-auto-review
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: none
+reasoning summaries: none
+session id: 019fc3ad-2c60-7ae3-92ad-74b470364857
+--------
+user
+Build a TypeScript project in the current directory using Prisma with SQLite.
+
+It covers retail inventory for a chain of stores. The data model is:
+
+- Store: store key, name, region, state, city, zip code, latitude, longitude, tier.
+- ProductType: name.
+- ProductFamily: name, belongs to a ProductType.
+- ProductLine: name, belongs to a ProductFamily.
+- Brand: brand name.
+- Product: SKU number, product name, belongs to a ProductLine and to a Brand.
+- InventoryDaily: one row per snapshot date, store and product. Carries cost per unit,
+  units on hand, units on order, units in transit, units received, units shrunk, reorder
+  point, max stock level, days of supply, inventory value, is stockout, is low stock,
+  lost sales units, lost sales value, lead time days, merchant id.
+- InventoryAdjustment: store, product, who adjusted it, when, units delta, reason,
+  serial number.
+
+Write prisma/schema.prisma, and a src/queries.ts exporting one function per page below:
+
+1. A store's current inventory: every product held at one store on the latest snapshot
+   date, returning product name, brand name, product family name and units on hand.
+2. Low stock across a region: every product flagged low stock at any store in a region,
+   returning store name, product name and units on hand.
+3. A product's adjustment history at a store, returning who made each adjustment.
+4. A regional summary: total inventory value per store for a given snapshot date.
+
+This will run in production against several years of daily snapshots for hundreds of stores.
+codex
+I’ll set up the Prisma schema, TypeScript query functions, and minimal project configuration, then run generation/type checks so the queries are production-appropriate for SQLite.
+exec
+/bin/bash -lc "ls -la && rg --files -g '"'!node_modules'"' -g '"'!dist'"'" in /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2
+ succeeded in 0ms:
+total 12
+drwxrwxr-x 2 pdbethke pdbethke 4096 Aug  2 14:12 .
+drwxrwxr-x 6 pdbethke pdbethke 4096 Aug  2 14:12 ..
+-rw-rw-r-- 1 pdbethke pdbethke 2167 Aug  2 14:12 transcript.txt
+transcript.txt
+
+2026-08-02T18:13:11.598164Z ERROR codex_core::tools::router: error=patch rejected: writing outside of the project; rejected by user approval settings
+apply patch
+patch: completed
+/home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+/home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+/home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+/home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+/home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..f47f822dd1ba6bc4725e3cec8565b3ae8cc41fdd
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,97 @@
++generator client { provider = "prisma-client-js" }
++datasource db { provider = "sqlite" url = env("DATABASE_URL") }
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..f47f822dd1ba6bc4725e3cec8565b3ae8cc41fdd
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,97 @@
++generator client { provider = "prisma-client-js" }
++datasource db { provider = "sqlite" url = env("DATABASE_URL") }
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+exec
+/bin/bash -lc 'npx prisma validate' in /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..f47f822dd1ba6bc4725e3cec8565b3ae8cc41fdd
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,97 @@
++generator client { provider = "prisma-client-js" }
++datasource db { provider = "sqlite" url = env("DATABASE_URL") }
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+ exited 1 in 911ms:
+Prisma schema loaded from prisma/schema.prisma
+
+Error: Prisma schema validation - (validate wasm)
+Error code: P1012
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:2
+   | 
+ 1 | generator client { provider = "prisma-client-js" }
+ 2 | datasource db { provider = "sqlite" url = env("DATABASE_URL") }
+ 3 | 
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:4
+   | 
+ 3 | 
+ 4 | model Store {
+ 5 |   storeKey String @id
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:5
+   | 
+ 4 | model Store {
+ 5 |   storeKey String @id
+ 6 |   name String
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:6
+   | 
+ 5 |   storeKey String @id
+ 6 |   name String
+ 7 |   region String
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:7
+   | 
+ 6 |   name String
+ 7 |   region String
+ 8 |   state String
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:8
+   | 
+ 7 |   region String
+ 8 |   state String
+ 9 |   city String
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:9
+   | 
+ 8 |   state String
+ 9 |   city String
+10 |   zipCode String
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:10
+   | 
+ 9 |   city String
+10 |   zipCode String
+11 |   latitude Float?
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:11
+   | 
+10 |   zipCode String
+11 |   latitude Float?
+12 |   longitude Float?
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:12
+   | 
+11 |   latitude Float?
+12 |   longitude Float?
+13 |   tier String?
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:13
+   | 
+12 |   longitude Float?
+13 |   tier String?
+14 |   inventoryDaily InventoryDaily[]
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:14
+   | 
+13 |   tier String?
+14 |   inventoryDaily InventoryDaily[]
+15 |   adjustments InventoryAdjustment[]
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:15
+   | 
+14 |   inventoryDaily InventoryDaily[]
+15 |   adjustments InventoryAdjustment[]
+16 |   @@index([region])
+   | 
+error: Error validating: This line is not a valid definition within a generator.
+  -->  prisma/schema.prisma:16
+   | 
+15 |   adjustments InventoryAdjustment[]
+16 |   @@index([region])
+17 | }
+   | 
+error: Type "Store" is neither a built-in type, nor refers to another model, composite type, or enum.
+  -->  prisma/schema.prisma:78
+   | 
+77 |   merchantId String?
+78 |   store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
+   | 
+error: Type "Store" is neither a built-in type, nor refers to another model, composite type, or enum.
+  -->  prisma/schema.prisma:94
+   | 
+93 |   serialNumber String?
+94 |   store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
+   | 
+error: Argument "provider" is missing in generator block "client".
+  -->  prisma/schema.prisma:1
+   | 
+   | 
+ 1 | generator client { provider = "prisma-client-js" }
+ 2 | datasource db { provider = "sqlite" url = env("DATABASE_URL") }
+ 3 | 
+ 4 | model Store {
+ 5 |   storeKey String @id
+ 6 |   name String
+ 7 |   region String
+ 8 |   state String
+ 9 |   city String
+10 |   zipCode String
+11 |   latitude Float?
+12 |   longitude Float?
+13 |   tier String?
+14 |   inventoryDaily InventoryDaily[]
+15 |   adjustments InventoryAdjustment[]
+16 |   @@index([region])
+17 | }
+   | 
+
+Validation Error Count: 17
+[Context: validate]
+
+Prisma CLI Version : 6.19.3
+
+apply patch
+patch: completed
+/home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..6113d858e01ed9d5e8fec5dd31bf295edf4609fc
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,102 @@
++generator client {
++  provider = "prisma-client-js"
++}
++datasource db {
++  provider = "sqlite"
++  url = env("DATABASE_URL")
++}
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..6113d858e01ed9d5e8fec5dd31bf295edf4609fc
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,102 @@
++generator client {
++  provider = "prisma-client-js"
++}
++datasource db {
++  provider = "sqlite"
++  url = env("DATABASE_URL")
++}
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+exec
+/bin/bash -lc 'npx prisma validate && npx prisma generate' in /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..6113d858e01ed9d5e8fec5dd31bf295edf4609fc
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,102 @@
++generator client {
++  provider = "prisma-client-js"
++}
++datasource db {
++  provider = "sqlite"
++  url = env("DATABASE_URL")
++}
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+ exited 1 in 870ms:
+Prisma schema loaded from prisma/schema.prisma
+Error: Prisma schema validation - (get-config wasm)
+Error code: P1012
+error: Environment variable not found: DATABASE_URL.
+  -->  prisma/schema.prisma:6
+   | 
+ 5 |   provider = "sqlite"
+ 6 |   url = env("DATABASE_URL")
+   | 
+
+Validation Error Count: 1
+[Context: getConfig]
+
+Prisma CLI Version : 6.19.3
+
+exec
+/bin/bash -lc "DATABASE_URL='file:./dev.db' npx prisma validate && DATABASE_URL='file:./dev.db' npx prisma generate && npx tsc --noEmit" in /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..6113d858e01ed9d5e8fec5dd31bf295edf4609fc
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,102 @@
++generator client {
++  provider = "prisma-client-js"
++}
++datasource db {
++  provider = "sqlite"
++  url = env("DATABASE_URL")
++}
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..6113d858e01ed9d5e8fec5dd31bf295edf4609fc
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,102 @@
++generator client {
++  provider = "prisma-client-js"
++}
++datasource db {
++  provider = "sqlite"
++  url = env("DATABASE_URL")
++}
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+codex
+The schema now validates and Prisma Client generates successfully. I’m doing a final review of the indexes and query typing, especially the latest-date and regional aggregation paths.
+exec
+/bin/bash -lc "git status --short && sed -n '1,220p' prisma/schema.prisma && sed -n '1,220p' src/queries.ts" in /home/pdbethke/PycharmProjects/sigma-rbac-lab/.claude/worktrees/indexing-article/experiments/indexing/runs-crossmodel/codex/arm2-trial2
+ succeeded in 0ms:
+?? ../../../runCrossModel.sh
+?? ../../
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url = env("DATABASE_URL")
+}
+
+model Store {
+  storeKey String @id
+  name String
+  region String
+  state String
+  city String
+  zipCode String
+  latitude Float?
+  longitude Float?
+  tier String?
+  inventoryDaily InventoryDaily[]
+  adjustments InventoryAdjustment[]
+  @@index([region])
+}
+model ProductType {
+  id Int @id @default(autoincrement())
+  name String @unique
+  productFamilies ProductFamily[]
+}
+model ProductFamily {
+  id Int @id @default(autoincrement())
+  name String
+  productTypeId Int
+  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
+  productLines ProductLine[]
+  @@unique([productTypeId, name])
+  @@index([productTypeId])
+}
+model ProductLine {
+  id Int @id @default(autoincrement())
+  name String
+  productFamilyId Int
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
+  products Product[]
+  @@unique([productFamilyId, name])
+  @@index([productFamilyId])
+}
+model Brand {
+  id Int @id @default(autoincrement())
+  name String @unique
+  products Product[]
+}
+model Product {
+  skuNumber String @id
+  name String
+  productLineId Int
+  brandId Int
+  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  inventoryDaily InventoryDaily[]
+  adjustments InventoryAdjustment[]
+  @@index([productLineId])
+  @@index([brandId])
+}
+model InventoryDaily {
+  snapshotDate DateTime
+  storeKey String
+  skuNumber String
+  costPerUnit Float
+  unitsOnHand Int
+  unitsOnOrder Int
+  unitsInTransit Int
+  unitsReceived Int
+  unitsShrunk Int
+  reorderPoint Int
+  maxStockLevel Int
+  daysOfSupply Float
+  inventoryValue Float
+  isStockout Boolean
+  isLowStock Boolean
+  lostSalesUnits Int
+  lostSalesValue Float
+  leadTimeDays Int
+  merchantId String?
+  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
+  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
+  @@id([snapshotDate, storeKey, skuNumber])
+  @@index([storeKey, snapshotDate])
+  @@index([storeKey, skuNumber, snapshotDate])
+  @@index([isLowStock, snapshotDate])
+}
+model InventoryAdjustment {
+  id Int @id @default(autoincrement())
+  storeKey String
+  skuNumber String
+  adjustedBy String
+  adjustedAt DateTime
+  unitsDelta Int
+  reason String
+  serialNumber String?
+  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
+  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
+  @@index([storeKey, skuNumber, adjustedAt])
+}
+import { PrismaClient } from "@prisma/client";
+
+export const prisma = new PrismaClient();
+
+export async function getCurrentInventory(storeKey: string) {
+  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
+  if (!latest) return [];
+  const rows = await prisma.inventoryDaily.findMany({
+    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
+    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
+    orderBy: { product: { name: "asc" } },
+  });
+  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
+}
+
+export async function getLowStockByRegion(region: string) {
+  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
+  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
+}
+
+export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
+  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
+}
+
+export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
+  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
+  if (!totals.length) return [];
+  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
+  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
+  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
+}
+
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..6113d858e01ed9d5e8fec5dd31bf295edf4609fc
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,102 @@
++generator client {
++  provider = "prisma-client-js"
++}
++datasource db {
++  provider = "sqlite"
++  url = env("DATABASE_URL")
++}
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+codex
+Implemented the Prisma/SQLite TypeScript project.
+
+Files added:
+
+- [prisma/schema.prisma](.../prisma/schema.prisma)
+- [src/queries.ts](.../src/queries.ts)
+- [package.json](.../package.json)
+- [tsconfig.json](.../tsconfig.json)
+- [.env.example](.../.env.example)
+
+Queries exported:
+
+- `getCurrentInventory`
+- `getLowStockByRegion`
+- `getProductAdjustmentHistory`
+- `getRegionalInventorySummary`
+
+The schema includes composite keys and indexes for daily snapshot, store, product, region, low-stock, and adjustment-history access patterns.
+
+Verified with:
+
+- `prisma validate`
+- `prisma generate`
+- `tsc --noEmit`
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+new file mode 100644
+index 0000000000000000000000000000000000000000..d91f95889e5004df86b0afff865d8db24d0a7d5d
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/.env.example
+@@ -0,0 +1 @@
++DATABASE_URL="file:./dev.db"
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..41387ee078f267061229b3aba1fb3c2f1c32d64b
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/package.json
+@@ -0,0 +1 @@
++{"name":"retail-inventory-prisma","private":true,"scripts":{"generate":"prisma generate","typecheck":"tsc --noEmit"},"dependencies":{"@prisma/client":"^6.0.0"},"devDependencies":{"prisma":"^6.0.0","typescript":"^5.0.0"}}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+new file mode 100644
+index 0000000000000000000000000000000000000000..6113d858e01ed9d5e8fec5dd31bf295edf4609fc
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/prisma/schema.prisma
+@@ -0,0 +1,102 @@
++generator client {
++  provider = "prisma-client-js"
++}
++datasource db {
++  provider = "sqlite"
++  url = env("DATABASE_URL")
++}
++
++model Store {
++  storeKey String @id
++  name String
++  region String
++  state String
++  city String
++  zipCode String
++  latitude Float?
++  longitude Float?
++  tier String?
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([region])
++}
++model ProductType {
++  id Int @id @default(autoincrement())
++  name String @unique
++  productFamilies ProductFamily[]
++}
++model ProductFamily {
++  id Int @id @default(autoincrement())
++  name String
++  productTypeId Int
++  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict)
++  productLines ProductLine[]
++  @@unique([productTypeId, name])
++  @@index([productTypeId])
++}
++model ProductLine {
++  id Int @id @default(autoincrement())
++  name String
++  productFamilyId Int
++  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id], onDelete: Restrict)
++  products Product[]
++  @@unique([productFamilyId, name])
++  @@index([productFamilyId])
++}
++model Brand {
++  id Int @id @default(autoincrement())
++  name String @unique
++  products Product[]
++}
++model Product {
++  skuNumber String @id
++  name String
++  productLineId Int
++  brandId Int
++  productLine ProductLine @relation(fields: [productLineId], references: [id], onDelete: Restrict)
++  brand Brand @relation(fields: [brandId], references: [id], onDelete: Restrict)
++  inventoryDaily InventoryDaily[]
++  adjustments InventoryAdjustment[]
++  @@index([productLineId])
++  @@index([brandId])
++}
++model InventoryDaily {
++  snapshotDate DateTime
++  storeKey String
++  skuNumber String
++  costPerUnit Float
++  unitsOnHand Int
++  unitsOnOrder Int
++  unitsInTransit Int
++  unitsReceived Int
++  unitsShrunk Int
++  reorderPoint Int
++  maxStockLevel Int
++  daysOfSupply Float
++  inventoryValue Float
++  isStockout Boolean
++  isLowStock Boolean
++  lostSalesUnits Int
++  lostSalesValue Float
++  leadTimeDays Int
++  merchantId String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@id([snapshotDate, storeKey, skuNumber])
++  @@index([storeKey, snapshotDate])
++  @@index([storeKey, skuNumber, snapshotDate])
++  @@index([isLowStock, snapshotDate])
++}
++model InventoryAdjustment {
++  id Int @id @default(autoincrement())
++  storeKey String
++  skuNumber String
++  adjustedBy String
++  adjustedAt DateTime
++  unitsDelta Int
++  reason String
++  serialNumber String?
++  store Store @relation(fields: [storeKey], references: [storeKey], onDelete: Cascade)
++  product Product @relation(fields: [skuNumber], references: [skuNumber], onDelete: Cascade)
++  @@index([storeKey, skuNumber, adjustedAt])
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a55194b90b1cb2873e90f63feda518f1653e71fa
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/src/queries.ts
+@@ -0,0 +1,31 @@
++import { PrismaClient } from "@prisma/client";
++
++export const prisma = new PrismaClient();
++
++export async function getCurrentInventory(storeKey: string) {
++  const latest = await prisma.inventoryDaily.findFirst({ where: { storeKey }, orderBy: { snapshotDate: "desc" }, select: { snapshotDate: true } });
++  if (!latest) return [];
++  const rows = await prisma.inventoryDaily.findMany({
++    where: { storeKey, snapshotDate: latest.snapshotDate, unitsOnHand: { gt: 0 } },
++    select: { product: { select: { name: true, brand: { select: { name: true } }, productLine: { select: { productFamily: { select: { name: true } } } } } }, unitsOnHand: true },
++    orderBy: { product: { name: "asc" } },
++  });
++  return rows.map((r) => ({ productName: r.product.name, brandName: r.product.brand.name, productFamilyName: r.product.productLine.productFamily.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getLowStockByRegion(region: string) {
++  const rows = await prisma.inventoryDaily.findMany({ where: { isLowStock: true, store: { region } }, select: { store: { select: { name: true } }, product: { select: { name: true } }, unitsOnHand: true }, orderBy: [{ store: { name: "asc" } }, { product: { name: "asc" } }] });
++  return rows.map((r) => ({ storeName: r.store.name, productName: r.product.name, unitsOnHand: r.unitsOnHand }));
++}
++
++export async function getProductAdjustmentHistory(storeKey: string, skuNumber: string) {
++  return prisma.inventoryAdjustment.findMany({ where: { storeKey, skuNumber }, select: { adjustedBy: true, adjustedAt: true, unitsDelta: true, reason: true, serialNumber: true }, orderBy: { adjustedAt: "desc" } });
++}
++
++export async function getRegionalInventorySummary(region: string, snapshotDate: Date) {
++  const totals = await prisma.inventoryDaily.groupBy({ by: ["storeKey"], where: { snapshotDate, store: { region } }, _sum: { inventoryValue: true }, orderBy: { storeKey: "asc" } });
++  if (!totals.length) return [];
++  const stores = await prisma.store.findMany({ where: { storeKey: { in: totals.map((r) => r.storeKey) } }, select: { storeKey: true, name: true } });
++  const names = new Map(stores.map((s) => [s.storeKey, s.name]));
++  return totals.map((r) => ({ storeKey: r.storeKey, storeName: names.get(r.storeKey) ?? r.storeKey, totalInventoryValue: r._sum.inventoryValue ?? 0 }));
++}
+diff --git a/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..531a4084fb392f8761323a6f7c4610121a46b57c
+--- /dev/null
++++ b/experiments/indexing/runs-crossmodel/codex/arm2-trial2/tsconfig.json
+@@ -0,0 +1 @@
++{"compilerOptions":{"target":"ES2022","module":"CommonJS","moduleResolution":"Node","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"dist"},"include":["src/**/*.ts"]}
+
+tokens used
+43,819
+Implemented the Prisma/SQLite TypeScript project.
+
+Files added:
+
+- [prisma/schema.prisma](.../prisma/schema.prisma)
+- [src/queries.ts](.../src/queries.ts)
+- [package.json](.../package.json)
+- [tsconfig.json](.../tsconfig.json)
+- [.env.example](.../.env.example)
+
+Queries exported:
+
+- `getCurrentInventory`
+- `getLowStockByRegion`
+- `getProductAdjustmentHistory`
+- `getRegionalInventorySummary`
+
+The schema includes composite keys and indexes for daily snapshot, store, product, region, low-stock, and adjustment-history access patterns.
+
+Verified with:
+
+- `prisma validate`
+- `prisma generate`
+- `tsc --noEmit`

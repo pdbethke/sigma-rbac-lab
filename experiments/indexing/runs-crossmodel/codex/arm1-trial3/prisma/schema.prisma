@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  storeKey       String             @id
+  name           String
+  region         String
+  state          String
+  city           String
+  zipCode        String
+  latitude       Float
+  longitude      Float
+  tier           String
+  inventoryDaily InventoryDaily[]
+  adjustments    InventoryAdjustment[]
+
+  @@index([region])
+}
+
+model ProductType {
+  id      Int             @id @default(autoincrement())
+  name    String          @unique
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int           @id @default(autoincrement())
+  name          String
+  productTypeId Int
+  productType   ProductType   @relation(fields: [productTypeId], references: [id])
+  lines         ProductLine[]
+
+  @@unique([productTypeId, name])
+}
+
+model ProductLine {
+  id              Int            @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+  productFamily   ProductFamily  @relation(fields: [productFamilyId], references: [id])
+  products        Product[]
+
+  @@unique([productFamilyId, name])
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  brandName String   @unique
+  products Product[]
+}
+
+model Product {
+  skuNumber     String             @id
+  productName   String
+  productLineId Int
+  brandId       Int
+  productLine   ProductLine       @relation(fields: [productLineId], references: [id])
+  brand         Brand             @relation(fields: [brandId], references: [id])
+  inventoryDaily InventoryDaily[]
+  adjustments   InventoryAdjustment[]
+
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  snapshotDate    DateTime
+  storeKey        String
+  productSku      String
+  costPerUnit     Decimal
+  unitsOnHand     Int
+  unitsOnOrder    Int
+  unitsInTransit  Int
+  unitsReceived   Int
+  unitsShrunk     Int
+  reorderPoint    Int
+  maxStockLevel   Int
+  daysOfSupply    Float
+  inventoryValue  Decimal
+  isStockout      Boolean
+  isLowStock      Boolean
+  lostSalesUnits  Int
+  lostSalesValue  Decimal
+  leadTimeDays    Int
+  merchantId      String
+  store           Store              @relation(fields: [storeKey], references: [storeKey])
+  product         Product            @relation(fields: [productSku], references: [skuNumber])
+
+  @@id([snapshotDate, storeKey, productSku])
+  @@index([storeKey, snapshotDate])
+  @@index([productSku, snapshotDate])
+  @@index([isLowStock])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeKey     String
+  productSku   String
+  adjustedBy   String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String?
+  store        Store    @relation(fields: [storeKey], references: [storeKey])
+  product      Product  @relation(fields: [productSku], references: [skuNumber])
+
+  @@index([storeKey, productSku, adjustedAt])
+}
