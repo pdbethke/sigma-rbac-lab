@@ -5,3 +5,7 @@ __pycache__/
 oracle/rbac.db
 data/inventory/
 .claude/worktrees/
+node_modules/
+__pycache__/
+experiments/indexing/engines.duckdb
+experiments/indexing/runs/*/node_modules/

@@ -1,0 +1,16 @@
+{
+  "name": "sigma-rbac-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "scan": "node --experimental-strip-types .claude/skills/performance/scanNPlusOne.ts app"
+  },
+  "devDependencies": {
+    "@duckdb/node-api": "^1.1.0",
+    "@typescript-eslint/typescript-estree": "^8.0.0",
+    "prisma": "^6.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
