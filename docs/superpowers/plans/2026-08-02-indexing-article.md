@@ -53,7 +53,7 @@ The same parser reads both sides of the comparison — the hand-authored `oracle
     "scan": "node --experimental-strip-types .claude/skills/performance/scanNPlusOne.ts app"
   },
   "devDependencies": {
-    "@duckdb/node-api": "^1.1.0",
+    "@duckdb/node-api": "1.5.5-r.3",
     "@typescript-eslint/typescript-estree": "^8.0.0",
     "prisma": "^6.0.0",
     "typescript": "^5.6.0",
@@ -74,6 +74,8 @@ export default defineConfig({
 ```
 
 The exclude matters: generated trial code lands under `runs/` and must never be collected as this repo's tests.
+
+**On the DuckDB dependency, verified 2026-08-02:** `@duckdb/node-api` publishes only prerelease-tagged versions (`1.5.5-r.3`, `1.4.5-r.1`), so a caret range such as `^1.1.0` can never resolve — pin the exact version above. There is also **no DuckDB CLI on this machine and no npm package that provides one**; `npx duckdb` fails. Every DuckDB query in this plan therefore runs through `@duckdb/node-api` via the small runner built in Task 4, not through a CLI.
 
 - [ ] **Step 2: Install and ignore**
 
@@ -724,10 +726,61 @@ export async function recordMetrics(rows: TrialRow[], dbPath: string): Promise<v
 
 Parse `arm` and `trial` from the directory name (`arm2-trial4` → arm 2, trial 4) in `main()`, and call `recordMetrics(rows, "experiments/indexing/metrics.duckdb")` after the table is printed.
 
-- [ ] **Step 9: Derive the reported numbers from queries, not by counting**
+- [ ] **Step 9: Build the DuckDB query runner**
+
+There is no DuckDB CLI available, so every query in this plan goes through this one script. It takes a database path and SQL — either as an argument or on stdin — runs each statement, and prints the last result as a table.
+
+```typescript
+// experiments/indexing/duckdbQuery.ts
+import { readFileSync } from "node:fs";
+import { DuckDBInstance } from "@duckdb/node-api";
+
+/** Run SQL against a DuckDB file and return the final statement's rows as text. */
+export async function runSql(dbPath: string, sql: string): Promise<string> {
+  const instance = await DuckDBInstance.create(dbPath);
+  const connection = await instance.connect();
+  const statements = sql
+    .split(";")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  let output = "";
+  for (const statement of statements) {
+    const reader = await connection.runAndReadAll(statement);
+    const rows = reader.getRowObjects();
+    if (rows.length > 0) {
+      const columns = Object.keys(rows[0]);
+      output =
+        [columns.join(" | "), columns.map(() => "---").join(" | ")]
+          .concat(rows.map((row) => columns.map((c) => String(row[c])).join(" | ")))
+          .join("\n") + "\n";
+    }
+  }
+  connection.closeSync();
+  return output;
+}
+
+async function main(): Promise<void> {
+  const [dbPath, sqlOrFile] = process.argv.slice(2);
+  if (!dbPath) throw new Error("usage: duckdbQuery.ts <db-path> [<sql> | -]");
+  const sql =
+    !sqlOrFile || sqlOrFile === "-"
+      ? readFileSync(0, "utf8")
+      : sqlOrFile.endsWith(".sql")
+        ? readFileSync(sqlOrFile, "utf8")
+        : sqlOrFile;
+  process.stdout.write(await runSql(dbPath, sql));
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) await main();
+```
+
+Add to `package.json` scripts: `"duckdb": "node --experimental-strip-types experiments/indexing/duckdbQuery.ts"`.
+
+- [ ] **Step 10: Derive the reported numbers from queries, not by counting**
 
 ```bash
-npx duckdb experiments/indexing/metrics.duckdb -c "
+npm run duckdb -- experiments/indexing/metrics.duckdb "
   SELECT arm,
          COUNT(*) FILTER (WHERE gradeable) AS n,
          COUNT(*) FILTER (WHERE NOT gradeable) AS ungradeable,
@@ -740,20 +793,22 @@ npx duckdb experiments/indexing/metrics.duckdb -c "
 " | tee experiments/indexing/summary.txt
 ```
 
-If `npx duckdb` is unavailable, run the same SQL through `@duckdb/node-api` in a short script and commit the script. Do not retype the numbers by hand — that is the failure mode this step exists to remove.
+Do not retype the numbers by hand — that is the failure mode this step exists to remove.
 
-- [ ] **Step 10: Write RESULTS.md**
+- [ ] **Step 11: Write RESULTS.md**
 
 Contents: the finding in one sentence at the top, whichever way it went. The per-arm summary **pasted from `summary.txt`**, plus the per-run table. The exact `n` per arm and the count of ungradeable runs. The control number from Task 2 and whether it was subtracted. The query used, so a reader can re-derive every figure. Three to five verbatim transcript quotes where a session explained — or did not explain — an indexing choice.
 
 If the sessions matched the oracle, say so plainly. That outcome removes a section from the article and the article will explain why it was removed.
 
-- [ ] **Step 11: Commit**
+- [ ] **Step 12: Commit**
 
 ```bash
 git add experiments/indexing/
 git commit -m "Run the index-count test: n=5 per arm, metrics in DuckDB, raw transcripts"
 ```
+
+**Verify the API before trusting the sketches above.** `@duckdb/node-api` is pinned at `1.5.5-r.3` and its surface is not stable across releases — the `DuckDBInstance.create` / `connect` / `runAndReadAll` / `getRowObjects` calls used in Steps 8 and 9 are written from expectation, not from this version's documentation. Check them against the installed package's own types in `node_modules/@duckdb/node-api` and adjust. If a call does not exist, the sketch is wrong and the package is right.
 
 ---
 
@@ -1277,7 +1332,7 @@ Record the plan verbatim, including whether it names `idx_inventory_store`. This
 Same rows, one embedded row store and one embedded columnar engine. This turns section 3 from a citation into a demonstration a reader can reproduce on a laptop.
 
 ```bash
-npx duckdb experiments/indexing/engines.duckdb -c "
+npm run duckdb -- experiments/indexing/engines.duckdb "
   CREATE OR REPLACE TABLE inventory_daily AS
     SELECT \"Snapshot Date\" AS snapshot_date,
            \"Store Id\"      AS store_id,
@@ -1297,7 +1352,7 @@ npx duckdb experiments/indexing/engines.duckdb -c "
 Then create the equivalent index and run the identical `EXPLAIN` again:
 
 ```bash
-npx duckdb experiments/indexing/engines.duckdb -c "
+npm run duckdb -- experiments/indexing/engines.duckdb "
   CREATE INDEX idx_inventory_store ON inventory_daily (store_id, snapshot_date);
   EXPLAIN SELECT store_id, SUM(inventory_value)
           FROM inventory_daily
@@ -1309,7 +1364,9 @@ npx duckdb experiments/indexing/engines.duckdb -c "
 
 Record the row count and diff the two plans. **State only what the output supports.** DuckDB does support `CREATE INDEX` — it builds ART indexes and uses them for point lookups and constraints — so the claim is not "DuckDB has no indexes." The defensible version, if the output bears it out, is that for this analytical scan the plan is unchanged and the engine relies on automatic zone maps, whereas SQLite's plan for the comparable query names `idx_inventory_store`. If the plans *do* differ, that is the finding and the article says that instead.
 
-If `npx duckdb` is unavailable, DuckDB can read the oracle directly with `INSTALL sqlite; LOAD sqlite; ATTACH 'oracle/rbac.db' AS lab (TYPE sqlite);` — but that needs network for the extension. The CSV path above works offline and uses the same source rows.
+These run through the Task 4 runner; there is no DuckDB CLI on this machine. DuckDB could also read the oracle directly with `INSTALL sqlite; LOAD sqlite; ATTACH 'oracle/rbac.db' AS lab (TYPE sqlite);`, but that needs network for the extension — the CSV path above works offline and uses the same source rows.
+
+`oracle/rbac.db` is gitignored and is **not** present in a fresh checkout. Rebuild it with `python3 oracle/build.py` before Step 3.
 
 - [ ] **Step 5: Write the sources file**
 
