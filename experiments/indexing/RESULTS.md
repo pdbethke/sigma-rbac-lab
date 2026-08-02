@@ -20,14 +20,36 @@ technicality — a follow-up task will replicate with an interleaved run order b
 arm-vs-arm claim is treated as solid. Every number below should be read with this in
 mind.
 
-## Control result (Task 2, unchanged, nothing subtracted)
+## Control result — now covers every Prisma version a trial actually used
 
-`experiments/indexing/control/CONTROL.md`: Prisma 6.19.3's `migrate diff` against SQLite,
-for a schema declaring relations but zero `@@index` and no `@unique` beyond primary
-keys, emits **zero** `CREATE INDEX` statements. Only `CREATE TABLE` with inline
-`PRIMARY KEY` / `FOREIGN KEY` constraints. Consequence: every index a trial schema
-contains is attributable to that trial's session, not to a Prisma default. No
-subtraction was applied to any number in this file.
+The control run (Task 2) was originally measured against Prisma 6.19.3 only. That
+undercovered the data: each trial ran its own `npm install`, and only `arm2-trial5`
+happened to land on 6.19.3.
+
+| trials | Prisma installed |
+| --- | --- |
+| arm1-trial1 .. arm1-trial5, arm2-trial1 .. arm2-trial3 (8 trials) | `^7.9.1` |
+| arm2-trial4 | `^6.1.0` |
+| arm2-trial5 | `^6.19.3` |
+
+The control was re-run against **7.9.1** and **6.1.0** as well
+(`experiments/indexing/control/CONTROL.md` has the full commands and environment for
+all three). `CREATE INDEX` count per version, from `parseIndexes`, not eyeballed:
+
+| Prisma version | trials it covers | `CREATE INDEX` count |
+| --- | --- | --- |
+| 6.19.3 | arm2-trial5 | 0 |
+| 6.1.0 | arm2-trial4 | 0 |
+| 7.9.1 | the other 8 trials | 0 |
+
+**Zero in all three.** Prisma's `migrate diff` against SQLite, for a schema declaring
+relations but zero `@@index` and no `@unique` beyond primary keys, emits only
+`CREATE TABLE` statements with inline `PRIMARY KEY` / `FOREIGN KEY` constraints — in
+6.1.0, 6.19.3, and 7.9.1 alike. Consequence: every index a trial schema contains is
+attributable to that trial's session, not to a Prisma default, for all 10 trials, not
+just the one the original single-version control covered. **No subtraction was applied
+to any number in this file** — there is nothing to subtract, since raw and
+framework-only counts are identical (both zero) at every version in play.
 
 ## Per-arm summary (from a query, not counted by hand)
 
@@ -83,19 +105,41 @@ From `experiments/indexing/tally-output.md`:
 
 ## A grading note on `adjustments`, reported rather than fixed
 
-No trial in either arm scored an exact "match" on `adjustments`. This is not because
-sessions ignored the access pattern — several sessions built a composite index on
-`InventoryAdjustment` covering exactly `store_id, product_id`, but then added
-`adjusted_at` as a trailing third column to also serve the "newest first" sort (arm2
-trial4: *"`@@index([storeId, productId, adjustedAt])` on adjustments — query 3's filter
-is the leading two columns and its sort is the third, so ordering is free."*).
-`grade()`'s exact-key comparison scores that as "partial" (some but not all target
-columns present) rather than "match," because the oracle's `idx_adj_store` is a
-2-column index and the trial's is 3 columns. That is a real property of a grading rule
-fixed before any trial ran (see Task brief Step 1 / this file's test suite,
-`tally.test.ts`, committed before `runTrials.sh` was invoked) — it is reported here as
-a limitation of "match" as defined, not adjusted after the fact. `grade()` was not
-touched after seeing this data.
+No trial in either arm scored an exact "match" on `adjustments` (target: an index on
+`store_id, product_id`, in that order, on `InventoryAdjustment`). Per ruling: `grade()`
+is not being changed in response to this — the rubric was fixed and tested (Step 1,
+`tally.test.ts`, committed as `c4d534a` before any trial ran) before this data existed,
+and changing it now would be exactly the thing that was forbidden. What follows is the
+actual `CREATE INDEX` column list each trial declared on `InventoryAdjustment` (from
+each run's `extracted.sql`, via `parseIndexes` — excluding the `serialNumber` unique
+constraint, which every trial adds for a different reason and which never overlaps the
+graded columns), so a reader can see exactly what "partial" covers here:
+
+| run | `InventoryAdjustment` index column lists declared (excl. `serialNumber` unique) | verdict |
+| --- | --- | --- |
+| arm1-trial1 | *(none — only the `serialNumber` unique)* | missing |
+| arm1-trial2 | `(storeId, productId, adjustedAt)`, `(productId)` | partial |
+| arm1-trial3 | `(storeId, productId, adjustedAt)`, `(productId)` | partial |
+| arm1-trial4 | *(none — only the `serialNumber` unique)* | missing |
+| arm1-trial5 | `(storeId, productId, adjustedAt)`, `(productId, adjustedAt)`, `(adjustedBy)`, `(adjustedAt)` | partial |
+| arm2-trial1 | `(storeId, productId, adjustedAt)`, `(productId, adjustedAt)`, `(adjusterId)` | partial |
+| arm2-trial2 | `(storeId, productId, adjustedAt)`, `(productId)` | partial |
+| arm2-trial3 | `(storeId, productId, adjustedAt)`, `(adjustedById)` | partial |
+| arm2-trial4 | `(storeId, productId, adjustedAt)`, `(productId, adjustedAt)` | partial |
+| arm2-trial5 | `(storeId, productId, adjustedAt)`, `(productId, adjustedAt)`, `(serialNumber)` | partial |
+
+**8 of the 10 trials led their composite index with the exact target pair
+`(storeId, productId)`, then added `adjustedAt` as a third, trailing column** to also
+serve the "newest first" sort the prompt's page 3 asks for (arm2-trial4: *"the leading
+two columns and its sort is the third, so ordering is free"*). `grade()`'s exact-key
+comparison scores a 3-column index as "partial" against a 2-column target — not
+because 8 of these trials failed to find the access pattern, but because the oracle's
+`idx_adj_store` happens to be 2 columns and a superset does not equal a match under an
+exact-key rule. **This is a limitation of "match" as defined, not of the sessions that
+scored "partial."** The remaining 2 trials (`arm1-trial1`, `arm1-trial4`) are the
+genuine negative case — no index touches `store_id` or `product_id` on that table at
+all, which is why they score "missing" rather than "partial," and both are also the
+two transcripts that never mention indexing (see below).
 
 ## Tooling deviations found and fixed (infrastructure, not grading)
 
