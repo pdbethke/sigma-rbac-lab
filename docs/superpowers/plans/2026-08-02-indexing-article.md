@@ -1615,3 +1615,47 @@ The validator checks colour, not layout. Open the page and both SVGs and check f
 git add package.json package-lock.json charts/
 git commit -m "Chart the trial metrics: every trial plotted, no aggregate rates"
 ```
+
+---
+
+### Task 13: Interleave and parallelize the harness, then replicate
+
+Added 2026-08-02. The first run (Task 4) executed arm 1 entirely, then arm 2, sequentially over roughly half an hour. That makes arm order confounded with time-of-run — rate limiting, machine load, or model-side serving variance across the window cannot be separated from the arm effect. At n=5 that is a real limitation. This task removes it rather than footnoting it.
+
+**Files:**
+- Modify: `experiments/indexing/runTrials.sh`
+- Create: `experiments/indexing/runs2/` (the replication)
+- Modify: `experiments/indexing/RESULTS.md`
+- Modify: `experiments/indexing/README.md`
+
+**Interfaces:**
+- Consumes: the prompts from Task 3, `tally.ts` and `recordMetrics` from Task 4.
+- Produces: a second `trials` table (or a `run_batch` column) in `metrics.duckdb` covering the replication.
+
+- [ ] **Step 1: Rewrite the runner as an interleaved pool**
+
+Build the full work list first, interleaved by arm — `arm1-trial1, arm2-trial1, arm1-trial2, arm2-trial2, …` — then feed it to `xargs -P "$PARALLEL"` with `PARALLEL` defaulting to **4**. Not 10: concurrent sessions that trip a rate limit produce failures, and failures correlated with position in the run would reintroduce exactly the bias this task exists to remove.
+
+Preserve all three existing behaviors — skip an existing run directory, leave a failed trial in place with its transcript, never retry. Verify with `bash -n` and by inspecting the generated work list before running anything.
+
+- [ ] **Step 2: Confirm the interleaving before spending any sessions**
+
+Print the work list with execution disabled and check by eye that arms alternate. A pool that silently runs all of one arm first has fixed nothing.
+
+- [ ] **Step 3: Run the replication into a separate directory**
+
+Write to `runs2/`, leaving `runs/` untouched — the first run stays on disk as the pilot, and the promoted `app/` corpus still traces to a committed trial.
+
+- [ ] **Step 4: Grade and record with the batch distinguished**
+
+Add a `batch` column (`pilot` / `replication`) so the two runs can be queried apart and together. Do not pool them into one number without showing both.
+
+- [ ] **Step 5: Report both, and say which one the article leads with**
+
+The replication is the clean result and the article leads with it. The pilot is reported alongside — a second independent run agreeing is stronger evidence than either alone, and if they disagree, that disagreement is the most interesting finding in the piece and must not be buried.
+
+Do not drop the pilot because the replication is tidier. Do not merge them to make n look bigger.
+
+- [ ] **Step 6: Update the README's reproduce instructions and commit**
+
+The README's reproduce steps must describe the parallel, interleaved version, since that is what a reader will run.
