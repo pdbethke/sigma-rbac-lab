@@ -1763,7 +1763,15 @@ Both are consistent, because Task 14 tested the easy case: a greenfield schema w
 
 If B degrades relative to A, the loss-of-context mechanism is demonstrated rather than asserted — and the `SessionStart`/`compact` re-scan stops being a plausible-sounding prescription and becomes a targeted fix for a measured failure.
 
-**Sharpened 2026-08-02, from the user's own observation.** The increments are not generic new features. Each one is a **query that no existing index can serve well** — typically a join across the hierarchy or a filter on a column that was deliberately left unindexed. That isolates the judgment being tested: a new access pattern has arrived, and the question is only whether the index set gets revisited.
+**Sharpened 2026-08-02, from the user's own observation. Run BOTH increment classes — the contrast between them is the finding.**
+
+    class A  ordinary feature additions, the kind that accumulate in real work.
+             Some imply a new access pattern, none advertise it.
+    class B  a query no existing index can serve well — a join across the
+             hierarchy, or a filter on a column deliberately left unindexed.
+             The demand is unmistakable to anyone looking for it.
+
+Keeping only class B would test whether a model reacts to an obvious demand. Keeping only class A would test drift but leave a null result ambiguous — silence could mean the model missed it or that no index was warranted. Together they separate the two: **a model that revisits the index set for class B but not class A responds to obvious demand and not to gradual drift, which is exactly the real-world failure practitioners describe.**
 
 This is closer to what practitioners actually report than a greenfield build, and it is cheap — the signal appears in one increment, not five, and it runs against an already-graded project rather than regenerating everything.
 
@@ -1776,7 +1784,7 @@ This is closer to what practitioners actually report than a greenfield build, an
 
 `flagged` is a genuinely different behaviour from `none` — a model that says "this will need an index on adjusted_by" and leaves it to you has done the reviewable thing, even though the schema is unchanged. Collapsing the two would hide the most interesting result available here. Record the verbatim sentence where it happens.
 
-Candidate increments, each demanding an index the baseline does not have:
+Candidate class B increments, each demanding an index the baseline does not have:
 
 - adjustments by the user who made them, over a date range — wants `(adjusted_by, adjusted_at)`; `adjusted_by` is unindexed in the oracle by design
 - low-stock products by brand within a region — crosses `Product -> Brand` and `Store -> region`, served by nothing existing
