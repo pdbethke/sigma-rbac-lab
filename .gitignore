@@ -9,3 +9,5 @@ node_modules/
 __pycache__/
 experiments/indexing/engines.duckdb
 experiments/indexing/runs/*/node_modules/
+.gemini/
+experiments/indexing/runs-crossmodel/*/node_modules/

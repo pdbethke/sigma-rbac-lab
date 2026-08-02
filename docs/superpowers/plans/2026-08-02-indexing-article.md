@@ -1673,3 +1673,60 @@ Do not drop the pilot because the replication is tidier. Do not merge them to ma
 - [ ] **Step 6: Update the README's reproduce instructions and commit**
 
 The README must describe the serial, interleaved run as the canonical mode and state that the published numbers came from it. If the opt-in concurrency flag is documented at all, document it as a convenience that is explicitly not how the results were produced.
+
+---
+
+### Task 14: Cross-model replication — Claude, Gemini pro, Gemini flash
+
+Added 2026-08-02. The pilot measured **one model**: every trial ran `claude-opus-5[1m]` via `claude -p` with no `--model` flag. "Agents declare indexes" is not supported by that; "Claude Opus 5 declared indexes in 8 of 10 trials on this schema" is. This task makes it a comparison.
+
+Supersedes Task 13's Claude-only replication — the interleaved rerun happens here, across models, so there is one clean run rather than two.
+
+**Models, pinned explicitly. Never use an alias.** `gemini-pro-latest` exists but reports its version as the string "Gemini Pro Latest" and can move underneath a result; anything attributed to it is unreproducible.
+
+    claude         claude-opus-5[1m]        via `claude -p`; record the resolved id from --output-format json
+    gemini-pro     gemini-3.1-pro-preview   tier parity with Opus 5
+    gemini-flash   gemini-3.6-flash         the 3.6 line, which exists only as flash
+
+**There is no `gemini-3.6-pro`** — verified 2026-08-02 against the key's full model list (42 models supporting `generateContent`). So the 3.6 line cannot be compared at tier parity, and running both Gemini models is what separates model *family* from model *tier*. An Opus-5-versus-3.6-flash gap alone would confound the two.
+
+**Design:** 3 models × 2 arms × 5 trials = **30 trials**, serial, interleaved by model and arm. Roughly 3 minutes each, so about 90 minutes.
+
+- [ ] **Step 1: Extend the harness for models, interleaved and serial**
+
+Build the work list as a full rotation — `claude/arm1/1, gemini-pro/arm1/1, gemini-flash/arm1/1, claude/arm2/1, …` — so model and arm both distribute across the run. Execute **one at a time**; serial is canonical, for the reasons in Task 13.
+
+The prompt files are byte-identical across models. The prompt is the experiment's constant and must not be adapted per tool.
+
+    claude -p "$(cat prompt-armN.txt)" --dangerously-skip-permissions
+    gemini -m <model> --approval-mode yolo "$(cat prompt-armN.txt)"
+
+**Gemini auth, verified 2026-08-02.** The CLI reads `.gemini/settings.json` from the **immediate working directory only — it does not walk up the tree.** A config at the worktree root is therefore ignored by a trial running in a subdirectory, which silently falls back to the machine's global `oauth-personal` and fails. So the harness must write
+
+    {"security":{"auth":{"selectedType":"gemini-api-key"}}}
+
+into `<trial-dir>/.gemini/settings.json` before each Gemini invocation. Disclose in the results that this harness-created config file is present in Gemini trial directories; it configures authentication only and is not something the model wrote.
+
+**The API key is read from `$GEMINI_API_KEY` and is NEVER written into the script, a settings file, or any committed artifact.** The runner exits with a clear message if it is unset.
+
+- [ ] **Step 2: Print the work list and verify the rotation before spending anything**
+
+Confirm by eye that model and arm both alternate. A run that groups by model has reintroduced exactly the confound this task exists to remove.
+
+- [ ] **Step 3: Run into `runs-crossmodel/`**
+
+Leave `runs/` untouched as the pilot. A trial that fails for any reason — quota, timeout, refusal, malformed output — is **left in place with its transcript and counted as ungradeable. Never retried.** A retried trial ran under different conditions than its peers, which is the bias interleaving exists to prevent. Report ungradeable counts per model; a model that fails more often is itself a finding.
+
+- [ ] **Step 4: Grade with model recorded**
+
+Add `model` and `model_version` columns. Grade with the **unchanged** `grade()` and the unchanged three counts (`total_indexes`, `explicit_indexes`, `in_scope_indexes`). Do not add or adjust a metric because a model performs unexpectedly on it.
+
+Expect lower gradeability from Gemini: the pipeline needs a Prisma project `prisma migrate diff` can read, and a session that lays its project out differently produces nothing to grade. That is a result, not a bug to work around by editing the prompt.
+
+- [ ] **Step 5: Report per model, and state what the comparison does not support**
+
+n per model, ungradeable per model, all three index counts, and the verdict distribution. Then the limits, in the text: one schema, one domain, one prompt, five trials per cell; and CLI harnesses differ in scaffolding, tool permissions and system prompts, so this compares **these tools as invoked here**, not the underlying models in isolation. 3.6-flash is a fast tier and 3.1-pro a frontier tier, which is why both are present.
+
+- [ ] **Step 6: Commit, with no secret in the diff**
+
+Grep the staged diff for the key and for any `AQ.`-prefixed string. Confirm `.gemini/` is gitignored, that no trial's `.gemini/settings.json` is staged, and that no `node_modules` is staged.
