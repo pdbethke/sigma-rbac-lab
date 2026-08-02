@@ -1682,24 +1682,27 @@ Added 2026-08-02. The pilot measured **one model**: every trial ran `claude-opus
 
 Supersedes Task 13's Claude-only replication — the interleaved rerun happens here, across models, so there is one clean run rather than two.
 
-**Models, pinned explicitly. Never use an alias.** `gemini-pro-latest` exists but reports its version as the string "Gemini Pro Latest" and can move underneath a result; anything attributed to it is unreproducible.
+**Models, pinned explicitly. Never use an alias.** `gemini-pro-latest` exists but reports its version as the string "Gemini Pro Latest" and can move underneath a result; anything attributed to it is unreproducible. Verified 2026-08-02: of the Claude id spellings, only `claude-opus-4-8` reports itself back in `modelUsage` — `opus-4.8` and `claude-opus-4.8` are accepted by the CLI but return an empty model list, which would have produced a silently mislabeled column.
 
-    claude         claude-opus-5[1m]        via `claude -p`; record the resolved id from --output-format json
-    gemini-pro     gemini-3.1-pro-preview   tier parity with Opus 5
-    gemini-flash   gemini-3.6-flash         the 3.6 line, which exists only as flash
+    claude   claude-opus-4-8    confirm the id echoes back via --output-format json
+    gemini   gemini-3.6-flash   the 3.6 line, which exists only as flash
 
-**There is no `gemini-3.6-pro`** — verified 2026-08-02 against the key's full model list (42 models supporting `generateContent`). So the 3.6 line cannot be compared at tier parity, and running both Gemini models is what separates model *family* from model *tier*. An Opus-5-versus-3.6-flash gap alone would confound the two.
+**There is no `gemini-3.6-pro`** — verified 2026-08-02 against the key's full model list (42 models supporting `generateContent`).
 
-**Design:** 3 models × 2 arms × 5 trials = **30 trials**, serial, interleaved by model and arm. Roughly 3 minutes each, so about 90 minutes.
+**Design:** 2 models x 2 arms x 5 trials = **20 trials**, serial, interleaved by model and arm. Roughly 3 minutes each, so about an hour.
+
+**The pilot gives a third model for free.** `runs/` already holds 10 Claude Opus 5 trials. Those are reported alongside but never pooled with this run: they were produced under a different design (arm-grouped rather than interleaved) and a different model. Three models' worth of data, two of them cleanly comparable.
+
+**State the tier caveat once, in the results, and do not repeat it as a hedge.** `claude-opus-4-8` is a frontier-tier model and `gemini-3.6-flash` is a fast tier, so a gap between them confounds model family with model tier. The comparison is still worth running and reporting; it simply cannot support a claim of the form "Claude is better than Gemini at this."
 
 - [ ] **Step 1: Extend the harness for models, interleaved and serial**
 
-Build the work list as a full rotation — `claude/arm1/1, gemini-pro/arm1/1, gemini-flash/arm1/1, claude/arm2/1, …` — so model and arm both distribute across the run. Execute **one at a time**; serial is canonical, for the reasons in Task 13.
+Build the work list as a full rotation — `claude/arm1/1, gemini/arm1/1, claude/arm2/1, gemini/arm2/1, claude/arm1/2, …` — so model and arm both distribute across the run. Execute **one at a time**; serial is canonical, for the reasons in Task 13.
 
 The prompt files are byte-identical across models. The prompt is the experiment's constant and must not be adapted per tool.
 
-    claude -p "$(cat prompt-armN.txt)" --dangerously-skip-permissions
-    gemini -m <model> --approval-mode yolo "$(cat prompt-armN.txt)"
+    claude -p "$(cat prompt-armN.txt)" --model claude-opus-4-8 --dangerously-skip-permissions
+    gemini -m gemini-3.6-flash --approval-mode yolo "$(cat prompt-armN.txt)"
 
 **Gemini auth, verified 2026-08-02.** The CLI reads `.gemini/settings.json` from the **immediate working directory only — it does not walk up the tree.** A config at the worktree root is therefore ignored by a trial running in a subdirectory, which silently falls back to the machine's global `oauth-personal` and fails. So the harness must write
 
