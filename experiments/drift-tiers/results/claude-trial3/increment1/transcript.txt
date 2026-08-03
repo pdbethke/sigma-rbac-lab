@@ -1,0 +1,14 @@
+Typecheck passes cleanly (`tsc --noEmit`, exit 0).
+
+## Summary
+
+**`prisma/schema.prisma`** — no change needed. The existing `InventoryAdjustment` model already has every field the page requires: `adjustedBy` (who), `unitsDelta` (amount the count changed by), `reason`, `adjustedAt` (to scope to this month), and relations to `Store` and `Product` for their names.
+
+**`src/queries.ts`** — added `getLargestAdjustmentsThisMonth()` and its `LargestAdjustmentRow` interface (Page 5), following the same conventions as the existing pages (doc comment, exported row interface, `prisma.*.findMany` with `select`, JS post-processing like Page 4).
+
+What it returns, per row: `adjustedBy`, `productName`, `storeName`, `unitsDelta`, `reason` — exactly the columns the manager asked for.
+
+Two decisions worth flagging:
+- **"Largest" = by magnitude.** A −500 correction is a big adjustment, so it ranks alongside a +500 one. If the manager actually only cares about increases (or wants signed ranking), that's a one-line change to the sort.
+- **Efficiency.** SQLite/Prisma can't `orderBy ABS(...)`, so instead of loading the whole month into memory I fetch the 10 biggest increases and 10 biggest decreases (`take: 10` each), merge/dedupe, and slice the top 10 by magnitude — provably correct and bounded to ~20 rows.
+- **Month scope** defaults to the current calendar month but accepts an injectable `now` param, which keeps it testable.

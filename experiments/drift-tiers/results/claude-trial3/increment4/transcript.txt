@@ -1,0 +1,20 @@
+Typecheck passes cleanly (`tsc --noEmit`, exit 0).
+
+## Done
+
+**`prisma/schema.prisma`** — no change needed. `InventoryDaily` already records `costPerUnit` per store, per product, per `snapshotDate` with the `product` relation, which is exactly the shape this trend needs.
+
+**`src/queries.ts`** — added **Page 8**, `getProductCostTrend(productId)`, following the same pattern as the other pages (the aggregate `groupBy` style from `getRegionalSummary`):
+
+```ts
+export interface ProductCostTrendRow {
+  snapshotDate: Date;
+  averageCostPerUnit: number;
+}
+```
+
+It groups `InventoryDaily` by `snapshotDate` for the given product, averages `costPerUnit` across every store carrying it (`_avg`), and orders `snapshotDate` ascending (earliest → latest) — one row per date on which the product appears anywhere in the chain.
+
+**Verification:** `npx tsc --noEmit` → exit 0.
+
+**One decision worth your confirmation:** I combined stores via a plain **average** of cost per unit per date. If the analyst wants a **units-weighted** average (total cost ÷ total units on hand, so a big store weighs more than a small one), it's a one-line change from `groupBy`/`_avg` to summing `inventoryValue` and `unitsOnHand` — say the word and I'll switch it.

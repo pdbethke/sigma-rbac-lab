@@ -1,0 +1,11 @@
+Typecheck passes clean (exit 0) against the generated Prisma client.
+
+## Done
+
+**Page 7 — Stockouts per store on a snapshot date** is added to `src/queries.ts:288`.
+
+**`src/queries.ts`** — new exported `StoreStockoutCountRow` interface and `getStoreStockoutCounts(snapshotDate)` function. It follows the same shape as the existing Page 4 (`getRegionalSummary`): `groupBy` over `InventoryDaily` filtered to the snapshot date and `isStockout: true`, then a separate `store.findMany` with an in-memory `Map` join, sorted by store name. Each store returns `{ storeId, storeName, stockoutCount }`, one row per store.
+
+**`prisma/schema.prisma`** — **no change needed**. The schema already carries everything the page requires: `InventoryDaily.isStockout` (the out-of-stock flag), `snapshotDate`, and the `store` relation for the name. I deliberately left it untouched rather than add anything gratuitous — the task said add "whatever you need," and nothing was needed. (For scale you could later add an index on `snapshotDate`, but that would be a new convention the other pages don't use, so I left it out to match the existing style.)
+
+One decision I made for you: **"every store" includes stores with zero stockouts** — they show a count of `0`. A bare `groupBy` would silently omit them; the extra `store.findMany` is there specifically so the director sees a complete store list. If you'd rather only list stores that actually had at least one stockout, that's a one-line change (drop the `findMany` and map the `grouped` result directly, like Page 4 does) — let me know.

@@ -113,11 +113,49 @@ run_increment_codex() {
   echo "[$(date -Iseconds)] DONE codex trial$trial increment$incn rc=$rc"
 }
 
-for incn in 1 2 3 4; do
-  for trial in $(seq 1 "$TRIALS"); do
-    run_increment_gemini "$trial" "$incn"
-    run_increment_codex "$trial" "$incn"
+run_increment_claude() {
+  local trial="$1" incn="$2"
+  local dir="$RUNS/claude-trial$trial"
+  local resdir="$RESULTS/claude-trial$trial"
+  mkdir -p "$resdir"
+  setup_trial "$dir"
+  if [ "$incn" -eq 1 ] && [ ! -f "$resdir/increment0" ]; then
+    mkdir -p "$resdir/increment0"
+    cp "$dir/prisma/schema.prisma" "$resdir/increment0/schema.prisma"
+    snapshot_indexes "$dir" > "$resdir/increment0/indexes.txt"
+    touch "$resdir/increment0"
+  fi
+  if [ -f "$resdir/increment$incn/.done" ]; then
+    echo "skip claude trial$trial increment$incn (done)"
+    return 0
+  fi
+  echo "[$(date -Iseconds)] START claude trial$trial increment$incn -> $dir (fresh session)"
+  ( cd "$dir" && timeout "$TIMEOUT_SECS" claude -p "$(cat "$PROMPTS/increment-$incn.txt")" \
+      --model claude-opus-4-8 --dangerously-skip-permissions --output-format json \
+      > "increment${incn}-result.json" 2> "increment${incn}-stderr.txt" )
+  local rc=$?
+  jq -r '.result // empty' "$dir/increment${incn}-result.json" > "$dir/increment${incn}-transcript.txt" 2>/dev/null
+  mkdir -p "$resdir/increment$incn"
+  cp "$dir/increment${incn}-transcript.txt" "$resdir/increment$incn/transcript.txt" 2>/dev/null || true
+  echo "$rc" > "$resdir/increment$incn/exit_code.txt"
+  grade_increment "$dir" "$resdir" "$incn"
+  touch "$resdir/increment$incn/.done"
+  echo "[$(date -Iseconds)] DONE claude trial$trial increment$incn rc=$rc"
+}
+
+if [ "${RUN_MODE:-full}" = "claude-only" ]; then
+  for incn in 1 2 3 4; do
+    for trial in $(seq 1 "$TRIALS"); do
+      run_increment_claude "$trial" "$incn"
+    done
   done
-done
+else
+  for incn in 1 2 3 4; do
+    for trial in $(seq 1 "$TRIALS"); do
+      run_increment_gemini "$trial" "$incn"
+      run_increment_codex "$trial" "$incn"
+    done
+  done
+fi
 
 echo "ALL DONE. results under $RESULTS"

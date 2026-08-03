@@ -1,0 +1,20 @@
+Typecheck passes clean (exit 0). Done.
+
+## Summary
+
+I added a `getLargestAdjustmentsThisMonth()` query to `src/queries.ts` (Page 5), matching the style of the existing pages.
+
+**No schema change was needed** — the `InventoryAdjustment` model in `prisma/schema.prisma` already holds every field this page requires (`adjustedBy`, `adjustedAt`, `unitsDelta`, `reason`, plus relations to `Store` and `Product`), so adding fields would have been redundant.
+
+The query returns the ten largest adjustments this calendar month, each row giving:
+- **who** made it (`adjustedBy`)
+- the **product** (`productName`)
+- the **store** (`storeName`)
+- the **amount the count changed by** (`unitsDelta`)
+- the **reason** (`reason`)
+
+Two decisions to confirm:
+1. **"Largest" = biggest magnitude in either direction.** A −500 write-off ranks above a +10 correction. If you actually meant only the largest *increases* (or only decreases), it's a one-line change — say the word.
+2. **"This month" = the current calendar month** based on the server clock (`[1st of month, 1st of next month)`). The other queries take explicit parameters (`snapshotDate`, `region`), so if you'd rather pass the month in — for testability or to view a past month — I can make it a parameter.
+
+The two-query approach (top 10 from each end of `unitsDelta`, merged and ranked by absolute value) is because SQLite/Prisma can't `ORDER BY abs(...)` directly, and it keeps the fetch bounded rather than loading the whole month into memory.

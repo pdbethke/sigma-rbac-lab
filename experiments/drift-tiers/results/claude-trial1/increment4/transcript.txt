@@ -1,0 +1,31 @@
+Both checks pass. Here's the rundown.
+
+## Your day — Sat, Aug 2
+
+- 🗓️ **All day** — CE Questionaire *(family)*
+- **10:00–11:00 AM** — PREP FOR TRIP *(family)*
+
+Your personal calendar is clear; both events are on the Family Cal.
+
+## The inventory page: product cost-per-unit trend
+
+**`prisma/schema.prisma`** — no new fields were needed (`InventoryDaily` already has `snapshotDate`, `productId`, `costPerUnit`). I added a supporting index, mirroring how `InventoryAdjustment` carries `@@index([adjustedBy, adjustedAt])` for the person-history query:
+
+```prisma
+@@index([productId, snapshotDate])
+```
+
+**`src/queries.ts`** — added `getProductCostTrend` + its `ProductCostTrendRow` interface, built the same way as pages 4 and 7 (Prisma `groupBy` with an aggregate, then map):
+
+```ts
+const grouped = await prisma.inventoryDaily.groupBy({
+  by: ["snapshotDate"],
+  where: { productId },
+  _avg: { costPerUnit: true },
+  orderBy: { snapshotDate: "asc" },
+});
+```
+
+**One interpretation to flag:** "cost per unit, combined across every store" is ambiguous because different stores can carry the product at different costs on the same date. I combined them as the **mean cost per unit across stores** per snapshot date (`_avg`), which fits the existing `groupBy` aggregate style. If the analyst actually wants a **units-weighted** cost (total inventory cost ÷ total units on hand), that's a different calculation — say the word and I'll switch it to `_sum: { inventoryValue, unitsOnHand }` and divide.
+
+Verified: `tsc --noEmit` exits 0 and `prisma validate` reports the schema valid.

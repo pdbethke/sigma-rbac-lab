@@ -1,0 +1,9 @@
+Typechecks clean.
+
+## Summary
+
+**`prisma/schema.prisma`** — no change needed. The models already support this page: `InventoryDaily` carries `snapshotDate`, `storeId`, and the `isStockout` boolean, `Store` carries `name`, and `snapshotDate` is already indexed via the existing `@@unique([snapshotDate, storeId, productId])`. Adding a field or index just to touch the file would be dead weight, so I left it alone.
+
+**`src/queries.ts`** — added `getStoreStockoutCounts(snapshotDate)` returning `StoreStockoutCountRow[]` (`storeId`, `storeName`, `stockoutCount`), one row per store, sorted by store name. It follows Page 4's two-step `groupBy` → resolve-names shape.
+
+The one non-obvious decision: **"every store" includes stores with zero stockouts.** A store that was snapshotted on that date but had no products out of stock still gets a row with `stockoutCount: 0`. A single `groupBy` filtered on `isStockout: true` would silently omit those stores, so the function first groups by `storeId` over all rows for the date (the full store set), then merges in the stockout counts, defaulting missing stores to 0. Stores with *no* data at all on the chosen date are excluded — for those, "0 out of stock" would be a false claim rather than a real zero. If the director instead wants literally every store in the chain (including un-snapshotted ones shown as 0), that's a one-line change to source the store set from `prisma.store` — let me know.

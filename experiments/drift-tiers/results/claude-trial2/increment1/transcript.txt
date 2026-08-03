@@ -1,0 +1,17 @@
+Type-checks clean and runs correctly. The July 31 `-2 / damage` adjustment is correctly excluded (it's last month), and the two August adjustments come back ranked by magnitude (`+5` before `−3`).
+
+## Summary
+
+**Schema (`prisma/schema.prisma`):** No change needed. The existing `InventoryAdjustment` model already carries every field the page requires — `adjustedBy` (who), the `product` and `store` relations, `unitsDelta` (amount changed), and `reason`, plus `adjustedAt` to scope by month. Adding fields would have been redundant.
+
+**Query (`src/queries.ts`):** Added `getLargestAdjustmentsThisMonth()` (Page 5) plus its `LargestAdjustmentRow` interface, matching the existing Page-N structure exactly:
+
+- Filters to the current month using UTC boundaries (`gte monthStart` / `lt monthEnd`), which matches how `adjustedAt` is stored in the seed.
+- Selects the product name via the `product` relation and store name via `store`, the same nested-select style as Pages 1–2.
+- Ranks by **magnitude** of change (`Math.abs`), so a large shrinkage outranks a small correction — with most-recent-first as the tie-breaker — then takes the top ten. The abs-value sort is done in code because SQLite/Prisma can't `orderBy` an absolute value, consistent with the in-code sort/slice already used in Page 4.
+
+One decision worth flagging: I read "the ten **largest** adjustments" as largest by magnitude of count change. If the manager actually means only the biggest *increases* (or wants shrinkage and restocks split out), that's a one-line change to the sort — let me know.
+
+A couple of judgment calls I'll note rather than assume:
+- **"This month" = calendar month in UTC**, derived from the current date at call time (defaulting to `new Date()`, overridable for testing). The seed stores timestamps in UTC, so this aligns; if the store chain operates on local/store time, the boundary could shift.
+- The function returns the exact five fields the page describes. It doesn't include `adjustedAt` or `serialNumber` in the row — easy to add if the page wants a timestamp column too.

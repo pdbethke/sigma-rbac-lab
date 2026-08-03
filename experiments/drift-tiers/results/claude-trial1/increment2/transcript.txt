@@ -1,0 +1,16 @@
+Both pass — Prisma schema is valid and the TypeScript compiles clean.
+
+## Summary
+
+The `InventoryAdjustment` model already carried every field this page needs, so the work was small:
+
+**`prisma/schema.prisma`** — added `@@index([adjustedBy, adjustedAt])` to `InventoryAdjustment`, matching the new access pattern (filter by person, then by time). No index migration is needed for the query to *work*, but it keeps the lookup fast as the table grows.
+
+**`src/queries.ts`** — added **Page 6**, built the same way as the existing pages:
+- `PersonAdjustmentRow` interface — `storeName`, `productName`, `unitsDelta`, `reason`, `adjustedAt`.
+- `getAdjustmentsByPerson(adjustedBy, from, to)` — filters `InventoryAdjustment` by the person and an inclusive `[from, to]` date window, pulls the store and product names via relation selects (like `getRegionLowStock`/`getLargestAdjustmentsThisMonth`), and orders most-recent-first (like `getProductAdjustmentHistory`).
+
+A couple of choices worth flagging:
+- **Name match is exact** on `adjustedBy` (that column is a free-text string). If the analyst expects fuzzy/partial matching, say so and I'll switch to `contains`.
+- **Window is inclusive on both ends** (`gte`/`lte`). Page 5 uses a half-open month range; I chose inclusive since an analyst-supplied range usually means "through this day." Easy to change if you'd prefer half-open.
+- If the client is regenerated (`npx prisma generate`) the new index will be picked up; the query itself uses only pre-existing fields, so no client change is required for it to run.

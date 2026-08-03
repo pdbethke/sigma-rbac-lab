@@ -1,0 +1,19 @@
+Done. Clean typecheck, no errors.
+
+## What I added
+
+**`prisma/schema.prisma`** — one line on `InventoryAdjustment`:
+```prisma
+@@index([adjustedBy, adjustedAt])
+```
+The model already held every field the page needs (`adjustedBy`, `adjustedAt`, `unitsDelta`, `reason`, `store`, `product`), so no new columns were required. The index backs this page's new access pattern — filter by person, then by date range.
+
+**`src/queries.ts`** — `getPersonAdjustments(adjustedBy, from, to)` returning `PersonAdjustmentRow[]` with `storeName`, `productName`, `unitsDelta`, `reason`, and `adjustedAt`. It's built the same way as Page 5: a single `findMany` on `InventoryAdjustment` with the store/product names selected through the relations, ordered most-recent-first. It spans every store and product since nothing constrains those.
+
+Two judgment calls worth flagging:
+- **Inclusive date range** (`gte`/`lte`) — the most literal reading of "date range" for an analyst. Page 5 uses a half-open `[start, end)` for month boundaries; I chose closed here because the caller supplies the exact window edges. Easy to switch to `lt` if you'd rather `to` be exclusive.
+- **Exact name match** on `adjustedBy` — consistent with how the other pages filter (`region`, ids). If the analyst needs fuzzy/partial name matching, that'd be a `contains` change.
+
+One follow-up on your side: `prisma migrate dev` to get the new index into the SQLite DB (I only generated the client, I didn't touch your database).
+
+Separately — several MCP servers (Atlassian, Cloudflare, Hugging Face) need authorization and can't be used in this non-interactive session; authorize them via `claude mcp` or `/mcp` interactively if you need them.

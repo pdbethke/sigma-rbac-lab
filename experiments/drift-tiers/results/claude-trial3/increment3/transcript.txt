@@ -1,0 +1,13 @@
+Typechecks clean. Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — no change needed. The page's data is fully expressible with existing fields: `InventoryDaily.isStockout`, `snapshotDate`, and the `Store` relation. Adding columns would be dead weight, so I left the schema alone.
+
+**`src/queries.ts`** — added `getStoreStockoutCounts(snapshotDate)` plus its `StoreStockoutCountRow` interface (Page 7), following the same style as the other pages:
+
+- `groupBy` on `storeId` over `inventoryDaily` where `snapshotDate` matches and `isStockout` is true, using `_count` — the same groupBy-then-resolve-names shape as `getRegionalSummary` (Page 4).
+- Starts from the full `store` list so **every store gets a row**, defaulting to a count of `0` when it had no stockouts that day (one row per store, as specified).
+- Sorted by store name, matching the alphabetical ordering the other pages use.
+
+One judgment call worth flagging: I read "every store" literally, so stores with zero stockouts on the chosen date still appear (count 0). If the director instead wants only stores that actually had stockouts, drop the `store.findMany` and just map over `grouped` — say the word and I'll switch it.

@@ -1,0 +1,15 @@
+Typechecks clean. Done.
+
+## What I added
+
+**`prisma/schema.prisma`** — no change needed. The existing `InventoryAdjustment` model already carries every field this page requires (`adjustedBy`, `adjustedAt`, `unitsDelta`, `reason`) plus the `store` and `product` relations. Adding columns would just be dead weight.
+
+**`src/queries.ts`** — added `getPersonAdjustments(adjustedBy, from, to)` returning `PersonAdjustmentRow[]`:
+
+- Filters `InventoryAdjustment` by `adjustedBy` and a `[from, to)` half-open date window (same bounding convention as Page 5's month range).
+- Joins `store` and `product` to surface their names, and returns `unitsDelta`, `reason`, and `adjustedAt` — the store, product, amount changed, reason, and when it happened.
+- Ordered most-recent-first, matching the other adjustment pages.
+
+It follows the same shape as the existing queries: exported row interface, `prisma.<model>.findMany` with a `select`, then a `.map` to the flat row type.
+
+One thing worth confirming on your end: the page filters by exact `adjustedBy` string match (that's how the field is stored — same as Page 3/5). If the analyst will be typing names in freeform and you need case-insensitive or partial matching, say so and I'll adjust the `where` clause.

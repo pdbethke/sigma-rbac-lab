@@ -1,0 +1,15 @@
+Both the Prisma client regeneration and `tsc --noEmit` pass cleanly.
+
+## Summary
+
+I added a "cost-per-unit trend" page to the inventory app, following the existing `src/queries.ts` conventions.
+
+**`prisma/schema.prisma`** — added one index to `InventoryDaily`:
+```prisma
+@@index([productId, snapshotDate])
+```
+The existing `@@unique([snapshotDate, storeId, productId])` is leading-keyed on `snapshotDate`, so it can't serve a per-product lookup. This index makes "filter by product, order by date" efficient. No new columns are needed — `snapshotDate`, `productId`, and `costPerUnit` already exist.
+
+**`src/queries.ts`** — added `getProductCostTrend(productId)` returning `ProductCostTrendRow[]` (`{ snapshotDate, averageCostPerUnit }`), one row per snapshot date, ordered earliest → latest. It uses the same `groupBy` + aggregate shape as Page 4 (Regional summary), with `_avg` in place of `_sum`.
+
+**One design decision worth flagging:** "cost per unit combined across every store" — stores can record different costs for the same product on the same day, so each date collapses to the **simple average** of `costPerUnit` across the stores carrying it. If you'd rather weight by units on hand (a volume-blended chain cost, `Σ(cost×units)/Σ units`), that's a different figure — say the word and I'll switch it; it's a small change but it does need the `unitsOnHand`-weighted math rather than `_avg`.
