@@ -19,4 +19,4 @@
 
 If a fix can't wait through the 15-minute setup, **say that explicitly to the user and ask** before reaching for scp. "We need to ship this in five minutes; OK to scp now and add the rails right after?" lets the user weigh urgency vs. discipline.
 
-Recorded 2026-04-26 after the a production incident. The scp worked, but the user had to call out the missing version control twice before the right thing was set up.
+Recorded 2026-04-26 after a production incident. (The original sentence named the affected service, its dependency and its host. Removed before publication: that is infrastructure reconnaissance rather than disclosure, and the rule above — which is what was actually in effect during the trials — is unchanged.)
