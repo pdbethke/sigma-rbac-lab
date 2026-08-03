@@ -61,7 +61,7 @@ const CREDENTIAL_PATTERNS: [RegExp, string][] = [
 ];
 
 /** Hosting providers and infrastructure nouns worth a human glance. */
-const INFRA = /\b(hetzner|digitalocean|linode|vultr|ovh|rackspace|ec2|rds instance|s3 bucket|cloudflare tunnel|bare metal|vps)\b/gi;
+const INFRA = /\b(hetzner|digitalocean|linode|vultr|ovh|rackspace|ec2|rds instance|s3 bucket|cloudflare tunnel|bare metal|vps)\b/gi; // publication-guard: ignore
 
 /** Phrases that turn "we use a host" into "here is how our host is weak". */
 const WEAKNESS = /\b(without version control|no version control|no ci\b|not in git|plaintext|hard-?coded|unpatched|vulnerab|bypass|exploit|root (?:login|access|password)|scp'?d?\b|misconfigur)/i;
@@ -94,12 +94,27 @@ function isPrivateIp(a: number, b: number): boolean {
   );
 }
 
+/**
+ * Escape hatch, deliberately explicit. A file whose first 30 lines contain
+ * `publication-guard: ignore-file` is skipped entirely; a single line ending in
+ * `publication-guard: ignore` is skipped on its own.
+ *
+ * This exists because the scanner's own test fixtures are fake credentials, and
+ * a tool that flags its own tests is a tool people learn to ignore. Anything
+ * suppressed must be suppressed on purpose and visibly, in the file itself.
+ */
+const IGNORE_FILE = /publication-guard:\s*ignore-file/;
+const IGNORE_LINE = /publication-guard:\s*ignore\b/;
+
 export function scanText(text: string, file = "<memory>"): Finding[] {
   const findings: Finding[] = [];
   const lines = text.split("\n");
 
+  if (lines.slice(0, 30).some((l) => IGNORE_FILE.test(l))) return [];
+
   lines.forEach((raw, i) => {
     const line = i + 1;
+    if (IGNORE_LINE.test(raw)) return;
     const add = (rule: Rule, severity: Severity, match: string, message: string): void => {
       findings.push({ file, line, rule, severity, match, message });
     };

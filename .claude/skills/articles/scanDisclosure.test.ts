@@ -1,3 +1,6 @@
+// publication-guard: ignore-file
+// Every credential and address below is a fabricated fixture. This marker is the
+// scanner's own escape hatch, applied to itself -- see scanDisclosure.ts.
 import { describe, expect, it } from "vitest";
 import { scanText, type Finding } from "./scanDisclosure.ts";
 
@@ -100,5 +103,22 @@ describe("reporting", () => {
 
   it("finds nothing in clean text", () => {
     expect(scanText("A claim about how the data will be read.")).toEqual([]);
+  });
+});
+
+describe("suppression", () => {
+  it("skips a whole file marked ignore-file", () => {
+    const src = "// publication-guard: ignore-file\nsk-abcdefghijklmnopqrstuvwxyz123456";
+    expect(scanText(src)).toEqual([]);
+  });
+
+  it("skips a single line marked ignore", () => {
+    const src = "ghp_abcdefghijklmnopqrstuvwxyz1234567890 // publication-guard: ignore";
+    expect(scanText(src)).toEqual([]);
+  });
+
+  it("does not skip neighbouring lines", () => {
+    const src = "ok // publication-guard: ignore\nsomeone@gmail.com";
+    expect(scanText(src).map((f) => f.rule)).toEqual(["email"]);
   });
 });
