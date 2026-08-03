@@ -312,6 +312,46 @@ TO RESUME TASK 19 after a restart:
      took the rule's SECOND branch (stated why no index was needed) and quote one verbatim.
   6. Partial runs already captured must not be mixed with a fresh run — start clean or
      continue only the untouched trials, and say which in the report.
+RESUMED 2026-08-03: Task 19 RESTARTED CLEAN, not continued. The reboot took /tmp with it, and
+  only schema.prisma / queries.ts / indexes.txt / transcript were preserved per increment — not
+  the cumulative project directory an increment builds on. A trial stopped after increment 2
+  therefore cannot be continued, so the 3 partial sessions from the 20:44-20:53 run are
+  DISCARDED, not mixed (resume instruction 6). They stay committed under
+  experiments/drift-instruction/results/ as the record of the interrupted run; the report must
+  say the reported cell is a single clean run and that these were not folded in.
+  Preconditions re-verified before the first session: `git rev-parse --show-toplevel` -> fatal;
+  skill probe -> NO. Baseline confirmed = drift-stripped baseline + CLAUDE.md and nothing else;
+  prompts byte-identical to experiments/drift/prompts. Runner reconstructed from
+  experiments/drift-tiers/run.sh (Task 18's harness), claude-only path, armB naming.
+
+SIGMA/SNOWFLAKE MATERIAL added to the spec 2026-08-03 (brainstormed with user; no re-runs).
+  Problem: the article isn't about Sigma but ships from a Sigma-named repo on Sigma sample data.
+  Verified first that this is cheap: prompts, generated corpora and the draft carry NO Sigma data;
+  only Task 9's engine demo reads the real rows, and only as row volume. So it is a writing change.
+  Decided: bring Sigma in where earned. Four pieces, all in the spec's Amendment section --
+  provenance paragraph, engine section as a 3-step escalation, a NEW section "THE TABLES NOBODY
+  WROTE" (own heading, after WHAT THIS MEANS FOR YOUR INDEXING STRATEGY), and the close's throughline.
+  ACCURACY FIX, load-bearing: the draft's "Snowflake offers no B-tree secondary index" is now
+  MISLEADING. Snowflake Optima Indexing creates HIDDEN indexes on standard tables, docs say
+  "not user-declarable", best-effort, no config, no extra cost, Gen2/Adaptive warehouses only,
+  detectable only in Query Profile. Precise claim: you cannot declare one; the engine may create
+  one you cannot see. Spec outline item 3 corrected in place.
+  Sigma finding for the new section: Sigma creates/manages a write-back schema (PostgreSQL 15+
+  supported; materialization/input tables/write-back are ABSENT from Postgres's documented
+  limitations list). Its materialization quickstart says, passive and actorless, "Materialized
+  tables can be indexed or tuned for specific query patterns"; the best-practices page names four
+  Sigma-side levers and never mentions the access path. SCOPE LIMIT, must stay in the text: this is
+  a claim about DOCUMENTATION, not implementation -- proving what Sigma actually creates needs a
+  paid Postgres connection we do not have.
+  Length ceiling raised 14k -> ~15.5k deliberately, recorded in the spec; Task 10's wc -c uses the
+  new number.
+  Attribution wording: state WHERE the data came from, never what its licence permits. The terms
+  were never verified and a licensing characterization must not be invented.
+  Task 9 follow-on: indexing-sources.md needs new citation lines before any of this reaches the
+  draft. The 30%->96% pruning figure is SNOWFLAKE'S published number -- attribute or omit.
+  Throughline paragraph is BLOCKED ON TASK 19 by design: 19 tests instruction vs convention, which
+  is the paragraph's subject. Do not draft it in advance of its own evidence.
+
 NEXT AFTER 19: Task 12 charts for expansion/stripped/tiers (user wants charts before article),
   then Task 10 article rewrite (the "THEN I TOOK THE INDEXES AWAY" section currently states
   0/24 as the headline and must be reworded to the same-harness Task 15 vs 16 comparison),

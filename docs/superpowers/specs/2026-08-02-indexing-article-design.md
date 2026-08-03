@@ -177,10 +177,13 @@ Outline:
    school is not nostalgia, it is the part that stopped failing loudly enough to teach anyone.
 2. What an index is, in one honest paragraph: a claim about how the data will be read, paid for in
    writes and in storage. Not "makes queries fast."
-3. Why some engines have them and some do not. A row store seeking one row versus a columnar engine
-   scanning a column. This same schema, in Snowflake behind Sigma, has no B-tree indexes at all —
-   micro-partitions and zone maps. The lesson: "add an index" is not portable advice, it is
-   engine-specific.
+3. Why some engines have them and some do not — a three-step escalation, each step moving the
+   decision further from the person writing the query. SQLite declares an index and the plan names
+   it. DuckDB declares one and the optimizer ignores it for an analytical scan. Snowflake standard
+   tables cannot declare one at all, and Optima Indexing may build a hidden one by watching the
+   workload. The lesson: "add an index" is not portable advice, it is engine-specific.
+   **Corrected 2026-08-03:** this item previously read "in Snowflake behind Sigma, has no B-tree
+   indexes at all." That is now misleading — see the amendment below.
 4. The gap that used to teach you. Correctness and scalability failed together, on your machine. They
    do not any more.
 5. We trust they build indexes. The omitted index is invisible. Then the finding: four hand-authored
@@ -195,8 +198,12 @@ The phrase *old school in an age of new school* is the opening line, not the tit
 carry the claim rather than the mood; this piece's stakes are its strongest asset and the title should
 carry them.
 
-Length: article scale. `04` and `05` sit at 11–14k characters. A connecting post may follow if it
-earns one; not designed here.
+Length: article scale. `04` and `05` sit at 11–14k characters. **Ceiling raised to ~15.5k on
+2026-08-03**, deliberately and with the reason recorded: the provenance paragraph and the new
+"THE TABLES NOBODY WROTE" section add roughly 1,800 characters to a draft already at 13,748. The
+piece earned the length by measuring things rather than by padding. Task 10's `wc -c` check compares
+against the new ceiling, not the old one. A connecting post may follow if it earns one; not designed
+here.
 
 ## Accuracy constraints
 
@@ -219,3 +226,135 @@ earns one; not designed here.
 - Runtime N+1 detection, query profiling, or a benchmark harness.
 - Any claim about tools not built here beyond the shape of the question, per the hedging discipline
   applied to the Assistant material in `04`.
+
+---
+
+## Amendment 2026-08-03 — the Sigma and Snowflake material
+
+The problem this solves: the article is not about Sigma, but every artifact it ships sits in a
+repo named `sigma-rbac-lab`, built on Sigma's sample retail data. The domain read as an unexplained
+coincidence. Decided: bring Sigma in where it is earned rather than swapping the data or apologizing
+for it. **No measurement changes.** Checked first, and it is what made this cheap:
+
+| | Sigma data present? |
+|---|---|
+| Trial prompts (both arms, all drift prompts) | **no** — generic entity and field lists we authored |
+| Generated corpora (`app/`, every trial) | **no** |
+| Article draft | **no** — "retail inventory", `inventory_daily`, `store_id` |
+| Task 9 engine demo | **yes** — `oracle/rbac.db` and `data/inventory_daily.csv`, 94,500 rows |
+
+One measurement out of everything, and there only as row volume and column distribution — never as
+values a reader sees. So this is a writing-and-citation change; nothing re-runs.
+
+### 1. Provenance paragraph (section 2)
+
+Three sentences after the reference-schema lines: the schema comes from the sibling RBAC lab built on
+Sigma's free tier over their sample retail dataset; the four indexes are hand-authored, not
+inherited; the nine RBAC tables are out of scope for the trials, which is why the comparison is
+against two indexes rather than four. This answers "why retail inventory" and discloses the borrowed
+rows in the same breath.
+
+**State where the data came from, not what its licence permits.** Describing the source is a fact we
+can stand behind; characterizing the terms is not, and was never verified. If a formal attribution or
+licence note is wanted, that is a separate addition made deliberately.
+
+### 2. Engine section — three steps, and an accuracy fix
+
+Each step moves the index decision further from the person writing the query:
+
+| | Can you declare it? | What the engine does |
+|---|---|---|
+| SQLite | yes | plan names `idx_inventory_store` — **demonstrated** |
+| DuckDB | yes | plan byte-identical before and after — **demonstrated** |
+| Snowflake standard tables | **no** | Optima may build a hidden one — **cited** |
+
+**The accuracy fix.** The draft says Snowflake "offers no B-tree secondary index." Against the
+`CREATE INDEX` page that is still literally defensible — that page is scoped to hybrid tables — but
+it is now misleading, and a Snowflake-literate reader will say so. The precise claim: *on a standard
+table you cannot declare an index, and the engine may create one you cannot see.*
+
+Optima Indexing "automatically analyzes workload patterns", creates **hidden indexes** the docs call
+**"not user-declarable"**, "built and maintained on a best-effort basis, without requiring user
+intervention", at no additional cost and with no configuration, on Gen2 standard warehouses or
+Adaptive Warehouses. Detectable only via the Query Profile insight "Snowflake Optima used" or the
+"Partitions pruned by Snowflake Optima" statistic.
+
+Optima stays in this section rather than moving to the new one: it is a fact about what the engine
+does with an index, not about who owns the decision.
+
+### 3. New section — "THE TABLES NOBODY WROTE"
+
+Placed **after** "WHAT THIS MEANS FOR YOUR INDEXING STRATEGY", before "HORSEPOWER IS A COSTLY
+NON-SOLUTION". Placement is load-bearing: among the platform material early on it reads as trivia;
+after the reader has absorbed the measured finding it lands as an extension of something proven —
+*it isn't only the code; tools write the tables now too.*
+
+The argument: generated **schema** has the same problem as generated code. Sigma is the worked
+example — a write-back schema it creates and manages (PostgreSQL 15+ supported, and materialization,
+input tables and write-back are absent from PostgreSQL's documented limitations list, which is
+specific enough that the omission is meaningful). Then their own sentence, quoted verbatim:
+
+> "Query optimization: Materialized tables can be indexed or tuned for specific query patterns."
+
+Passive, no actor, filed under *advantages*. The performance best-practices page names four
+Sigma-side levers — denormalize upstream, materialize, hide columns, join in Sigma — and never
+mentions the access path on the tables Sigma just wrote. The nearest owner named anywhere is "a data
+specialist in your organization."
+
+Closing move: Optima recalled as the mirror image. One platform hides the index it created, the
+other hides the absence of one. Both leave the developer unable to tell whether a judgment was made —
+which is the article's own finding, arriving through products instead of through agents.
+
+**Register.** The passive-voice observation is quoted verbatim so a reader can check it, and aimed
+at the pattern rather than at Sigma. The piece implicates the reader everywhere else; one
+vendor-pointed jab would change its register.
+
+**Scope limits, both stated in the text:**
+
+- **Documentation, not implementation.** Absence of guidance is not absence of behavior. We cannot
+  say Sigma creates no index on a Postgres write-back table — only that its guidance does not
+  address it. Proving otherwise needs a paid Postgres connection and a look at the write-back
+  schema; the free tier uploads files and has no warehouse behind it.
+- **Row stores only.** On Snowflake — Sigma's primary platform — this barely matters, because a
+  standard table has no declarable index anyway and clustering is the lever, which Sigma does point
+  at. The gap is specific to the row stores.
+
+### 4. Throughline in the close
+
+The RBAC piece argued authority belongs in the data, not in the instruction. This one finds the model
+conforming to what the codebase already did. Same argument from the other side — the codebase is data
+the model reads, which is what the title means.
+
+**Written after Task 19 resolves.** Task 19 tests exactly this: one CLAUDE.md rule against codebase
+convention. If instruction wins, the paragraph is written differently. It must not be drafted in
+advance of its own evidence.
+
+### 5. `docs/posts/indexing-sources.md` amendment
+
+Per the existing rule — no claim appears in the article without a line here — new entries needed for:
+
+- Snowflake Optima: both URLs, date checked, exact wording, plus the Gen2/Adaptive gating,
+  best-effort qualifier, no-additional-cost statement, and Query-Profile-only detection.
+- Sigma write-back on PostgreSQL: write access "Necessary for features like Input tables and
+  Materialization", PostgreSQL 15+, the reserved write schema, and the absence of these features
+  from the documented PostgreSQL limitations list.
+- The materialization quickstart's passive sentence, verbatim.
+- The best-practices page's four levers and its silence on indexing.
+
+**The 30%→96% pruning improvement is Snowflake's own published figure, not ours.** The no-unbenchmarked-
+numbers constraint means it is attributed explicitly to Snowflake or it does not appear.
+
+### 6. Repo README
+
+One disclosure line naming the data source, so the public repo is not silently shipping derived
+vendor rows under `data/`.
+
+### Added accuracy constraints
+
+- **Snowflake index claims are tier- and table-type-scoped.** "No secondary index" is false as a
+  blanket statement: hybrid tables have `CREATE INDEX`, standard tables have search optimization and
+  Optima. Say which table type, every time.
+- **Vendor-published performance figures are attributed to the vendor or omitted.** They were not
+  measured here and the piece's credibility rests on that distinction.
+- **Claims about a product's behavior derived from its documentation are labelled as such** in the
+  text, not just in the sources file.
