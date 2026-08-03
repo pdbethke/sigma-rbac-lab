@@ -1,0 +1,165 @@
+Your codebase is the prompt
+
+EXECUTIVE SUMMARY
+
+Old school in an age of new school. Except the old school isn't nostalgia. It's the part that stopped failing loudly enough to teach anyone.
+
+Everyone who understands database indexing learned it the same way: an application fell over on a dataset you could feel, early, on your own machine, attached to the query that caused it. Correctness and scalability failed together. They don't any more. Generated code clears the bar that used to trigger the lesson, because it returns the right rows.
+
+So I measured whether agents still get indexing right. They mostly do — 8 of 10 sessions declared composite indexes with correct column order, for access patterns nobody described to them.
+
+Then I removed the indexes from the starting schema and ran the identical experiment. The same model, given the same four features, added the right index 24 times out of 24 when the schema already had indexes, and 0 times out of 24 when it didn't.
+
+The model isn't ignorant. It's conformist. It read the room and matched it.
+
+That changes the advice. The risk isn't that agents don't know about indexes. It's that they inherit whatever standard your code already displays — so the standard, not the review, is the control.
+
+WHAT AN INDEX IS
+
+A claim about how the data will be read, paid for on every write and in storage.
+
+Not "makes queries fast." The definition has to carry the cost, because the cost is what makes indexing a judgment rather than a checklist item.
+
+The reference schema in this experiment has 17 tables and 4 indexes. Three are composite, and the column order encodes the access pattern: (store_id, snapshot_date) because a store's inventory is read as a date range, (user_id, status) because assignments are filtered to active. Roughly thirty other foreign keys are deliberately left unindexed.
+
+Four, not thirty. The restraint is the skill.
+
+WHY SOME ENGINES HAVE THEM AND SOME DON'T
+
+Same 94,500 rows, same query, two engines, opposite answers.
+
+SQLite plans it like this:
+
+SEARCH inventory_daily USING INDEX idx_inventory_store (store_id=? AND snapshot_date>?)
+
+DuckDB, on identical data, produces a physical plan that is byte-identical before and after creating the equivalent index. The optimizer didn't want it for an analytical scan. The engine leans on automatic per-partition metadata instead.
+
+Both outputs are committed in the repository. You can re-run them in under a minute.
+
+The narrow claim only: DuckDB does support CREATE INDEX, builds ART indexes, and uses them for point lookups and constraint enforcement. "DuckDB has no indexes" is false. What's demonstrated is that for this scan, on this data, the index changed nothing.
+
+At warehouse scale the same divergence appears. Snowflake stores data in immutable micro-partitions with per-column metadata and offers no B-tree secondary index. Sigma pushes queries down into the warehouse rather than extracting data out of it.
+
+"Add an index" is engine-specific advice wearing the costume of a universal rule.
+
+THE WRITE SIDE, WHICH DECIDES THE TRADE
+
+An index is paid for on every write, so the engine's write profile governs whether the trade is worth making at all. This is also why "index everything" fails.
+
+A columnar store built on immutable partitions makes a single-row change mean rewriting a partition. That cost doesn't go away with a bigger machine.
+
+State this as architecture, never as a product verdict. No vendor documentation I could find gives a concrete cost figure for single-row DML on standard tables, so this piece states no number. And Snowflake ships Hybrid Tables and Snowpipe Streaming precisely for row-oriented write-heavy work, so "Snowflake is bad at writes" would be both a product claim and a dated one.
+
+THE GAP THAT USED TO TEACH YOU
+
+The feedback loop is gone, not the fundamental.
+
+An N+1 doesn't announce itself at 200 rows in development. It announces itself at 200,000 rows in production, detached from the moment anyone could have learned from it.
+
+This isn't a claim that agents are careless. It's that two things which used to fail together now don't, and everything that lived in that gap is unenforced.
+
+WHAT THEY ACTUALLY DO AT CREATION
+
+The setup: describe a retail inventory domain in business terms, ask for a schema and four queries, and never use the words index, performance, fast, slow, or scale. Then count what came back.
+
+The control first, because without it the count means nothing. A schema declaring relations and zero indexes, compiled by the ORM itself, emits zero CREATE INDEX statements — verified on all three major versions the trials installed. So every index in a trial is attributable to the session, not the framework.
+
+Ten trials, Claude Opus 5: 8 of 10 declared explicit indexes on the target tables. Two declared none, and their transcripts never mention indexing at all.
+
+Three more tools, ten trials each. Claude Opus 4.8 averaged 10.4 explicit indexes without the production hint. Codex averaged 6.2, though bimodally — two of five trials were near zero. Gemini 3.6-flash declared zero explicit indexes in five of five trials without the hint, and 9 to 12 in five of five with it. One sentence about production scale flipped it completely.
+
+Gemini 3.6-flash is a fast tier sitting beside two frontier tiers. That gap is a tier difference, not evidence that one vendor is worse than another, and it matters because cost pressure pushes production traffic toward exactly that tier.
+
+THE MISTAKE I MADE MEASURING IT
+
+The first version of this section reported that every session declared composite indexes, averaging 14.0 rising to 18.2.
+
+Both numbers were wrong. The count included CREATE UNIQUE INDEX rows the ORM emits mechanically from uniqueness constraints, and indexes on tables outside the experiment. Two of the ten sessions had declared nothing at all — their "composite index" was the uniqueness constraint my own prompt had dictated by describing the table's grain.
+
+Corrected, in-scope and explicit only: 4.0 and 5.2, not 14.0 and 18.2. The effect was overstated about threefold.
+
+It was internally consistent, reproducible, and backed by committed DDL. It was also wrong, and it was caught only because something independent went and checked it.
+
+That is this article's own thesis happening inside its own evidence.
+
+N+1, CONCRETELY
+
+The chain is Product to ProductLine to ProductFamily to ProductType, plus Product to Brand. "Show my store's inventory with product and brand name" is the most natural request anyone would make of this data, and the naive implementation issues one query per row — against 31,500 rows for a store manager.
+
+The honest result: scanning ten independently generated codebases plus one promoted application, zero N+1 patterns in any page-serving query code. Nested selects in a single query, groupBy with an in-memory join, parallel fetches for independent lookups. Three independent reads agree.
+
+The scanner did find 20 candidates: 13 real, 7 false, a 35% false-positive rate. Every real one is a create call inside a loop in a seed script — one-time setup, not per-request code. Calling that a user-facing N+1 would be the same overclaim as the index count.
+
+Credit where it's due. On this task, these tools wrote query code that avoids the pattern.
+
+THEN I TOOK THE INDEXES AWAY
+
+Creation is the easy case, and it's the case benchmarks measure. Real work is accumulation: features arrive across sessions and nobody re-derives the access patterns.
+
+So I ran a second experiment. Start from a generated project that already had 10 explicit indexes. Add four features, one at a time, each introducing an access pattern the existing indexes don't serve — including one that inverts the fact table's leading column, so the existing composite is useless for it. Two arms: one continuous session, and a fresh session per feature to simulate a handoff.
+
+The expected index for each feature was written down and committed before any session ran. Without that, any index the model happens to produce can be rationalized afterwards.
+
+Result: 24 of 24 increments got a schema-appropriate index. Both arms alike. Lost context was not the mechanism.
+
+That falsified my hypothesis. It also didn't explain why practitioners keep finding missing indexes in real codebases.
+
+So I ran it again with one variable changed: the same baseline project with only the index declarations deleted. Same generator, same code style, same queries, same model, same features, same frozen expectations. Every uniqueness and primary key constraint left intact, because those are correctness, not performance.
+
+0 of 24.
+
+Not one index added, in either arm, across all three trials. And the final schemas contain zero index declarations after four features that each demanded one.
+
+One session explained itself:
+
+"none of the existing pages add DB indexes... so I stayed consistent and didn't add one... an @@index([adjustedAt]) on InventoryAdjustment would speed the month-range scan — say the word and I'll add it."
+
+It named the correct index. It knew why the query needed one. It withheld it to match the surrounding convention.
+
+That isn't hallucination, incompetence, or misalignment. It's deference. And reviewing the output wouldn't catch it, because the output is fine — it's the absence that's wrong, and absences don't show up in a diff.
+
+[PENDING TASK 17 — one paragraph: whether the same result holds when the trials run outside this repository, where the project's own performance-scanning skill is not visible. If it degrades, every index number from the cross-model run onward is inflated and only the first ten trials are clean.]
+
+[PENDING TASK 18 — one paragraph: whether the 0-of-24 result holds across model tiers, or concentrates at the cheap tier. If all tiers fail alike, "use a better model" stops being an answer.]
+
+WHAT THIS MEANS FOR YOUR INDEXING STRATEGY
+
+The classical version assumes a query set that's stable, reviewed, and changes at the speed of a release. You enumerate the access patterns and index for them.
+
+Agent-generated code breaks that from both directions. New access patterns appear faster than anyone re-derives the index set, and agents also add indexes on their own initiative, which is write amplification nobody chose.
+
+But the deeper problem is the one the experiment found. The index set doesn't drift randomly. It stays exactly where you left it, because the agent is reading it as the specification.
+
+HORSEPOWER IS A COSTLY NON-SOLUTION
+
+This project's own measurement is the first example. Gathering these numbers took about thirty minutes per run because trials execute one at a time, and the obvious move was to run five at once and finish in six. That would have been faster and worse: concurrent sessions can be throttled or served differently, so a degraded result correlating with position in the pool is a bias hidden inside numbers that still look fine.
+
+Trading a visible cost for an invisible defect is the same move as buying hardware instead of making an access-pattern decision.
+
+The general case: an index changes the shape of the work, while hardware buys a constant factor that next year's growth eats. And an N+1 doesn't respond to hardware at all — it's round trips, not compute. A faster server runs every one of the queries, slightly faster.
+
+No dollar figures here, and no speedup multiples. Nothing was benchmarked. There are real cases where more hardware is the right answer, including write-heavy tables where index maintenance costs more than it saves. The claim is about hardware bought instead of a decision.
+
+THE FIX IS A HOOK, NOT A RESOLUTION
+
+Not "be more careful." You're rebuilding the feedback loop the tooling removed.
+
+A skill that scans for the pattern, wired to run at session start and again after context compaction. Both were fired and observed, with output captured. Compaction is the load-bearing one: after a compaction the specific reasoning — "we decided to prefetch here" — is exactly what's gone.
+
+Report the scanner's limits alongside its findings: a 35% false-positive rate, all from one misclassification, plus a disclosed list of what it structurally cannot see. "The scanner found nothing" and "there is nothing to find" are different claims, and this piece only makes the first.
+
+WHAT THIS DOESN'T SUPPORT
+
+One schema, one domain, one ORM. Five trials per cell at creation, three per arm at expansion — raw counts, never percentages, because "2 of 3" isn't 67% of anything.
+
+The tools differ in scaffolding, permissions and logging, so this compares these tools as invoked here, not the underlying models in isolation. Codex's model identifier could not be independently verified: its account entitlement rejects explicit model pins and the session log records only an internal slug, so its column reflects a CLI default that self-reports as GPT-5.
+
+The trials ran on a subscription where usage isn't metered per token. The measured cost of ten Claude trials was $9.75 in API-equivalent pricing — not a charge here, but real to anyone re-running this on metered billing.
+
+TWO TESTS YOU CAN RUN THIS AFTERNOON
+
+Ask an agent for a schema and a query set for something you actually run. Count the indexes it declares unasked — then check whether they're real indexes or uniqueness constraints your own description dictated. That distinction is where I got it wrong.
+
+Then delete the indexes from a copy of your own schema and ask for one new feature. If the index doesn't come back, you've reproduced the finding on your own codebase.
+
+The first index in a codebase is worth far more than the tenth. You're not just fixing one query — you're setting the convention every future agent will follow.
