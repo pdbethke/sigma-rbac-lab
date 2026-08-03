@@ -219,9 +219,17 @@ carry them.
 
 Length: article scale. `04` and `05` sit at 11–14k characters.
 
-**Ceiling raised twice on 2026-08-03, both deliberate, both recorded.** First to ~15.5k, for the
-provenance paragraph and "THE TABLES NOBODY WROTE" against a draft then at 13,748. Then to **~20.5k**,
-approved by the user after the rewrite came in at 20,205.
+**Ceiling raised three times on 2026-08-03, each deliberate, each recorded.** First to ~15.5k, for the
+provenance paragraph and "THE TABLES NOBODY WROTE" against a draft then at 13,748. Then to ~20.5k,
+approved by the user after the rewrite came in at 20,205. Then to **~21.5k**, for two author-driven
+revisions that both made the piece better: the positioning paragraph naming the full-stack vantage
+point, and the deterministic-versus-agentic distinction in the generated-schema section.
+
+**Two of the three raises were content the author asked for, which is the distinction that matters.**
+Drift is length arriving unnoticed. Each of these was measured, surfaced, and chosen — twice by
+proposing a cut list first and being told to keep the material. A trim pass ran each time before the
+raise, and the last one recovered 305 characters by tightening the new block rather than deleting an
+argument.
 
 The second raise is the one that needs justifying, so: the 11–14k band was set from `04` and `05`,
 which argue from reasoning and cite a demo. This piece reports five experiments, 104 graded sessions

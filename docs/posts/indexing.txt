@@ -12,7 +12,9 @@ Then I removed the indexes from the starting schema and ran the identical experi
 
 The model isn't ignorant. It's conformist. It read the room and matched it.
 
-Then I put one sentence in a CLAUDE.md file — declare the index that serves your query, or say why none is needed — and ran the same harness again. It went from 4 of 12 to 11 of 12.
+That absolute zero belongs to one harness, and I'd rather say so here than let it travel unqualified. Run through a smaller one, three tools scored 4, 12 and 11 out of 12 on the same stripped schema. The mechanism replicates; the number doesn't.
+
+Then I put one sentence into a CLAUDE.md file — declare the index that serves your query, or say why none is needed — and re-ran that smaller harness. The tool that had scored 4 of 12 came back 11 of 12.
 
 So the standard is the control, and the standard is writable.
 
@@ -168,9 +170,17 @@ It isn't only the code that arrives unindexed. Most of your schema was never wri
 
 Start with the migrations directory, because that one is already in this experiment. Every trial's DDL was emitted by the ORM, not typed by anyone, and the control run pins down exactly what it does on its own: from a schema declaring relations and no indexes, zero CREATE INDEX. But from a uniqueness constraint it emits CREATE UNIQUE INDEX mechanically, every time. That is generated schema making an access-path decision — a real index, with real write cost — and nobody reviewed it as one. It is also what fooled me into reporting 14.0 when the answer was 4.0.
 
-Then look at the tables you didn't add at all. Your auth library's session and account tables. Your job queue. Your audit log. Each arrived with whatever indexes its author chose, tuned for a workload that isn't yours, and you inherited both the indexes and their absences without ever making a decision. Managed platforms and BI tools do the same thing further out, writing tables back into your database on your behalf — Sigma's materialization guide, to pick the one I've actually built on, lists "Materialized tables can be indexed or tuned for specific query patterns" among the advantages, in the passive voice, naming nobody as the one who does it.
+Then look at the tables you didn't add at all. Your auth library's session and account tables. Your job queue. Your audit log. Each arrived with whatever indexes its author chose, tuned for a workload that isn't yours, and you inherited both the indexes and their absences without making a decision.
 
-Hold that beside Optima and the shape closes from both ends. One platform creates an index you cannot see. The other creates a table and leaves the index to someone unspecified. Either way the artifact appears, it returns the right rows, and the judgment has no owner — the same failure as the agent that declared nothing, arriving through a dependency instead of a pull request.
+But sort those by how the generator works, because I had the two halves backwards.
+
+A deterministic generator emits schema from a specification you can read — the ORM from the schema you declared, a governed BI model from a definition somebody modeled on purpose. The queries that will hit those tables come from that same declaration, so the access patterns are derivable, and so is the index set. That is the tractable case, and arguably more tractable than hand-written code, where the access patterns live in whatever a hundred developers happened to write.
+
+An agent is the other kind. Nothing sits upstream of the artifact. The access pattern exists only in the query it improvised this session.
+
+So the governed side is where this is solvable, and mostly unsolved. Sigma's materialization guide, to pick the one I've built on, lists "Materialized tables can be indexed or tuned for specific query patterns" among the advantages, in the passive voice, naming nobody. That's a gap in the guidance rather than a flaw in the architecture, and worth closing precisely because the architecture makes it closable: if the tool knows the query it generates, the index is derivable rather than guessed.
+
+Hold that beside Optima and the ends meet. One platform derives your index and doesn't tell you. The other could derive it and leaves it unassigned. The failure isn't automation — automation with a readable specification is the good case. It's automation whose output nobody can trace back to a decision, which is the agent's problem arriving through a dependency instead of a pull request.
 
 HORSEPOWER IS A COSTLY NON-SOLUTION
 
