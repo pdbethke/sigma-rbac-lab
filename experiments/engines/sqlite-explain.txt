@@ -1,0 +1,10 @@
+-- SQLite 3.51.3
+-- rows: 94500
+-- query:
+SELECT * FROM inventory_daily
+WHERE store_id = (SELECT store_id FROM inventory_daily LIMIT 1)
+  AND snapshot_date > '2026-01-01'
+
+SEARCH inventory_daily USING INDEX idx_inventory_store (store_id=? AND snapshot_date>?)
+SCALAR SUBQUERY 1
+SCAN inventory_daily USING COVERING INDEX idx_inventory_store

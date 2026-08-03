@@ -16,3 +16,6 @@ experiments/indexing/runs-crossmodel/*/*/.git/
 experiments/indexing/runs-crossmodel/*/*/.codex/
 experiments/indexing/runs-crossmodel/*/*/.agents/
 metrics.duckdb.bak
+experiments/engines/inventory_daily.csv
+experiments/engines/engines.sqlite
+experiments/engines/engines.duckdb
