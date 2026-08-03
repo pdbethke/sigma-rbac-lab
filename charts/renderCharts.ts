@@ -869,6 +869,136 @@ function driftLegend(document: Document, mode: Mode): SVGElement {
   return g;
 }
 
+/**
+ * The hero figure — the whole argument in one image.
+ *
+ * Four cells, not three. Tasks 15 and 16 share one harness and differ by exactly
+ * one variable, so 24-of-24 against 0-of-24 is a clean comparison. The
+ * instruction result comes from a SMALLER harness whose no-rule baseline was
+ * 4 of 12, and putting 0-of-24 beside 11-of-12 without that middle cell would
+ * overstate the effect. The divider marks where the harness changes.
+ */
+interface HeroCell {
+  key: string;
+  label: string;
+  sub: string;
+}
+
+const HERO: HeroCell[] = [
+  { key: "expansion", label: "Schema already\nhad indexes", sub: "same harness" },
+  { key: "stripped", label: "Indexes\nremoved", sub: "one variable changed" },
+  { key: "tiers/claude", label: "Removed,\nno rule", sub: "smaller harness" },
+  { key: "instruction", label: "Removed,\none rule added", sub: "same smaller harness" },
+];
+
+function buildHeroSvg(document: Document, rows: DriftRow[], mode: Mode): SVGElement {
+  const COL = 208;
+  const GAP = 16;
+  const bodyWidth = HERO.length * COL + (HERO.length - 1) * GAP;
+  const bodyHeight = 252;
+  const body = el(document, "svg", { width: bodyWidth, height: bodyHeight, overflow: "visible" });
+
+  HERO.forEach((cell, i) => {
+    const cellRows = rows.filter((r) => driftKey(r) === cell.key);
+    const correct = cellRows.filter((r) => r.outcome === "correct").length;
+    const partial = cellRows.filter((r) => r.outcome === "partial").length;
+    // The headline counts sessions that declared a FITTING index — exact or
+    // partial — because that is the claim the article makes (24 of 24). The
+    // exact/partial split stays visible in the squares below and in the legend.
+    const fitting = correct + partial;
+    const total = cellRows.length;
+    const x = i * (COL + GAP);
+    const ratio = total === 0 ? 0 : fitting / total;
+    const tone: keyof typeof STATUS_COLOR =
+      ratio >= 0.9 ? "good" : ratio <= 0.1 ? "critical" : "warning";
+
+    body.appendChild(
+      el(document, "rect", {
+        x, y: 0, width: COL, height: bodyHeight, rx: 10,
+        fill: PAGE_PLANE[mode], stroke: GRIDLINE[mode], "stroke-width": 1,
+      }),
+    );
+
+    // The number, doing the work.
+    body.appendChild(
+      el(document, "text",
+        { x: x + COL / 2, y: 84, "text-anchor": "middle", "font-size": 54,
+          "font-weight": 700, fill: STATUS_COLOR[tone] },
+        String(fitting)),
+    );
+    body.appendChild(
+      el(document, "text",
+        { x: x + COL / 2, y: 108, "text-anchor": "middle", "font-size": 15,
+          fill: INK_SECONDARY[mode] },
+        `of ${total} sessions`),
+    );
+
+    if (partial > 0) {
+      body.appendChild(
+        el(document, "text",
+          { x: x + COL / 2, y: 128, "text-anchor": "middle", "font-size": 11,
+            fill: INK_MUTED[mode] },
+          `${correct} exact · ${partial} partial`),
+      );
+    }
+
+    cell.label.split("\n").forEach((line, k) => {
+      body.appendChild(
+        el(document, "text",
+          { x: x + COL / 2, y: 152 + k * 18, "text-anchor": "middle", "font-size": 14,
+            "font-weight": 600, fill: INK_PRIMARY[mode] },
+          line),
+      );
+    });
+    body.appendChild(
+      el(document, "text",
+        { x: x + COL / 2, y: 194, "text-anchor": "middle", "font-size": 11, fill: INK_MUTED[mode] },
+        cell.sub),
+    );
+
+    // One square per session — the raw counts, never a percentage.
+    const per = 12;
+    const size = 11;
+    const gap = 3;
+    const startX = x + (COL - (Math.min(total, per) * (size + gap) - gap)) / 2;
+    cellRows.forEach((r, j) => {
+      const status = DRIFT_STATUS[r.outcome] ?? "critical";
+      body.appendChild(
+        el(document, "rect", {
+          x: startX + (j % per) * (size + gap),
+          y: 210 + Math.floor(j / per) * (size + gap),
+          width: size, height: size, rx: 3,
+          fill: STATUS_COLOR[status], stroke: PAGE_PLANE[mode], "stroke-width": 1,
+        }),
+      );
+    });
+  });
+
+  // Mark where the harness changes, so the two halves are not read as one series.
+  const dividerX = 2 * (COL + GAP) - GAP / 2;
+  body.appendChild(
+    el(document, "line", {
+      x1: dividerX, y1: -6, x2: dividerX, y2: bodyHeight + 6,
+      stroke: BASELINE[mode], "stroke-width": 1, "stroke-dasharray": "4 4",
+    }),
+  );
+
+  return composeFigure(document, {
+    title: "Did the session declare the index its query needed?",
+    subtitle:
+      "The number counts sessions that declared a fitting index, exact or partial; the squares show which. " +
+      "Raw counts throughout. Left of the dashed line: one harness, one variable changed. " +
+      "Right of it: a smaller harness, where the only difference is a single sentence added to a CLAUDE.md file. " +
+      "The two halves are not the same experiment and are not pooled.",
+    body,
+    bodyWidth,
+    bodyHeight,
+    mode,
+    legend: driftLegend(document, mode),
+    legendHeight: 26,
+  });
+}
+
 async function main(): Promise<void> {
   const allRows = await loadTrials();
 
@@ -908,7 +1038,7 @@ async function main(): Promise<void> {
   const dom = new JSDOM("<!doctype html><html><body></body></html>");
   const document = dom.window.document as unknown as Document;
 
-  // ---- Drift grid ----------------------------------------------------
+  // ---- Drift grid + hero ---------------------------------------------
   writeFileSync(
     `${OUT_DIR}drift-grid.svg`,
     buildDriftGridSvg(document, driftRows, "light").outerHTML,
@@ -917,6 +1047,8 @@ async function main(): Promise<void> {
     `${OUT_DIR}drift-grid-dark.svg`,
     buildDriftGridSvg(document, driftRows, "dark").outerHTML,
   );
+  writeFileSync(`${OUT_DIR}hero.svg`, buildHeroSvg(document, driftRows, "light").outerHTML);
+  writeFileSync(`${OUT_DIR}hero-dark.svg`, buildHeroSvg(document, driftRows, "dark").outerHTML);
 
   // ---- Verdict grids -------------------------------------------------
   const crossVerdict = verdictRows(crossRows);
@@ -1047,6 +1179,13 @@ async function main(): Promise<void> {
         `<td>${explicit.mean ?? "—"}</td><td>${inScope.mean ?? "—"}</td></tr>`,
     );
   }
+
+  // Dark variants for every figure, written to disk rather than living only
+  // inside charts.html — the article and any external venue need both modes.
+  writeFileSync(`${OUT_DIR}verdict-grid-dark.svg`, verdictGridCrossDark.outerHTML);
+  writeFileSync(`${OUT_DIR}verdict-grid-pilot-dark.svg`, verdictGridPilotDark.outerHTML);
+  writeFileSync(`${OUT_DIR}index-count-dark.svg`, stripCrossDark.outerHTML);
+  writeFileSync(`${OUT_DIR}index-count-pilot-dark.svg`, stripPilotDark.outerHTML);
 
   const tableHtml =
     buildTableHtml(document, allRows) + buildDriftTableHtml(driftRows);

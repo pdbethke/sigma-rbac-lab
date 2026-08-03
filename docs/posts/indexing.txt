@@ -110,7 +110,7 @@ So I ran a second experiment. Start from a generated project that already had 10
 
 The expected index for each feature was written down and committed before any session ran. Without that, any index the model happens to produce can be rationalized afterwards.
 
-Result: 24 of 24 increments got a schema-appropriate index. Both arms alike. Lost context was not the mechanism.
+Result: 24 of 24 increments got a schema-appropriate index — 21 of them the exact tuple in the right column order, 3 with the right columns in a different shape. Both arms alike. Lost context was not the mechanism.
 
 That falsified my hypothesis. It also didn't explain why practitioners keep finding missing indexes in real codebases.
 
