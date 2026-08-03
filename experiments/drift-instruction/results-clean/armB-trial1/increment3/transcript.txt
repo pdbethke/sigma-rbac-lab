@@ -1,0 +1,19 @@
+Schema is valid and TypeScript compiles clean. Done.
+
+## What I added
+
+**`src/queries.ts` — `getStoreStockoutCounts(snapshotDate)`** (Page 7)
+
+Follows the Page 4 (`getRegionalSummary`) pattern: a `groupBy(storeId)` over `InventoryDaily` filtered by `snapshotDate` + `isStockout: true` gives per-store stockout counts, then store names are resolved in a second query and joined in JS, sorted by name.
+
+One design point worth flagging: the director asked for **every** store. A `groupBy` alone only returns stores that *have* stockouts on that date, so I scan the full `Store` table and left-join the counts — stores with none show a `stockoutCount` of `0` rather than dropping off the report.
+
+**`prisma/schema.prisma` — new index** (per the project rule to declare an index for each new query's access pattern):
+
+```prisma
+@@index([snapshotDate, isStockout])   // on InventoryDaily
+```
+
+The query filters `InventoryDaily` by `snapshotDate` (equality) then `isStockout` (equality) before grouping by `storeId` — this composite covers exactly that. The full-store scan hits `Store`'s own small table and needs no new index; I noted both in the query's doc comment.
+
+Note: this is a schema change, so a migration (`prisma migrate dev`) is still needed to apply the index to the database — I didn't run it since that touches your dev DB; say the word and I will.

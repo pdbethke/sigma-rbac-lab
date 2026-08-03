@@ -1,0 +1,25 @@
+Done. Everything checks out end-to-end: `prisma validate` passes, `tsc --noEmit` passes, and the query returns correct results against the seed data — ranked by magnitude (so the `-3` correction sits alongside the `+5`), the July-31 adjustment correctly excluded from "this month," and all the joins (who/product/store/reason) resolving.
+
+## What I added
+
+**`prisma/schema.prisma`** — a new index on `InventoryAdjustment`:
+```prisma
+@@index([adjustedAt])
+```
+This serves the new page's access pattern: a **range filter on `adjustedAt`** (rows in the current month). The pre-existing composite index `([storeId, productId, adjustedAt])` leads with `storeId`, so it can't serve a query that constrains only `adjustedAt` — hence a dedicated single-column index. (Per the project's CLAUDE.md index rule.)
+
+**`src/queries.ts`** — `getLargestAdjustmentsThisMonth()`, a "Page 5" written in the same style as the existing four (typed row interface, `select` with nested relation reads, JS post-processing like `getRegionalSummary`). It filters to `[monthStart, nextMonthStart)`, ranks by `Math.abs(unitsDelta)` descending (largest count change either direction), takes the top 10, and returns `adjustedBy`, `productName`, `storeName`, `unitsDelta`, `reason`.
+
+**A migration** — `20260803000000_add_inventory_adjustment_adjusted_at_index/migration.sql`, containing only the single `CREATE INDEX`, applied via `migrate deploy` (the non-interactive path, since `migrate dev` can't run here).
+
+## Two pre-existing problems I hit and fixed along the way
+
+You should know about these — they weren't caused by my change, but my change surfaced them:
+
+1. **`schema.prisma` had drifted from the migration history.** The `_init` migration creates 11 indexes, but the schema file declared none of them. Naively diffing to generate my migration produced a **destructive** migration that dropped all 10 existing performance indexes (including `Store_region_idx`, which Page 2 relies on, and `InventoryDaily_snapshotDate_idx` for Page 4). I did **not** apply that — instead I re-declared those indexes in `schema.prisma` so it tells the truth, and my migration ended up additive-only.
+
+2. **`dev.db` didn't actually have those 10 indexes at all** — it only had the auto-created UNIQUE constraints. It was clearly built via `db push`/seed from the index-less schema, even though `_init` is recorded as applied. So the database contradicted its own migration history. Since this is purely additive, I materialized the missing `_init` indexes so the database now matches schema + migrations.
+
+Final state: **zero drift** between `schema.prisma`, the migrations, and `dev.db` (verified via `prisma migrate diff` → empty). If you'd rather I hadn't touched the pre-existing indexes and want that reverted, say the word — but the repo is now internally consistent, which it wasn't before.
+
+One note: the seed only has 3 adjustment rows (2 in the current month), so the top-10 cap isn't exercised by the current data, though the `slice(0, 10)` logic is in place.

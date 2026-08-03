@@ -352,11 +352,31 @@ SIGMA/SNOWFLAKE MATERIAL added to the spec 2026-08-03 (brainstormed with user; n
   Throughline paragraph is BLOCKED ON TASK 19 by design: 19 tests instruction vs convention, which
   is the paragraph's subject. Do not draft it in advance of its own evidence.
 
-TASK 19 COMPLETE (run): 12/12 sessions, all rc=0, finished 06:19. Clean single run; the 3
-  discarded partials from 2026-08-02 were NOT mixed in. NOT YET GRADED against
-  experiments/drift/EXPECTED.md — that is the next step, plus the count of sessions taking the
-  rule's SECOND branch (stated why no index was needed) with one verbatim quote, compared to
-  Task 18's same-harness Claude cell of 4/12.
+TASK 19 COMPLETE AND GRADED. 12/12 sessions rc=0. Report: experiments/drift-instruction/RESULTS.md
+  RESULT: 11/12 declared the pre-registered index. Same harness WITHOUT the rule (Task 18
+  claude cell) = 4/12 — verified from drift-tiers/results/claude-trial*/increment*/indexes.txt,
+  not taken from this ledger: t1 and t2 each got inc2+inc4 and missed inc1+inc3, t3 got nothing.
+  The 1 non-declaring session took the rule's SECOND BRANCH with substantive reasoning
+  (armB-trial3/increment3: the @@unique([snapshotDate,storeId,productId]) index already serves
+  filter-on-snapshotDate + group-by-storeId, isStockout is a residual predicate). GRADED 'none'
+  ANYWAY against the frozen EXPECTED.md, per the Task 4 standing ruling that the rubric does not
+  move after data arrives. Both facts reported. NOBODY IGNORED THE RULE: 11 first branch, 1 second.
+  ZERO CONFORMITY REFUSALS — the Task 16/18 failure mode ("none of the existing pages add DB
+  indexes so I stayed consistent") does not appear once. Three transcripts match that search and
+  all three are about matching CODE style in sessions that declared the correct index.
+  UNPLANNED: armB-trial2/increment1 declared TWELVE indexes, reconstructing most of the
+  well-indexed baseline plus the new one — a whole-schema audit, not a targeted add. One session
+  only. Recorded because "indexed more" and "indexed correctly" are different claims.
+  ARTICLE CONSEQUENCE — this is the strongest evidence for the line the user marked to keep:
+  "The model isn't ignorant. It's conformist. It read the room and matched it." Task 19 proves
+  conformity rather than ignorance, because ONE LINE redirected it. Absent instruction it
+  conformed to the schema; given instruction it conformed to the instruction. Both are conformity.
+  The THROUGHLINE PARAGRAPH IS NOW UNBLOCKED and instruction did NOT lose — so the RBAC piece's
+  "instruction is cover, data is control" must NOT be restated naively. The honest version: both
+  are channels the model reads, and the codebase is the one nobody thinks of as an instruction.
+  LIMITS to carry: n=3/12 sessions one model; the rule names the measured thing (tests
+  instruction-following, not judgment); gemini/codex were already 12/12 and 11/12 at Task 18
+  with NO rule, so this is not a general claim about agents.
 
 PERSONAL DATA + DISCLOSURE FIX 2026-08-03 (user: "remove it", "do all 3"):
   1. LEAK, now redacted: the operator's personal address appeared in

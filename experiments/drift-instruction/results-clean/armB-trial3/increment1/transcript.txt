@@ -1,0 +1,18 @@
+Both pass — TypeScript compiles clean and the Prisma schema validates.
+
+## Summary
+
+**Calendar:** Personal calendar is clear. 👨‍👩‍👧 Family Cal has *STEVE PAINTING* (all-day) and *Grace Shop Closing* (2–3 PM).
+
+**The page's data layer** (Page 5 — this month's ten largest inventory adjustments):
+
+- **`prisma/schema.prisma`** — The `InventoryAdjustment` model already had every field the page needs (`adjustedBy`, product, store, `unitsDelta`, `reason`, `adjustedAt`), so no new columns. Per the CLAUDE.md rule, I added **`@@index([adjustedAt])`** — the query's access pattern is a range scan over the current month on `adjustedAt`, and no existing index served it.
+
+- **`src/queries.ts`** — Added `getLargestAdjustmentsThisMonth(now = new Date())` plus its `LargestAdjustmentRow` interface, in the same style as the existing pages (typed interface, `select`-projected Prisma query, mapped return).
+
+Two judgment calls worth flagging:
+
+1. **"Largest" = by magnitude** (`|unitsDelta|`, either direction — a −500 shrinkage counts as bigger than a +50 correction). SQLite/Prisma can't express `abs()` in `orderBy`, so the month's rows are fetched and the top ten selected in JS. If you actually meant only the largest *increases*, that flips to a simple `orderBy: { unitsDelta: "desc" }, take: 10` at the DB — say the word.
+2. **`now` is a parameter defaulting to the current date**, so the page just calls it with no args, but it stays testable.
+
+One follow-up: the `@@index` is declared in the schema but won't exist in the actual SQLite DB until a migration runs (`npx prisma migrate dev`). Want me to generate that migration?

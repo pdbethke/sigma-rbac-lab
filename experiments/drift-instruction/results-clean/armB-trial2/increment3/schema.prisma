@@ -1,0 +1,153 @@
+// Retail inventory for a chain of stores.
+// Datasource: SQLite. Client: prisma-client-js.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id        Int    @id @default(autoincrement())
+  storeKey  String @unique
+  name      String
+  region    String
+  state     String
+  city      String
+  zipCode   String
+  latitude  Float
+  longitude Float
+  tier      String
+
+  inventoryDaily       InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  @@index([region])
+}
+
+model ProductType {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  families ProductFamily[]
+}
+
+model ProductFamily {
+  id            Int    @id @default(autoincrement())
+  name          String
+  productTypeId Int
+
+  productType ProductType   @relation(fields: [productTypeId], references: [id])
+  lines       ProductLine[]
+
+  @@index([productTypeId])
+}
+
+model ProductLine {
+  id              Int    @id @default(autoincrement())
+  name            String
+  productFamilyId Int
+
+  productFamily ProductFamily @relation(fields: [productFamilyId], references: [id])
+  products      Product[]
+
+  @@index([productFamilyId])
+}
+
+model Brand {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  products Product[]
+}
+
+model Product {
+  id            Int    @id @default(autoincrement())
+  sku           String @unique
+  name          String
+  productLineId Int
+  brandId       Int
+
+  productLine ProductLine @relation(fields: [productLineId], references: [id])
+  brand       Brand       @relation(fields: [brandId], references: [id])
+
+  inventoryDaily       InventoryDaily[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  @@index([productLineId])
+  @@index([brandId])
+}
+
+model InventoryDaily {
+  id             Int      @id @default(autoincrement())
+  snapshotDate   DateTime
+  storeId        Int
+  productId      Int
+  costPerUnit    Float
+  unitsOnHand    Int
+  unitsOnOrder   Int
+  unitsInTransit Int
+  unitsReceived  Int
+  unitsShrunk    Int
+  reorderPoint   Int
+  maxStockLevel  Int
+  daysOfSupply   Float
+  inventoryValue Float
+  isStockout     Boolean
+  isLowStock     Boolean
+  lostSalesUnits Int
+  lostSalesValue Float
+  leadTimeDays   Int
+  merchantId     String
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([snapshotDate, storeId, productId])
+  @@index([storeId, snapshotDate])
+  @@index([productId])
+  @@index([snapshotDate])
+  @@index([isLowStock])
+
+  // Serves the "stockout count per store on a snapshot date" access pattern
+  // (see getStoreStockoutCounts in src/queries.ts): equality on snapshotDate
+  // plus equality on isStockout, grouped by storeId. Leading with snapshotDate
+  // narrows to the single day, then isStockout selects only the out-of-stock
+  // rows. The existing [snapshotDate] index would still have to scan the day's
+  // in-stock rows too, so this composite is tighter for a query that always
+  // constrains both columns.
+  @@index([snapshotDate, isStockout])
+}
+
+model InventoryAdjustment {
+  id           Int      @id @default(autoincrement())
+  storeId      Int
+  productId    Int
+  adjustedBy   String
+  adjustedAt   DateTime
+  unitsDelta   Int
+  reason       String
+  serialNumber String
+
+  store   Store   @relation(fields: [storeId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([storeId, productId, adjustedAt])
+
+  // Serves the "adjustments made this month" access pattern: a range filter on
+  // adjustedAt alone (see getLargestAdjustmentsThisMonth in src/queries.ts).
+  // The composite index above leads with storeId, so it can't serve a query
+  // that constrains only adjustedAt — hence this dedicated single-column index.
+  @@index([adjustedAt])
+
+  // Serves the "one person's adjustments over a date range" access pattern
+  // (see getPersonAdjustments in src/queries.ts): equality on adjustedBy plus a
+  // range on adjustedAt, across every store and product. Leading with
+  // adjustedBy lets the index satisfy the equality and then the adjustedAt
+  // range in one traversal; neither index above leads with adjustedBy, so
+  // neither can serve this query.
+  @@index([adjustedBy, adjustedAt])
+}

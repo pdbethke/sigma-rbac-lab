@@ -1,0 +1,11 @@
+Typecheck passes (exit 0), confirming the groupBy/`_count` shapes resolve against the generated Prisma client.
+
+## Done
+
+**`src/queries.ts`** — Added **Page 7: `getStoreStockoutCounts(snapshotDate)`**, returning `{ storeId, storeName, stockoutCount }[]`, one row per store, sorted by name. It mirrors Page 4's idiom (groupBy → resolve names via a `Map` → sort). Every store that reported inventory that day appears; those with no stockouts show `0`.
+
+**`prisma/schema.prisma`** — No change, and per the project rule I'll state why explicitly:
+
+> The query filters `InventoryDaily` by `snapshotDate` (equality) and groups by `storeId`. The existing `@@unique([snapshotDate, storeId, productId])` is backed by an index whose leading column `snapshotDate` serves the filter and whose second column `storeId` serves the grouping — the same index Page 4 already leans on for its snapshot-date group-by. `isStockout` is just a residual predicate on rows the index has already narrowed. So **no new index is needed.**
+
+One design call worth flagging: I read "every store" as *every store that reported inventory on that date*, showing `0` for stores with no stockouts (a store with zero stockouts is good news a regional director would want to see). A store with **no** snapshot at all on that date is omitted, since there's no data for it. If you'd rather show only stores that had at least one stockout, drop the first `groupBy` and filter on `isStockout: true` directly — say the word and I'll adjust.

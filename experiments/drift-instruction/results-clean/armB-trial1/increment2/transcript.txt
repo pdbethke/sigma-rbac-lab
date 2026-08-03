@@ -1,0 +1,17 @@
+Done. Here's what I added, following the existing `queries.ts` pattern.
+
+**`src/queries.ts`** — new `getPersonAdjustments(adjustedBy, from, to)` (Page 6) with a `PersonAdjustmentRow` interface returning store name, product name, `unitsDelta`, reason, and `adjustedAt`, ordered most-recent-first. It mirrors the shape of `getProductAdjustmentHistory` / `getLargestAdjustmentsThisMonth` (same `select` with nested `store`/`product` names).
+
+**`prisma/schema.prisma`** — per the project's index rule, I declared the index that serves this new access pattern:
+
+```prisma
+@@index([adjustedBy, adjustedAt])
+```
+
+**Index rationale:** the query filters by `adjustedBy` (equality) then `adjustedAt` (range), so I ordered the compound index equality-column-first. The leading `adjustedBy` narrows to the one person; the trailing `adjustedAt` both satisfies the `gte`/`lt` range predicate and returns rows already in the `adjustedAt` order the page needs — no separate sort. The pre-existing `@@index([adjustedAt])` wouldn't serve this well, since it has no way to jump to a single person first.
+
+A couple of notes on the interface:
+- I used `[from, to)` half-open bounds (`gte`/`lt`), matching the month-boundary convention in `getLargestAdjustmentsThisMonth`. If the analyst passes an inclusive end date, callers should pass the day *after* the range end as `to`.
+- `adjustedBy` is matched by exact string equality (SQLite's default for a `String` field), consistent with how the existing adjustment queries treat it. If the analyst needs case-insensitive or partial-name matching, that's a different access pattern and I'd revisit the index — let me know.
+
+Nothing to run/migrate here beyond a `prisma migrate`/`generate` when you're ready, since this is a schema + query change only.

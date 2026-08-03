@@ -1,0 +1,14 @@
+Done. Here's what I added, following the existing page pattern in `src/queries.ts`.
+
+**`src/queries.ts` — new "Page 7" query**
+- `getStoreStockoutCounts(snapshotDate: Date)` → `StoreStockoutCountRow[]` (`storeId`, `storeName`, `stockoutCount`).
+- Uses `groupBy(["storeId"])` with `where: { snapshotDate, isStockout: true }` and `_count`, then joins against the full store list so **every store** gets a row — stores with no stockouts show `0` — sorted by store name. This mirrors the fetch-group-then-resolve-names shape of `getRegionalSummary` (Page 4), extended to include zero-count stores as required by "every store."
+
+**`prisma/schema.prisma` — new index (per the project index rule)**
+- Added `@@index([snapshotDate, isStockout])` to `InventoryDaily`, with a comment explaining the access pattern: the query always constrains both `snapshotDate` and `isStockout`, so a composite leading with `snapshotDate` (narrow to the day) then `isStockout` (only out-of-stock rows) is tighter than the existing `[snapshotDate]` index, which would still scan the day's in-stock rows.
+
+Two notes:
+- **Interpretation call:** I read "every store" as *all* stores (including 0-stockout ones), not just stores that had a stockout. If the director instead wants only stores with at least one stockout, drop the store-list join and return the grouped rows directly — easy change.
+- You'll need a migration for the new index (`npx prisma migrate dev`) before the query benefits from it.
+
+One housekeeping item: this project directory isn't a git repo (`Is a git repository: false`). Nothing to do right now, but when you're ready to save/ship these changes, get it under version control first rather than editing in place — happy to set that up.

@@ -1,0 +1,13 @@
+Both pass — Prisma schema is valid and TypeScript compiles clean.
+
+## Summary
+
+Added a loss-prevention page backend following the existing `src/queries.ts` patterns.
+
+**`src/queries.ts`** — new `getPersonAdjustments(adjustedBy, start, end)` returning `PersonAdjustmentRow[]` (store, product, units delta, reason, timestamp), filtered by person over a half-open `[start, end)` date range across all stores/products, most recent first. Same shape as the existing `getProductAdjustmentHistory` / `getLargestAdjustmentsThisMonth` queries.
+
+**`prisma/schema.prisma`** — per the project rule to declare an index for each new access pattern, I added `@@index([adjustedBy, adjustedAt])` on `InventoryAdjustment`. The two existing indexes lead with `storeId` and `adjustedAt` respectively, so neither can serve an equality-on-person + range-on-time query; leading with `adjustedBy` satisfies both in one traversal. A comment documents the reasoning alongside the existing index notes.
+
+One design note for whoever builds the page/route: the range is half-open (`gte start`, `lt end`), so pass the day *after* the last day of interest as `end` to include the full final day.
+
+Two things I did **not** do, since you scoped this to the two files: no Prisma migration was generated (the schema change needs `prisma migrate dev` to hit an actual DB), and there's no route/UI wiring yet. Say the word if you want either.

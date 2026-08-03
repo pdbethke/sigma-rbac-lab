@@ -1,0 +1,15 @@
+Both pass — TypeScript compiles clean and the Prisma schema validates.
+
+## What I added
+
+**`prisma/schema.prisma`** — an `@@index([adjustedAt])` on `InventoryAdjustment`. Per the project's index rule: the new query filters adjustments by `adjustedAt` within the current month, and this index serves exactly that range scan.
+
+**`src/queries.ts`** — `getLargestAdjustmentsThisMonth(now = new Date())`, built the same way as the existing pages (a `Row` interface + an async function using the Prisma client):
+
+- Filters `InventoryAdjustment` to `[monthStart, monthEnd)`.
+- Selects the five columns the page shows — `adjustedBy` (who), `product.name`, `store.name`, `unitsDelta` (the amount the count changed by), and `reason`.
+- Returns the **ten largest by magnitude in either direction**. I read "largest adjustments" as biggest count swings up *or* down, which is what a store ops manager reviewing corrections cares about. Prisma's `orderBy` can't sort on `abs(unitsDelta)`, so the month's rows are ranked and sliced in JS — the same post-query-processing style Page 4 already uses. This is called out in the doc comment, including the note that no index can serve the magnitude ranking step.
+
+Two follow-ups before this is live, if you want them: run `npx prisma migrate dev` to create the index in the DB, and `npx prisma generate` to refresh the client types.
+
+One decision worth confirming: if "largest" should mean only the biggest *increases* (signed, not magnitude), swap the sort to `b.unitsDelta - a.unitsDelta` and it can then be pushed into an indexed `orderBy` + `take: 10` instead of the JS ranking. Say the word and I'll switch it.

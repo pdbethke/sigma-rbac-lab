@@ -1,0 +1,9 @@
+Done. Two changes, matching the existing pattern in `src/queries.ts`:
+
+**`src/queries.ts`** — new `getPersonAdjustments(adjustedBy, start, end)` (Page 6) with a `PersonAdjustmentRow` interface. It filters `InventoryAdjustment` by person name plus a `[start, end)` window and returns store name, product name, `unitsDelta`, reason, and `adjustedAt`, most recent first — same select/relation/map shape as the other pages.
+
+**`prisma/schema.prisma`** — new `@@index([adjustedBy, adjustedAt])` on `InventoryAdjustment`.
+
+On the index (per the project rule to declare one for every new query's access pattern): this page's access pattern is an equality match on `adjustedBy` followed by a range scan on `adjustedAt`. The existing `@@index([adjustedAt])` can't serve it well — it has no way to jump to a single person's rows, so it'd scan the whole date range and filter by name. A compound index with `adjustedBy` as the leading column lets the engine seek to just that person's adjustments and then use the range bounds on the trailing `adjustedAt` column, which also keeps the results in the `adjustedAt` order we sort by.
+
+Note: I didn't run a migration or `prisma generate` since this is a schema/query change only — let me know if you'd like me to generate the migration.

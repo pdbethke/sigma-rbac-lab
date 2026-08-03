@@ -1,0 +1,28 @@
+[2026-08-03T06:01:18-04:00] setup /tmp/claude-drift-instruction/runs/armB-trial1
+[2026-08-03T06:01:18-04:00] START armB trial1 increment1 -> /tmp/claude-drift-instruction/runs/armB-trial1 (fresh session)
+[2026-08-03T06:02:47-04:00] DONE armB trial1 increment1 rc=0
+[2026-08-03T06:02:47-04:00] setup /tmp/claude-drift-instruction/runs/armB-trial2
+[2026-08-03T06:02:47-04:00] START armB trial2 increment1 -> /tmp/claude-drift-instruction/runs/armB-trial2 (fresh session)
+[2026-08-03T06:07:27-04:00] DONE armB trial2 increment1 rc=0
+[2026-08-03T06:07:27-04:00] setup /tmp/claude-drift-instruction/runs/armB-trial3
+[2026-08-03T06:07:27-04:00] START armB trial3 increment1 -> /tmp/claude-drift-instruction/runs/armB-trial3 (fresh session)
+[2026-08-03T06:08:45-04:00] DONE armB trial3 increment1 rc=0
+[2026-08-03T06:08:45-04:00] START armB trial1 increment2 -> /tmp/claude-drift-instruction/runs/armB-trial1 (fresh session)
+[2026-08-03T06:09:41-04:00] DONE armB trial1 increment2 rc=0
+[2026-08-03T06:09:41-04:00] START armB trial2 increment2 -> /tmp/claude-drift-instruction/runs/armB-trial2 (fresh session)
+[2026-08-03T06:10:45-04:00] DONE armB trial2 increment2 rc=0
+[2026-08-03T06:10:45-04:00] START armB trial3 increment2 -> /tmp/claude-drift-instruction/runs/armB-trial3 (fresh session)
+[2026-08-03T06:11:39-04:00] DONE armB trial3 increment2 rc=0
+[2026-08-03T06:11:39-04:00] START armB trial1 increment3 -> /tmp/claude-drift-instruction/runs/armB-trial1 (fresh session)
+[2026-08-03T06:12:49-04:00] DONE armB trial1 increment3 rc=0
+[2026-08-03T06:12:49-04:00] START armB trial2 increment3 -> /tmp/claude-drift-instruction/runs/armB-trial2 (fresh session)
+[2026-08-03T06:14:10-04:00] DONE armB trial2 increment3 rc=0
+[2026-08-03T06:14:10-04:00] START armB trial3 increment3 -> /tmp/claude-drift-instruction/runs/armB-trial3 (fresh session)
+[2026-08-03T06:15:56-04:00] DONE armB trial3 increment3 rc=0
+[2026-08-03T06:15:56-04:00] START armB trial1 increment4 -> /tmp/claude-drift-instruction/runs/armB-trial1 (fresh session)
+[2026-08-03T06:17:11-04:00] DONE armB trial1 increment4 rc=0
+[2026-08-03T06:17:11-04:00] START armB trial2 increment4 -> /tmp/claude-drift-instruction/runs/armB-trial2 (fresh session)
+[2026-08-03T06:18:27-04:00] DONE armB trial2 increment4 rc=0
+[2026-08-03T06:18:27-04:00] START armB trial3 increment4 -> /tmp/claude-drift-instruction/runs/armB-trial3 (fresh session)
+[2026-08-03T06:19:20-04:00] DONE armB trial3 increment4 rc=0
+ALL DONE. results under /tmp/claude-drift-instruction/results

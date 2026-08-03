@@ -1,0 +1,13 @@
+Typechecks clean. Done.
+
+## Summary
+
+Added **Page 8 — a product's cost-per-unit trend** in the same style as the existing pages.
+
+**`src/queries.ts`** — `getProductCostPerUnitTrend(productId)` returns `{ snapshotDate, costPerUnit }[]`, one row per snapshot date, ordered earliest→latest. It `groupBy`s `InventoryDaily` on `snapshotDate` filtered to the product, taking `_avg(costPerUnit)` to combine across every store carrying it.
+
+**`prisma/schema.prisma`** — added `@@index([productId, snapshotDate])` on `InventoryDaily`, with a comment (matching the existing index docs) explaining that `productId` narrows to the one product across all stores and the trailing `snapshotDate` groups/orders the matches without a separate sort. The existing `@@unique` leads with `snapshotDate`, so it couldn't serve this `productId`-first access pattern — hence the new index, per the project's index rule.
+
+Two things to confirm:
+- **"Combined" = simple mean across stores** (each store equal). If you want a units-weighted blended cost (`Σ inventoryValue / Σ unitsOnHand`), it's a small change.
+- The schema change needs a migration (`npx prisma migrate dev`) to actually create the index in the DB — I didn't run that since it touches your database; let me know if you'd like me to.

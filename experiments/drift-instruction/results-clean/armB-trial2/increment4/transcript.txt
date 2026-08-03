@@ -1,0 +1,13 @@
+`prisma format` moved my comment above the index (its convention) — fine, the intent is intact. Typecheck passes clean.
+
+Done. Both files updated following the existing page pattern:
+
+**`src/queries.ts` — Page 8, `getProductCostPerUnitHistory(productId)`**
+- Groups `InventoryDaily` by `snapshotDate` filtered to the product, averaging `costPerUnit` across every store that carries it, ordered earliest→latest. Returns `{ snapshotDate, avgCostPerUnit }[]` — the same interface + typed-row shape as the other pages.
+
+**`prisma/schema.prisma` — new index `@@index([productId, snapshotDate])`**
+- Per the project rule, I declared the index serving this access pattern: productId equality → snapshotDate group/order without a sort. It replaces the former standalone `@@index([productId])` (the composite's leading column still serves any product-equality lookup), so no redundant index is left behind.
+
+Two things to confirm at your discretion:
+1. **Combination method** — I used a plain average of `costPerUnit` across stores per date. If the analyst wants a units-weighted average (economically the true blended cost), say so and I'll switch it to weight by `unitsOnHand`.
+2. **Migration** — I edited the schema but didn't run `prisma migrate` (adding/dropping an index is a schema migration). Want me to generate the migration, or are you handling that in your normal flow?
