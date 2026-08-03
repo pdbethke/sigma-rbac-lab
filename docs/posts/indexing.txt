@@ -22,9 +22,9 @@ A claim about how the data will be read, paid for on every write and in storage.
 
 Not "makes queries fast." The definition has to carry the cost, because the cost is what makes indexing a judgment rather than a checklist item.
 
-The reference schema in this experiment has 17 tables and 4 indexes. Three are composite, and the column order encodes the access pattern: (store_id, snapshot_date) because a store's inventory is read as a date range, (user_id, status) because assignments are filtered to active. Roughly thirty other foreign keys are deliberately left unindexed.
+The reference schema in this experiment has 17 tables and 4 indexes. Three are composite, and the column order encodes the access pattern: (store_id, snapshot_date) because a store's inventory is read as a date range, (user_id, status) because assignments are filtered to active. Fifteen other foreign key columns are deliberately left unindexed.
 
-Four, not thirty. The restraint is the skill.
+Four, not nineteen. The restraint is the skill.
 
 That schema isn't invented for this piece. It comes from a sibling project — an application-level access-control model I built on Sigma's free tier, over their sample retail dataset — where the four indexes were hand-authored by someone who knew the access patterns because he had just written them. The nine access-control tables are out of scope for these trials, which is why the comparison below is against two indexes rather than four.
 
@@ -72,7 +72,7 @@ The control first, because without it the count means nothing. A schema declarin
 
 Ten trials, Claude Opus 5: 8 of 10 declared explicit indexes on the target tables. Two declared none, and their transcripts never mention indexing at all.
 
-Three more tools, ten trials each. Claude Opus 4.8 averaged 10.4 explicit indexes without the production hint. Codex averaged 6.2, though bimodally — two of five trials were near zero. Gemini 3.6-flash declared zero explicit indexes in five of five trials without the hint, and 9 to 12 in five of five with it. One sentence about production scale flipped it completely.
+Three more tools, ten trials each. Claude Opus 4.8 averaged 10.4 explicit indexes without the production hint. Codex averaged 6.2, but bimodally — its five trials were 3, 3, 7, 9, 9, so the mean describes none of them. Gemini 3.6-flash declared zero explicit indexes in five of five trials without the hint, and 9 to 11 in five of five with it. One sentence about production scale flipped it completely.
 
 Gemini 3.6-flash is a fast tier sitting beside two frontier tiers. That gap is a tier difference, not evidence that one vendor is worse than another, and it matters because cost pressure pushes production traffic toward exactly that tier.
 

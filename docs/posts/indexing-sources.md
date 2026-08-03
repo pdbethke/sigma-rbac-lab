@@ -109,6 +109,88 @@ was checked. Any claim not listed here does not appear in the article.
   serve workloads standard tables don't fit) and must not assert a specific
   cost multiplier or a verdict on Snowflake's write performance in general.
 
+## Snowflake — Optima Indexing (added 2026-08-03, article section 3)
+
+This section exists because the article's earlier claim — Snowflake "offers no B-tree
+secondary index" — became misleading. It is still literally defensible against the
+`CREATE INDEX` page, which is scoped to hybrid tables, but it now omits that the engine
+may create an index on a standard table without being asked.
+
+- **Optima analyzes workloads and optimizes automatically.** "Snowflake Optima is an
+  intelligent optimization engine that automatically analyzes workload patterns and
+  implements the most effective strategies automatically." —
+  https://docs.snowflake.com/en/user-guide/snowflake-optima (checked 2026-08-03).
+
+- **The indexes it creates are hidden and NOT user-declarable.** Optima Indexing creates
+  "hidden indexes" which are fully automatic and "not user-declarable," and they are
+  "built and maintained on a best-effort basis, without requiring user intervention." —
+  same page (checked 2026-08-03). The phrase "not user-declarable" is what licenses the
+  article's formulation: *you cannot declare one; the engine may create one you cannot see.*
+
+- **No configuration, no additional cost, specific warehouse generations.** "There are no
+  additional costs for Optima Indexing"; "no additional configuration or effort is
+  required"; "Available on Snowflake generation 2 standard warehouses and Adaptive
+  Warehouses." — same page (checked 2026-08-03). The warehouse gating must appear in the
+  article: this is not on by default for everyone.
+
+- **Detection is via Query Profile only.** The Snowsight Query Profile shows the insight
+  "Snowflake Optima used," and the Statistics pane shows "Partitions pruned by Snowflake
+  Optima." — same page (checked 2026-08-03). This is the basis for the article's point
+  that you find out by reading a profile.
+
+- **NOT claimed:** the 30%-to-96% micro-partition pruning improvement published on
+  Snowflake's engineering blog is *their* measurement, not one taken here. Under this
+  project's no-unbenchmarked-numbers rule it is either attributed explicitly to Snowflake
+  or omitted. **The article omits it.**
+
+## Sigma — write-back and the tables it creates (added 2026-08-03, article section "THE TABLES NOBODY WROTE")
+
+Everything in this block is a claim about Sigma's **documentation**, not about its
+implementation. Verifying what Sigma actually creates in a PostgreSQL write-back schema
+would need a paid connection this project does not have, and the article says so in the
+text rather than only here.
+
+- **Sigma creates and manages tables in a schema you designate.** Write access is
+  "Necessary for features like Input tables and Materialization," requires PostgreSQL
+  version 15 or higher, and you designate a schema where "Sigma writes tables"; Sigma
+  "reserves it for internal write-back objects and doesn't expose it as a data source." —
+  https://help.sigmacomputing.com/docs/connect-to-postgresql (checked 2026-08-03).
+
+- **Materialization writes a table.** "Materialization writes a copy of a dataset or data
+  element back to your warehouse as a table, or in some cases, a Snowflake dynamic table."
+  Materialized data is "stored in your cloud data warehouse in a schema managed by the
+  Sigma service." — https://help.sigmacomputing.com/docs/materialization (checked
+  2026-08-03).
+
+- **PostgreSQL's documented limitations do NOT exclude write-back.** The PostgreSQL
+  section lists what those connections do not support — dataset warehouse views created in
+  Sigma, OAuth connections, Geography data type and functions, Python, SHA256, specifying
+  primary keys in the connection explorer, and others. Materialization, input tables and
+  write-back are **absent from that list**. —
+  https://help.sigmacomputing.com/docs/region-warehouse-and-feature-support (checked
+  2026-08-03). The list is specific enough that the omission is meaningful; this is the
+  basis for the article saying write-back lands in row stores.
+
+- **The one sentence on indexing those tables, quoted verbatim in the article.** Under
+  "Advantages of Materialization": "Query optimization: Materialized tables can be indexed
+  or tuned for specific query patterns." —
+  https://quickstarts.sigmacomputing.com/guide/administration_materialization/index.html
+  (checked 2026-08-03). Passive voice; no actor named. The article's observation is about
+  that grammar and is aimed at the pattern, not at the vendor.
+
+- **Warehouse tuning is placed on the customer.** "The size and configuration of your
+  cloud data warehouse (e.g., warehouse size, clustering) directly impact materialization
+  performance," and tuning of that kind "may require work from a data specialist in your
+  organization." — same quickstart (checked 2026-08-03).
+
+- **The performance guidance never mentions the access path.** The best-practices page
+  recommends denormalizing upstream, materializing intermediate results, hiding
+  unnecessary columns, and performing joins in Sigma. It does not mention indexes,
+  clustering keys, sort keys or partitioning. —
+  https://help.sigmacomputing.com/docs/best-practices-for-improved-performance (checked
+  2026-08-03). Stated in the article as an absence of guidance, never as evidence that no
+  index is created.
+
 ## Sigma — execution model (article section, Sigma comparison)
 
 - **Warehouse-native, no extract layer.** "Sigma provides the only

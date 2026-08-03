@@ -10,8 +10,12 @@ The oracle is `../../oracle/schema.sql`, which declares 17 tables and exactly 4 
     idx_inventory_store    (store_id, snapshot_date)
     idx_adj_store          (store_id, product_id)
 
-Three are composite, and the column order encodes the access pattern. Roughly thirty
+Three are composite, and the column order encodes the access pattern. Fifteen
 other REFERENCES columns are left unindexed on purpose.
+
+(Corrected 2026-08-03: this read "roughly thirty" and was wrong. `oracle/schema.sql`
+carries 18 REFERENCES clauses in total, 15 of which are on columns that are not the
+leading column of any index. The article had inherited the wrong figure from here.)
 
 Only the inventory half of that schema is in scope here — the RBAC tables are not in the
 prompt — so the comparison is against `idx_inventory_store` and `idx_adj_store`.
