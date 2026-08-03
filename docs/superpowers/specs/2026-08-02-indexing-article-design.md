@@ -318,6 +318,18 @@ NON-SOLUTION". Placement is load-bearing: among the platform material early on i
 after the reader has absorbed the measured finding it lands as an extension of something proven —
 *it isn't only the code; tools write the tables now too.*
 
+**REVISED 2026-08-03, after the section was written.** The author challenged it: the audience is
+full-stack developers, and a BI platform most of them don't use was carrying a general argument by
+itself. Correct. The argument survives; the example was wrong. Rewritten around what that reader
+already lives in — ORM migrations (the strongest case, and already in the piece, since the ORM emits
+`CREATE UNIQUE INDEX` mechanically from a uniqueness constraint), auth-library tables, job queues,
+audit logs — with Sigma demoted to one attributed clause. Also added: a positioning paragraph in
+section 2, because a long-time full-stack developer working in Sigma recently is exactly who notices
+that each layer between you and the database hides the mechanism, and agents are the newest layer.
+That stance is why the piece demonstrates rather than cites wherever it can.
+
+The original design of this section, kept for the record:
+
 The argument: generated **schema** has the same problem as generated code. Sigma is the worked
 example — a write-back schema it creates and manages (PostgreSQL 15+ supported, and materialization,
 input tables and write-back are absent from PostgreSQL's documented limitations list, which is

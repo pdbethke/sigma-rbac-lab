@@ -263,14 +263,34 @@ them would have made one story about tooling and lost the engine argument entire
 index are both committed outputs a reader can re-run in a minute. Only the warehouse claims rest on
 vendor documentation, and each has a dated line in `indexing-sources.md`.
 
-**Sigma appears where it is earned and nowhere else.** The domain is Sigma's sample retail data via
-the sibling access-control lab, so the piece says so plainly rather than letting the schema look like
-a coincidence — and it states where the data came from without characterizing what its terms permit,
-because that was never verified. The rest of the Sigma material sits in one section about generated
-schema, quoting their own passive-voice sentence about materialized tables being "indexed or tuned"
-with no actor named. That observation is aimed at the pattern rather than the vendor, and it is
-scoped to documentation rather than implementation, because verifying what Sigma creates in a
-Postgres write-back schema needs a paid connection this project doesn't have.
+**⭐ Sigma is the vantage point, not the subject — and an earlier draft got that backwards.** The
+first version built the whole "tables nobody wrote" section on Sigma's write-back schema. The author
+challenged it: the audience is full-stack developers, and a BI platform most of them don't use was
+carrying a general argument on its own. He was right, and the diagnosis was that the argument was
+sound while the example wasn't. Generated schema is something that reader already lives in — ORM
+migrations, auth-library tables, job queues, audit logs — and the strongest instance was already in
+the piece, because the ORM emits `CREATE UNIQUE INDEX` mechanically from a uniqueness constraint,
+which is the same generated DDL that produced the 14.0-that-was-4.0. Rewritten around those, with
+Sigma demoted to one clause among several.
+
+**The quote is attributed rather than anonymized.** A pass at "one vendor's materialization guide"
+was worse: an unattributed quote can't be checked, and hiding the name reads as a dig you won't sign.
+Naming it costs nothing once it's one instance among several instead of the whole section.
+
+**The positioning paragraph exists because it's the honest origin.** A long-time full-stack developer
+who has been working in Sigma recently is exactly the person who notices that a layer between you and
+the database is a layer where the mechanism goes invisible — and agents are the newest such layer.
+That framing arrived late, from the author, and it retroactively explains why the piece demonstrates
+rather than cites wherever it can: EXPLAIN output, schema diffs, a scanner. Wanting the underlying
+mechanism is the stance, so the evidence had to be mechanical.
+
+**Where the data came from is stated; what its terms permit is not.** That was never verified, and
+inventing a licensing characterization for a public repo is the kind of plausible-sounding claim this
+piece is about.
+
+**The generated-schema claims are scoped to documentation, not implementation.** Verifying what Sigma
+actually creates in a Postgres write-back schema needs a paid connection this project doesn't have,
+and the article says so in the text.
 
 **The Snowflake claim was corrected before publication, not after.** An earlier draft said Snowflake
 "offers no B-tree secondary index." Optima Indexing creates what the docs call hidden, "not
@@ -289,7 +309,7 @@ different file. It is mild and the trials stand. It is in the text because the s
 the subject: the isolation check that was run was thorough, tested the mechanism its author thought
 of, and came back clean — and a mechanism nobody tests looks exactly like one that tests clean.
 
-**It is 20,241 characters against the series' 11–14k.** Raised deliberately and twice, with the
+**It is 20,573 characters against the series' 11–14k.** Raised deliberately and twice, with the
 reason recorded in the spec. The band came from pieces that argue from reasoning; this one reports
 five experiments and 144 graded sessions.
 

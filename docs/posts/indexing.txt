@@ -26,7 +26,9 @@ The reference schema in this experiment has 17 tables and 4 indexes. Three are c
 
 Four, not nineteen. The restraint is the skill.
 
-That schema isn't invented for this piece. It comes from a sibling project — an application-level access-control model I built on Sigma's free tier, over their sample retail dataset — where the four indexes were hand-authored by someone who knew the access patterns because he had just written them. The nine access-control tables are out of scope for these trials, which is why the comparison below is against two indexes rather than four.
+That schema isn't invented for this piece. It comes from a sibling project — an application-level access-control model I built on Sigma's free tier, over their sample retail dataset. I hand-authored those four indexes, and I knew the access patterns because I had just written the queries. The nine access-control tables are out of scope for these trials, which is why the comparison below is against two indexes rather than four.
+
+That project is also where this one started. I've built full-stack applications for a long time and have been working in Sigma recently, and every layer between you and the database is a layer where the mechanism stops being visible. Agents are the newest one. The question underneath this piece is the one I'd ask of any abstraction: what is it doing on my behalf, and would I notice if it stopped?
 
 WHY SOME ENGINES HAVE THEM AND SOME DON'T
 
@@ -162,19 +164,13 @@ But the deeper problem is the one the experiment found. The index set doesn't dr
 
 THE TABLES NOBODY WROTE
 
-It isn't only the code that arrives unindexed. Tools write tables now too.
+It isn't only the code that arrives unindexed. Most of your schema was never written by a person either.
 
-Sigma is a worked example, and I use it because I've built on it, not to single it out. Connect it to a warehouse and you designate a schema where it writes: input tables, edit logs, warehouse views, materializations, uploads. Materialization "writes a copy of a dataset or data element back to your warehouse as a table." PostgreSQL 15 and up is supported, so this lands in row stores, where the declared index is the whole game.
+Start with the migrations directory, because that one is already in this experiment. Every trial's DDL was emitted by the ORM, not typed by anyone, and the control run pins down exactly what it does on its own: from a schema declaring relations and no indexes, zero CREATE INDEX. But from a uniqueness constraint it emits CREATE UNIQUE INDEX mechanically, every time. That is generated schema making an access-path decision — a real index, with real write cost — and nobody reviewed it as one. It is also what fooled me into reporting 14.0 when the answer was 4.0.
 
-Here is the entire treatment of indexing those tables, from the materialization guide, filed under advantages:
+Then look at the tables you didn't add at all. Your auth library's session and account tables. Your job queue. Your audit log. Each arrived with whatever indexes its author chose, tuned for a workload that isn't yours, and you inherited both the indexes and their absences without ever making a decision. Managed platforms and BI tools do the same thing further out, writing tables back into your database on your behalf — Sigma's materialization guide, to pick the one I've actually built on, lists "Materialized tables can be indexed or tuned for specific query patterns" among the advantages, in the passive voice, naming nobody as the one who does it.
 
-"Query optimization: Materialized tables can be indexed or tuned for specific query patterns."
-
-Passive voice, no actor. The benefit is claimed and nobody is named as doing it. The performance best-practices page lists four levers — denormalize upstream, materialize, hide unused columns, join in the tool — and never mentions the access path on the tables it just wrote. The closest thing to an owner is a reference to work that "may require a data specialist in your organization."
-
-A limit worth stating: this is a claim about documentation, not implementation. I can't tell you what Sigma actually creates in a Postgres write-back schema, only that its guidance doesn't address it, and checking would need a paid connection I don't have.
-
-Hold it beside Optima and the shape matches from both ends. One platform creates an index you can't see. The other creates a table and hands the index back to a role that may not exist on your team. Either way the artifact appears, it returns the right rows, and the judgment has no owner — the same failure as the agent that declared nothing, arriving through a purchase order instead of a pull request.
+Hold that beside Optima and the shape closes from both ends. One platform creates an index you cannot see. The other creates a table and leaves the index to someone unspecified. Either way the artifact appears, it returns the right rows, and the judgment has no owner — the same failure as the agent that declared nothing, arriving through a dependency instead of a pull request.
 
 HORSEPOWER IS A COSTLY NON-SOLUTION
 
