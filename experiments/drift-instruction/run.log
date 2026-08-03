@@ -1,0 +1,8 @@
+[2026-08-02T20:44:01-04:00] setup /tmp/claude-drift-instruction/runs/armB-trial1
+[2026-08-02T20:44:01-04:00] START armB trial1 increment1 -> /tmp/claude-drift-instruction/runs/armB-trial1 (fresh session)
+[2026-08-02T20:45:18-04:00] DONE armB trial1 increment1 rc=0
+[2026-08-02T20:45:18-04:00] setup /tmp/claude-drift-instruction/runs/armB-trial2
+[2026-08-02T20:45:18-04:00] START armB trial2 increment1 -> /tmp/claude-drift-instruction/runs/armB-trial2 (fresh session)
+[2026-08-02T20:46:59-04:00] DONE armB trial2 increment1 rc=0
+[2026-08-02T20:46:59-04:00] setup /tmp/claude-drift-instruction/runs/armB-trial3
+[2026-08-02T20:46:59-04:00] START armB trial3 increment1 -> /tmp/claude-drift-instruction/runs/armB-trial3 (fresh session)

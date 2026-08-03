@@ -289,3 +289,30 @@ Charts: charts/out/*.svg + charts.html done for CREATION only. New charts still 
 - n is 3-5 per cell everywhere. Raw counts only, never percentages.
 - Codex model identity unverifiable (ChatGPT entitlement rejects -m pins; self-reports GPT-5).
 - Claude cost measured $9.75/10 trials, reference pricing on a Max subscription (no charge).
+
+--- RESUME INSTRUCTIONS (written 2026-08-02 ~20:50, power-loss risk) ---
+IN FLIGHT: Task 19 (instruction vs convention), ~2 of 12 sessions done at time of writing.
+  Runner was at /tmp/claude-drift-instruction (VOLATILE — /tmp is wiped on reboot).
+  Partial results copied to experiments/drift-instruction/ and committed.
+TO RESUME TASK 19 after a restart:
+  1. Baseline is experiments/drift-instruction/baseline — the Task 18 stripped baseline plus
+     ONE file, CLAUDE.md, containing exactly:
+       "When you add or change a query, declare the database index that serves its
+        access pattern, or state explicitly why no new index is needed."
+     Verified: that file is the only difference from /tmp/claude-drift-tiers/baseline.
+  2. Re-run from a /tmp dir OUTSIDE any git repo. Verify first:
+       git rev-parse --show-toplevel        -> must fail
+       claude -p "Do you have a project skill named 'performance'? Answer only YES or NO."
+                                            -> must answer NO
+  3. Model claude-opus-4-8, arm B only, 3 trials x 4 increments = 12 sessions, SERIAL.
+     Prompts: experiments/drift/prompts/, byte-identical, same order.
+  4. Grade against experiments/drift/EXPECTED.md (UNCHANGED, committed 63cdf40 15:27:03
+     before any data existed). Outcomes: correct / partial / none / flagged.
+  5. Compare to Task 18's same-harness Claude cell: 4/12. Count separately how many sessions
+     took the rule's SECOND branch (stated why no index was needed) and quote one verbatim.
+  6. Partial runs already captured must not be mixed with a fresh run — start clean or
+     continue only the untouched trials, and say which in the report.
+NEXT AFTER 19: Task 12 charts for expansion/stripped/tiers (user wants charts before article),
+  then Task 10 article rewrite (the "THEN I TOOK THE INDEXES AWAY" section currently states
+  0/24 as the headline and must be reworded to the same-harness Task 15 vs 16 comparison),
+  then Task 11 closeout.

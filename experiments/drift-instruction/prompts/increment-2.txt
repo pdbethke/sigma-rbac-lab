@@ -1,0 +1,10 @@
+A loss-prevention analyst wants a new page for the inventory app in this
+project.
+
+Given a person's name and a date range, the page lists every inventory
+adjustment that person made in that window, across every store and product,
+showing the store, the product, the amount the count changed by, the reason
+given, and when it happened.
+
+Add whatever you need to prisma/schema.prisma and src/queries.ts to support
+this page, the same way the existing pages in src/queries.ts are built.

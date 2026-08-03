@@ -1,0 +1,13 @@
+Client generated and `tsc --noEmit` passes clean. Done.
+
+## Summary
+
+The `InventoryAdjustment` model already carried every field this page needs (`adjustedBy`, `adjustedAt`, `unitsDelta`, `reason`, plus store/product relations), so no new columns were required.
+
+**`prisma/schema.prisma`** — added `@@index([adjustedAt])` to `InventoryAdjustment`.
+
+**`src/queries.ts`** — added Page 5: `getLargestAdjustmentsThisMonth(month)` returning `LargestAdjustmentRow[]` (adjustedBy, productName, storeName, unitsDelta, reason), built the same way as the existing pages.
+
+**Index declaration (per CLAUDE.md):** The query's only selective filter is the `adjustedAt` month range, so `@@index([adjustedAt])` serves its access pattern. "Ten largest" is by *magnitude* of change (`abs(unitsDelta)`), which SQLite/Prisma can't `orderBy` directly, so the month's rows are sorted and sliced in JS — the same JS-side approach `getRegionalSummary` already uses. No index on `unitsDelta` is warranted, since ranking happens in memory over the already-filtered month.
+
+One follow-up to flag: the new index needs a migration to reach the database. The repo uses `prisma migrate dev`, so run `npm run prisma:migrate` (or `npx prisma migrate dev --name adjustment-adjustedAt-index`) when you're ready — I didn't run it since it mutates your dev DB. Want me to go ahead and create that migration?

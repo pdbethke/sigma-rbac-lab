@@ -1,0 +1,15 @@
+Both pass — Prisma schema is valid and TypeScript compiles clean.
+
+## What I added
+
+**`src/queries.ts` — `getLargestAdjustmentsThisMonth()`** (Page 5), built the same way as the existing pages: a Prisma query with a nested `select`, then a small JS post-processing step (like `getRegionalSummary` does). It returns `{ adjustedBy, productName, storeName, unitsDelta, reason }` — the who, product, store, count change, and reason the page needs.
+
+No schema *columns* were needed — `InventoryAdjustment` already carries all five fields.
+
+**Two judgment calls worth flagging:**
+- **"Largest" = by magnitude.** I rank by `Math.abs(unitsDelta)` so a large shrink (e.g. −400) ranks alongside a large increase — both are the significant corrections an ops manager reviews. If you instead want only the biggest *positive* adjustments, that's a one-line change.
+- **"This month" = current calendar month**, computed from `new Date()` at call time. The function takes no arguments to match the page's fixed framing.
+
+**Index (per the repo's query/index rule):** I added `@@index([adjustedAt])` to `InventoryAdjustment`. The query's access pattern is a range filter on `adjustedAt` (start-of-month … start-of-next-month); that index serves it. The magnitude ranking can't be indexed — SQLite/Prisma can't `ORDER BY ABS(...)` — so it's done in JS *after* the month filter has narrowed the row set.
+
+**One follow-up:** the index is declared in `schema.prisma` but not yet applied to the database. Run `npx prisma migrate dev --name adjustment-adjustedAt-index` (or `prisma db push`) to materialize it. I didn't run it myself since it mutates your local DB — say the word if you'd like me to.
