@@ -14,6 +14,8 @@ error the rest of this repo exists to catch.
     04-competitive-intelligence-article.txt  after     the article it points to
     05-corpus-supply-chain-post.txt       drafted    the connecting post
     05-corpus-supply-chain.txt            drafted    the article it points to
+    indexing.txt                          drafted    STANDALONE — indexing as a fundamental you can now blow past
+    indexing-sources.md                               every engine and vendor claim, cited or demonstrated
     personas.md                                       who is who, and which pair proves what
     held-back.md                                      ideas not yet spent
 
@@ -210,6 +212,86 @@ itself.
 
 **Still needed:** a real result from that test. If one has been run, it is the strongest paragraph
 available and it belongs right after the test description.
+
+### indexing.txt
+
+**Standalone, outside the numbered series, and deliberately so.** The series is one argument told in
+order — who may write, what they may write, where the boundary lives — and this piece is about a
+different failure entirely: a fundamental that stopped failing loudly enough to teach anyone. It
+shares the repo's data and none of its narrative, so numbering it would imply a sequence that isn't
+there.
+
+**The evidence was gathered before the article was written, and it kept refuting the plan.** That is
+the reason to trust it and the reason it took so long. The original premise was that agents skip
+indexing. They mostly don't — 8 of 10 sessions declared explicit indexes unprompted, and the scanner
+found zero N+1 in any page-serving code across eleven codebases. Both planned sections had to be
+rewritten to report what was actually there. A third premise, that lost context between sessions was
+the mechanism, was falsified outright at 24 of 24.
+
+**The finding that survived is better than the one that was planned.** It emerged from removing the
+indexes from the starting schema and changing nothing else: 0 of 24. The model names the right index
+in its own transcript and withholds it to match the surrounding convention. Deference, not
+ignorance — which is why the title is *Your codebase is the prompt*.
+
+**A control run exists because without it the headline number is meaningless.** A schema declaring
+relations and zero indexes, compiled by the ORM, emits zero `CREATE INDEX` — verified on all three
+major versions the trials installed. Without that, every index counted might have been the
+framework's.
+
+**The measurement error is in the article on purpose.** The first pass reported 14.0 rising to 18.2;
+the true in-scope figures are 4.0 and 5.2, overstated about threefold by counting uniqueness
+constraints the ORM emits mechanically and tables outside the experiment. It was internally
+consistent, reproducible, and wrong. Cutting it would have made the piece cleaner and less true, and
+it is the clearest instance of the thesis available — a plausible number rendering identically to a
+correct one.
+
+**A late claim audit caught three more.** "Roughly thirty" unindexed foreign keys was 15; "9 to 12"
+was 9 to 11; "two of five trials were near zero" described trials that were 3 and 3. Recorded because
+the pattern is the point: the numbers that survive scrutiny are the ones something independent went
+and checked, and the first two had already been read several times by then.
+
+**The scanner's false-positive rate is published alongside its findings.** 20 candidates, 13 true, 7
+false, 35% — all seven from a single misclassification. A tool reported as perfect is not credible,
+and "the scanner found nothing" and "there is nothing to find" are different claims.
+
+**Two artifacts, two jobs, and the split is deliberate.** The ORM project is the corpus the N+1
+scanner reads; raw SQL against SQLite and DuckDB is the instrument that measures indexes. Merging
+them would have made one story about tooling and lost the engine argument entirely.
+
+**The engine section is demonstrated rather than cited wherever it can be.** SQLite naming
+`idx_inventory_store` and DuckDB producing a byte-identical plan before and after the equivalent
+index are both committed outputs a reader can re-run in a minute. Only the warehouse claims rest on
+vendor documentation, and each has a dated line in `indexing-sources.md`.
+
+**Sigma appears where it is earned and nowhere else.** The domain is Sigma's sample retail data via
+the sibling access-control lab, so the piece says so plainly rather than letting the schema look like
+a coincidence — and it states where the data came from without characterizing what its terms permit,
+because that was never verified. The rest of the Sigma material sits in one section about generated
+schema, quoting their own passive-voice sentence about materialized tables being "indexed or tuned"
+with no actor named. That observation is aimed at the pattern rather than the vendor, and it is
+scoped to documentation rather than implementation, because verifying what Sigma creates in a
+Postgres write-back schema needs a paid connection this project doesn't have.
+
+**The Snowflake claim was corrected before publication, not after.** An earlier draft said Snowflake
+"offers no B-tree secondary index." Optima Indexing creates what the docs call hidden, "not
+user-declarable" indexes on standard tables, which makes the flat version misleading even though
+`CREATE INDEX` really is scoped to hybrid tables. The corrected version is sharper anyway: you cannot
+declare one, and the engine may create one you cannot see.
+
+**`0 of 24` is stated as harness-specific, because it is.** Through a smaller harness the absolute
+zero does not replicate — 4 of 12, 12 of 12, 11 of 12 across three tools. The qualitative mechanism
+does replicate. Letting the clean number stand unqualified would have been the most quotable sentence
+in the piece and the least defensible.
+
+**The hook disclosure is in the article, not just the repo.** A user-level `SessionStart` hook fired
+inside trial sessions and the original disclosure named only `CLAUDE.md`, because hooks live in a
+different file. It is mild and the trials stand. It is in the text because the shape of the error is
+the subject: the isolation check that was run was thorough, tested the mechanism its author thought
+of, and came back clean — and a mechanism nobody tests looks exactly like one that tests clean.
+
+**It is 20,241 characters against the series' 11–14k.** Raised deliberately and twice, with the
+reason recorded in the spec. The band came from pieces that argue from reasoning; this one reports
+five experiments and 144 graded sessions.
 
 ## Accuracy constraints
 

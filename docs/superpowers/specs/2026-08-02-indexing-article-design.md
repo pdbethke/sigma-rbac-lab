@@ -1,7 +1,26 @@
 # Indexing in an age of agentic development — design
 
 Date: 2026-08-02
-Status: approved, not yet built
+Status: **built 2026-08-03.** Article at `docs/posts/indexing.txt`.
+
+Where implementation diverged from this design, and why:
+
+- **Two of the three original premises were refuted by the evidence and the sections were
+  rewritten to report that.** Agents mostly do declare indexes at creation (8 of 10), and there
+  was no N+1 in any page-serving code across eleven codebases. The design assumed both would
+  fail. The surviving finding — conformity to the existing schema — was not in this spec at all;
+  it came out of an experiment added after the fact (Tasks 15–16).
+- **Five experiments exist where the design planned one.** Expansion, stripped, isolation,
+  cross-tier and instruction (Tasks 15, 16, 17, 18, 19). The last of these produced the piece's
+  most actionable result and earned its own section, which is most of the length overrun.
+- **`0 of 24` is reported as harness-specific.** Task 18 showed it does not replicate through a
+  smaller harness. The design would have let it stand as the headline.
+- **The `PostCompact` constraint in the original global constraints was wrong** and is corrected
+  in the plan: Claude Code does have a `PostCompact` hook. The config as built uses `SessionStart`
+  with `startup` and `compact`, both observed firing.
+- **Length ceiling raised twice**, see the Length section.
+- **Charts (Task 12) were added at user request** and are not described in this spec's
+  deliverables.
 
 ## What this is
 
