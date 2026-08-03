@@ -358,3 +358,35 @@ vendor rows under `data/`.
   measured here and the piece's credibility rests on that distinction.
 - **Claims about a product's behavior derived from its documentation are labelled as such** in the
   text, not just in the sources file.
+
+---
+
+## Amendment 2026-08-03b — the environment disclosure was incomplete
+
+Found while cleaning personal data out of the artifacts ahead of a standalone public repo.
+
+**What happened.** A user-level `SessionStart` hook fired inside headless trial sessions. Hooks are
+configured in `~/.claude/settings.json`, **not** in CLAUDE.md, so committing
+`claude-md-at-time-of-run.txt` disclosed only half the environment. Traces appear in 9 of 144
+committed transcripts (a few are false positives — an app feature legitimately says "calendar
+month"). One cross-model trial appended a note naming the operator's personal email; the address is
+redacted and the paragraph deliberately kept, because it is the proof the hook fired.
+
+**Fixed:** `experiments/indexing/hooks-at-time-of-run.md` inventories the hooks by event, matcher and
+effect without reproducing their text (the `SessionStart` command contains personal calendar
+identifiers and a third party's business address). `experiments/indexing/README.md` now discloses both
+parts. `experiments/indexing/RESULTS.md` carries it as caveat 3.
+
+**Assessment, stated not rated away:** mild. A calendar instruction carries no information about
+indexing and cannot plausibly have moved a model toward or away from declaring one.
+
+**The part that belongs in the article.** Task 17's isolation report was thorough about the project's
+`performance` skill not leaking into `/tmp` runs — and it was right. It did not test hooks, a
+separate mechanism, which did leak. That is worth one sentence in the piece, because it is the
+article's own thesis turned on the author: **the check that was run looked exactly like the check
+that was needed.** An untested mechanism and a tested-clean one are indistinguishable in a report
+that only lists what it found. Same shape as an absent index reading identically to a considered
+decision not to index.
+
+Do not overclaim it in the other direction either: the trials were not invalidated, and the article
+must not imply they were.

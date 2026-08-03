@@ -40,10 +40,26 @@ match/partial — see the per-run table). Any difference between arm 1 and arm 2
 be the prompt's added sentence, the run-order confound above, the Prisma-version split,
 or some mix of the three — this dataset cannot separate them.
 
-At n=5 per arm both confounds are real limitations, not technicalities. A follow-up
-task will replicate with an interleaved run order and control for (or at least record)
-the Prisma version each trial resolves. Every number below should be read with both of
-these in mind.
+**3. A user-level `SessionStart` hook fired inside trial sessions, and the disclosure did
+not mention it.** Found 2026-08-03. Hooks live in `~/.claude/settings.json`, not in
+CLAUDE.md, so committing a copy of CLAUDE.md disclosed only half the environment. The hook
+injects an instruction unrelated to the task — summarize the operator's calendar — and
+traces of it appear in 9 of 144 committed transcripts, a few of which are false positives.
+In one cross-model trial the session appended a note about it that included a personal
+email address; that address has been redacted and the surrounding paragraph deliberately
+left in place as the evidence the hook fired.
+
+Assessed rather than rated away: this is **mild**. A calendar instruction carries no
+information about indexing, so it cannot plausibly have moved a model toward or away from
+declaring one. But nobody checked until now, and Task 17's isolation report — which was
+thorough about the project's `performance` skill not leaking — did not test hooks, which
+are a separate mechanism and did leak. Read that report as scoped to what it tested. Full
+inventory in `hooks-at-time-of-run.md`.
+
+At n=5 per arm the first two confounds are real limitations, not technicalities. A
+follow-up task will replicate with an interleaved run order and control for (or at least
+record) the Prisma version each trial resolves. Every number below should be read with all
+three in mind.
 
 ## Control result — now covers every Prisma version a trial actually used
 

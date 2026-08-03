@@ -352,6 +352,38 @@ SIGMA/SNOWFLAKE MATERIAL added to the spec 2026-08-03 (brainstormed with user; n
   Throughline paragraph is BLOCKED ON TASK 19 by design: 19 tests instruction vs convention, which
   is the paragraph's subject. Do not draft it in advance of its own evidence.
 
+TASK 19 COMPLETE (run): 12/12 sessions, all rc=0, finished 06:19. Clean single run; the 3
+  discarded partials from 2026-08-02 were NOT mixed in. NOT YET GRADED against
+  experiments/drift/EXPECTED.md — that is the next step, plus the count of sessions taking the
+  rule's SECOND branch (stated why no index was needed) with one verbatim quote, compared to
+  Task 18's same-harness Claude cell of 4/12.
+
+PERSONAL DATA + DISCLOSURE FIX 2026-08-03 (user: "remove it", "do all 3"):
+  1. LEAK, now redacted: the operator's personal address appeared in
+     experiments/indexing/runs-crossmodel/claude/arm1-trial4/{result.json,transcript.txt},
+     committed in 809975f which is ALREADY PUSHED to origin/indexing-article on the PUBLIC
+     github.com/pdbethke/sigma-rbac-lab. Redacted to "[personal address redacted]"; result.json
+     re-validated as JSON. The surrounding paragraph is deliberately KEPT — it is the evidence
+     the hook fired. HISTORY NOT REWRITTEN: still present in 809975f, and per docs/HANDOFF.md a
+     force-push does not erase (orphaned objects reachable by SHA, forks outlive it). Awaiting
+     an explicit decision from the user before any force-push.
+  2. DISCLOSURE WAS INCOMPLETE. Hooks live in ~/.claude/settings.json, NOT CLAUDE.md, so
+     claude-md-at-time-of-run.txt covered only half the environment. New file
+     experiments/indexing/hooks-at-time-of-run.md inventories hooks by event/matcher/effect
+     WITHOUT reproducing their text — the SessionStart command contains the user's personal
+     calendar ids AND a third party's business address, so pasting it publicly would re-create
+     the leak just removed. experiments/indexing/README.md disclosure rewritten as two parts.
+  3. CONFOUND recorded as caveat 3 in experiments/indexing/RESULTS.md. Traces in 9 of 144
+     transcripts, some false positives ("calendar month" in app code). Assessed MILD and said so
+     — a calendar instruction carries no indexing information — but NOT rated away.
+     TASK 17 SCOPE CORRECTION: its isolation check was thorough about the `performance` skill and
+     did not test hooks, which are a separate mechanism and did leak. Read that report as scoped
+     to what it tested. Trials are NOT invalidated; the article must not imply they were.
+  ARTICLE NOTE (in the spec, amendment 2026-08-03b): the check that was run looked exactly like
+     the check that was needed. An untested mechanism and a tested-clean one are indistinguishable
+     in a report that only lists what it found — the same shape as an absent index reading
+     identically to a considered decision. Worth one sentence, aimed at the author.
+
 NEXT AFTER 19: Task 12 charts for expansion/stripped/tiers (user wants charts before article),
   then Task 10 article rewrite (the "THEN I TOOK THE INDEXES AWAY" section currently states
   0/24 as the headline and must be reworded to the same-harness Task 15 vs 16 comparison),

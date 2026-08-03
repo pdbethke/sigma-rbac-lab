@@ -23,9 +23,17 @@ Method: 5 trials per arm, each in an empty directory, via `claude -p`. Arm 1 ask
 schema and the queries. Arm 2 appends one sentence about running in production. No
 performance vocabulary appears in either prompt.
 
-Disclosure: the user-level `~/.claude/CLAUDE.md` is in effect for every trial; its
-contents at the time are in `claude-md-at-time-of-run.txt`. Trials ran with
-`--dangerously-skip-permissions` so file writes were not gated.
+Disclosure — **two** parts, because the first version of this paragraph named only one and
+was incomplete:
+
+1. The user-level `~/.claude/CLAUDE.md` is in effect for every trial; its contents at the
+   time are in `claude-md-at-time-of-run.txt`.
+2. **User-level hooks are also in effect, and they are configured in
+   `~/.claude/settings.json`, not in CLAUDE.md.** A `SessionStart` hook fired inside trial
+   sessions and is visible in some transcripts. See `hooks-at-time-of-run.md` for the
+   inventory, what was observed, and an assessment of whether it confounds anything.
+
+Trials ran with `--dangerously-skip-permissions` so file writes were not gated.
 
 Reproduce:
 
