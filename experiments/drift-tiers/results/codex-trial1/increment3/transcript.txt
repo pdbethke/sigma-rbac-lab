@@ -1,0 +1,12 @@
+Implemented the new stockout-count page support.
+
+Changes:
+- Added a Prisma index for the snapshot stockout grouping in [schema.prisma](/tmp/claude-drift-tiers/runs/codex-trial1/prisma/schema.prisma:101).
+- Added `StoreStockoutCountRow` and `getStoreStockoutCountsBySnapshotDate(snapshotDate)` in [queries.ts](/tmp/claude-drift-tiers/runs/codex-trial1/src/queries.ts:293).
+- Included alias `getStoreOutOfStockProductCountsBySnapshotDate`.
+
+Behavior: returns every store ordered by name, with `outOfStockProductCount` set to `0` when that store has no stockouts on the chosen date.
+
+Validated with:
+- `npx prisma validate`
+- `npm run build`

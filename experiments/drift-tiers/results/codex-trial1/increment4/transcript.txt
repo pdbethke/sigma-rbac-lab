@@ -1,0 +1,6 @@
+Implemented the product cost history page support:
+
+- Added a `[productId, snapshotDate]` index in [prisma/schema.prisma](/tmp/claude-drift-tiers/runs/codex-trial1/prisma/schema.prisma).
+- Added `getProductCostPerUnitHistory(productId)` in [src/queries.ts](/tmp/claude-drift-tiers/runs/codex-trial1/src/queries.ts), aggregating average cost per unit across stores by snapshot date, oldest first.
+- Added compatible aliases for common history naming.
+- Prisma generation and TypeScript build pass.

@@ -1,0 +1,8 @@
+Implemented the store stockout snapshot page support.
+
+Changes:
+- Added an indexed stockout lookup in [schema.prisma](/tmp/claude-drift-tiers/runs/codex-trial3/prisma/schema.prisma).
+- Added `getStoreStockoutCounts(snapshotDate)` and alias `getStoreOutOfStockCounts` in [queries.ts](/tmp/claude-drift-tiers/runs/codex-trial3/src/queries.ts).
+- Results include every store, sorted by name, with zero counts where applicable.
+
+Prisma generation and TypeScript build both pass.

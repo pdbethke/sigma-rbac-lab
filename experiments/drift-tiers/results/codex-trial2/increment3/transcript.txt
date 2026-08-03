@@ -1,0 +1,6 @@
+Implemented store-level stockout counts for a selected snapshot date.
+
+- Added an index on `InventoryDaily(snapshotDate, isStockout, storeId)`.
+- Added `getStoreStockoutCounts`, including stores with zero stockouts.
+- Added descriptive aliases for out-of-stock wording.
+- Verified with `npm run build` and `prisma validate`.

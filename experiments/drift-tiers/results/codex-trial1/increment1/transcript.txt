@@ -1,0 +1,11 @@
+Implemented the new support for the inventory adjustments page.
+
+Changed:
+- [prisma/schema.prisma](/tmp/claude-drift-tiers/runs/codex-trial1/prisma/schema.prisma:118): added an index on `InventoryAdjustment.adjustedAt` for efficient month filtering.
+- [src/queries.ts](/tmp/claude-drift-tiers/runs/codex-trial1/src/queries.ts:175): added `LargestInventoryAdjustmentRow` and `getLargestInventoryAdjustmentsThisMonth()`.
+
+The new query returns the top 10 adjustments in the current month by absolute `unitsDelta`, with `adjustedBy`, `productName`, `storeName`, `unitsDelta`, and `reason`.
+
+Verification passed:
+- `npx prisma format`
+- `npm run build`

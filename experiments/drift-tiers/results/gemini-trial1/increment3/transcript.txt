@@ -1,0 +1,10 @@
+I will run `npx prisma generate` to update the Prisma client with the updated schema indexes.
+I will compile the TypeScript project using `npm run build`.
+I will run `npm run seed` to seed the SQLite database and then run `npx ts-node src/smoke.ts` to test all queries including Page 7.
+I will run `npm run seed` to reset the test database.
+I will run `npm run build` to verify everything builds cleanly.
+I have added support for the new stockout summary page.
+
+### Changes Made
+1. **`prisma/schema.prisma`**: Added indexes on `snapshotDate` and `isStockout` fields in `InventoryDaily` model.
+2. **`src/queries.ts`**: Implemented `getStoreStockouts` (and convenient aliases such as `getStoreOutOfStock`, `getStoreStockoutCounts`, etc.) alongside `StoreStockoutRow` and helper type exports. For a given snapshot date, it queries every store and returns its count of out-of-stock products on that date, sorted alphabetically by store name.

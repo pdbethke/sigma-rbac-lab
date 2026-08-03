@@ -1,0 +1,6 @@
+Implemented support for the person/date-range inventory adjustments page.
+
+- Added a composite `adjustedBy`/`adjustedAt` index in [prisma/schema.prisma](/tmp/claude-drift-tiers/runs/codex-trial3/prisma/schema.prisma).
+- Added `getInventoryAdjustmentsByPerson` (plus aliases) in [src/queries.ts](/tmp/claude-drift-tiers/runs/codex-trial3/src/queries.ts), returning store, product, delta, reason, and timestamp.
+- Date range uses inclusive start / exclusive end and results are newest first.
+- Prisma validation and TypeScript build pass.

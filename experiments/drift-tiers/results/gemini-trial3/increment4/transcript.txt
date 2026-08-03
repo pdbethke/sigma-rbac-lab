@@ -1,0 +1,8 @@
+I will now run `npx prisma generate` to regenerate the Prisma client after updating `prisma/schema.prisma`.
+I will now build the project (`npm run build`) to verify there are no TypeScript compilation errors.
+I will now re-seed the database (`npm run seed`) and run the smoke test script (`npx ts-node src/smoke.ts`) to verify query output.
+I have added support for the new product cost history page:
+
+1. **Schema update (`prisma/schema.prisma`)**: Added `@@index([productId])` to the `InventoryDaily` model.
+2. **Query implementation (`src/queries.ts`)**: Added `getProductCostHistory` (and type/function aliases), returning a product's cost per unit aggregated across stores over time, ordered from earliest snapshot date to latest.
+3. **Verification (`src/smoke.ts`)**: Verified the implementation with `npm run build` and `npm run seed && npx ts-node src/smoke.ts`.

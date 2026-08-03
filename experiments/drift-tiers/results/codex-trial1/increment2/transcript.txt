@@ -1,0 +1,6 @@
+Implemented the person-based adjustment history page support:
+
+- Added an `adjustedBy + adjustedAt` index in [schema.prisma](/tmp/claude-drift-tiers/runs/codex-trial1/prisma/schema.prisma:116).
+- Added `getInventoryAdjustmentsByPerson()` in [queries.ts](/tmp/claude-drift-tiers/runs/codex-trial1/src/queries.ts:255), returning store, product, delta, reason, and timestamp.
+- Added history-oriented aliases for compatibility.
+- Verified with seeded data; build and Prisma validation pass.

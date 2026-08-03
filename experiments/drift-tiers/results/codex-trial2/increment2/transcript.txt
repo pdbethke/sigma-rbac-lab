@@ -1,0 +1,12 @@
+Implemented the new support for the loss-prevention page.
+
+Changed:
+- [prisma/schema.prisma](/tmp/claude-drift-tiers/runs/codex-trial2/prisma/schema.prisma): added `@@index([adjustedBy, adjustedAt])` on `InventoryAdjustment`.
+- [src/queries.ts](/tmp/claude-drift-tiers/runs/codex-trial2/src/queries.ts): added `getInventoryAdjustmentsByPerson(adjustedBy, startDate, endDate)` plus `PersonInventoryAdjustmentRow`.
+
+The query returns store name, product name, units delta, reason, and adjustment timestamp across all stores/products, filtered by person and inclusive date range, ordered most recent first.
+
+Verified with:
+- `npm run prisma:generate`
+- `npm run build`
+- Runtime check against seeded `jsmith` data.

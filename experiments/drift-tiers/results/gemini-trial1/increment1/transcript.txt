@@ -1,0 +1,14 @@
+I will run `npx prisma generate` to generate the updated Prisma Client with the index changes from `prisma/schema.prisma`, and `npm run build` to compile the TypeScript files.
+I will run `npm run seed` to re-seed the SQLite database with test data and then run the smoke test script to verify all query functions including Page 5.
+I will run `git status` and `git diff` to review all modified files and changes.
+I will run `npm run build` to confirm everything builds cleanly.
+I have updated `prisma/schema.prisma` and `src/queries.ts` to support the new page for the ten largest inventory adjustments made this month.
+
+### Changes Made:
+1. **`prisma/schema.prisma`**:
+   - Added `@@index([adjustedAt])` to `model InventoryAdjustment` for date filtering performance.
+
+2. **`src/queries.ts`**:
+   - Added the `LargestAdjustmentRow` interface with fields `adjustedBy`, `productName`, `storeName`, `unitsDelta`, and `reason`.
+   - Exported `getLargestAdjustmentsThisMonth(date?: Date)` to return the top 10 adjustments for the month sorted by magnitude (`Math.abs(unitsDelta)`).
+   - Exported helper type and function aliases (`LargestInventoryAdjustmentRow`, `getLargestAdjustments`, etc.) for flexible importing.

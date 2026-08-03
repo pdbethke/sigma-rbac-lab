@@ -1,0 +1,11 @@
+Implemented in [src/queries.ts](/tmp/claude-drift-tiers/runs/codex-trial2/src/queries.ts):
+
+- Added `getTopInventoryAdjustments(asOf?)`
+- Filters to the current UTC calendar month
+- Ranks by absolute `unitsDelta`
+- Returns the top 10 with user, product, store, change, and reason
+- Added a descriptive alias
+
+The existing `InventoryAdjustment` schema model already provided the required fields and relations, so no Prisma schema changes were necessary.
+
+Verified with TypeScript build, seeded data, and `prisma validate`.

@@ -1,0 +1,3 @@
+I will run `npx prisma generate` to update the Prisma client with the new indexes defined in `prisma/schema.prisma`, and then `npm run build` to compile the TypeScript project.
+I will run `npm run seed` and `npx ts-node src/smoke.ts` to populate the test database and verify the query function for Page 6.
+I have updated `prisma/schema.prisma` and `src/queries.ts` to support querying inventory adjustments by person and date range.

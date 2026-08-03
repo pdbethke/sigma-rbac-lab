@@ -1,0 +1,14 @@
+I will run `npx prisma generate` to update the Prisma client with the updated schema, `npm run build` to compile the TypeScript code, and `npx ts-node src/smoke.ts` to test database queries including the new cost history page.
+I will run `npm run seed` and `npx ts-node src/smoke.ts` to ensure the database seed completes and smoke tests run without errors.
+I will run `npm run build` one last time to ensure all TypeScript build checks pass cleanly.
+I have added Page 8 to `prisma/schema.prisma` and `src/queries.ts` to support tracking product unit cost history over time combined across stores:
+
+1. **`prisma/schema.prisma`**:
+   - Added composite index `@@index([productId, snapshotDate])` on `InventoryDaily` to optimize queries that filter by product and order/group by snapshot date.
+
+2. **`src/queries.ts`**:
+   - Defined `ProductCostHistoryRow` interface and `getProductCostHistory` function (along with name/type aliases).
+   - Groups records by `snapshotDate` for the given product across stores and orders the results from earliest to latest snapshot date.
+
+3. **`src/smoke.ts`**:
+   - Updated the smoke test script to invoke and print results for `getProductCostHistory`.

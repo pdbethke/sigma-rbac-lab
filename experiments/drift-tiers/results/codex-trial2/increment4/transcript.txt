@@ -1,0 +1,12 @@
+Implemented the inventory cost history support.
+
+Added:
+- Product/date index in [prisma/schema.prisma](/tmp/claude-drift-tiers/runs/codex-trial2/prisma/schema.prisma:100)
+- `getProductCostHistory(productId)` in [src/queries.ts](/tmp/claude-drift-tiers/runs/codex-trial2/src/queries.ts:286)
+- Aliases: `getProductCostPerUnitHistory`, `getProductCostOverTime`
+
+The query groups `InventoryDaily` rows by `snapshotDate`, averages `costPerUnit` across all store rows for the product, and returns results earliest to latest.
+
+Verification passed:
+- `npm run build`
+- Smoke-tested against seeded `ACM-HP-100` data successfully.

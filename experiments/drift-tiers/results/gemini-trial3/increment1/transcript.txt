@@ -1,0 +1,5 @@
+I have updated `prisma/schema.prisma` and `src/queries.ts` to add support for the new page.
+
+Key updates:
+1. **Schema**: Added an index on `adjustedAt` in `InventoryAdjustment` model in `prisma/schema.prisma` and regenerated the Prisma client.
+2. **Queries**: Added `getLargestAdjustmentsThisMonth` (and interface `LargestAdjustmentRow`) in `src/queries.ts` which returns up to ten largest adjustments for the given month, sorted by change magnitude, including `adjustedBy`, `productName`, `storeName`, `unitsDelta`, and `reason`.

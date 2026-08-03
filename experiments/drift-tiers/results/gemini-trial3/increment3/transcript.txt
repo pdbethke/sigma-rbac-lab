@@ -1,0 +1,9 @@
+I will now run `npm run prisma:generate` to regenerate the Prisma client after adding the indexes to `prisma/schema.prisma`.
+I will now build the project (`npm run build`) to ensure there are no TypeScript compilation errors.
+I will now re-seed the database and run the smoke test script to verify our new query output.
+I will now run `npm run build` to verify the build passes cleanly.
+I have added support for the new store stockout summary page:
+
+1. **Schema update (`prisma/schema.prisma`)**: Added indexes on `snapshotDate` and `isStockout` on the `InventoryDaily` model and regenerated the Prisma Client.
+2. **Query implementation (`src/queries.ts`)**: Added `getStoreStockouts` and the return type `StoreStockoutRow` (with exported aliases), which returns every store alongside the count of products out of stock on the specified snapshot date.
+3. **Verification (`src/smoke.ts`)**: Updated the smoke test script and confirmed that the TypeScript build (`npm run build`) passes cleanly.

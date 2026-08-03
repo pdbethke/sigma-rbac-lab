@@ -1,0 +1,13 @@
+I will run `npx prisma generate` to regenerate the Prisma client with the updated schema indexes.
+I will run `npm run build` to compile the TypeScript code and ensure there are no type errors.
+I will run `npx ts-node src/smoke.ts` to execute the smoke tests and verify query outputs.
+I will run `git status` to check modified files.
+I have updated `prisma/schema.prisma` and `src/queries.ts` to support the new page showing out-of-stock product counts per store for a chosen snapshot date.
+
+### Summary of Changes
+1. **`prisma/schema.prisma`**: Added composite index `@@index([snapshotDate, isStockout])` and index `@@index([snapshotDate])` to `InventoryDaily` to optimize date and stockout aggregation queries.
+2. **`src/queries.ts`**:
+   - Added `StoreStockoutRow` interface and `getStoreStockouts` query function.
+   - The query fetches all stores and calculates the out-of-stock count (`isStockout: true`) for the specified snapshot date, returning one row per store ordered by store name.
+   - Added function and type aliases to support variations in naming conventions.
+3. **`src/smoke.ts`**: Updated the smoke test script to display output for `getStoreStockouts`.

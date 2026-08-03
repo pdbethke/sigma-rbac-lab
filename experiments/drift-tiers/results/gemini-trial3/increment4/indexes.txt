@@ -1,0 +1,6 @@
+104:  @@unique([snapshotDate, storeId, productId])
+105:  @@index([snapshotDate])
+106:  @@index([isStockout])
+107:  @@index([productId])
+123:  @@index([adjustedBy])
+124:  @@index([adjustedAt])

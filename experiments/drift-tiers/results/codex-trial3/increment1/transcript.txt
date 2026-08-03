@@ -1,0 +1,12 @@
+Implemented the new support for the inventory adjustments page.
+
+Added an `adjustedAt` index in [prisma/schema.prisma](/tmp/claude-drift-tiers/runs/codex-trial3/prisma/schema.prisma:120) for month filtering, and added `getLargestInventoryAdjustmentsThisMonth` in [src/queries.ts](/tmp/claude-drift-tiers/runs/codex-trial3/src/queries.ts:187). The query returns the top 10 adjustments for the UTC calendar month containing `asOf`, defaulting to now, sorted by absolute `unitsDelta` with most recent as the tie-breaker.
+
+Verified with:
+
+```bash
+npx prisma validate
+npm run build
+```
+
+Also ran a runtime check for August 2026 seed data; it returned the `+5` adjustment before the `-3` adjustment as expected.

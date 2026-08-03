@@ -1,0 +1,9 @@
+I will run `npm run seed` to ensure the SQLite database is populated and then test the existing queries with `npx ts-node src/smoke.ts`.
+I will regenerate the Prisma client, build the TypeScript project, seed the database, and run the smoke test.
+I will run `git status` to verify the modified files.
+I have updated `prisma/schema.prisma` and `src/queries.ts` to support the new product cost history page.
+
+Key updates made:
+- Added indexes on `productId` and `[productId, snapshotDate]` to `InventoryDaily` in `prisma/schema.prisma`.
+- Implemented `getProductCostHistory` (along with aliases and return type interfaces) in `src/queries.ts` to query cost per unit over time combined across stores carrying the product, ordered from earliest snapshot date to latest.
+- Updated `src/smoke.ts` to include smoke tests for `getProductCostHistory`.

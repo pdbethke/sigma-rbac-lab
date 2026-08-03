@@ -1,0 +1,14 @@
+I will run `npm run build` to verify the build process.
+I will run `npx ts-node src/smoke.ts` to check current behavior.
+I will run `npx prisma generate` to update the Prisma client according to the modified schema.
+I will build the project and execute the smoke test to verify our changes.
+I have added the new query and schema index to support the page listing the ten largest inventory adjustments made this month.
+
+### Changes Made
+1. **`prisma/schema.prisma`**:
+   - Added `@@index([adjustedAt])` to `InventoryAdjustment` to optimize queries for adjustments made within a date range.
+2. **`src/queries.ts`**:
+   - Added `LargestAdjustmentRow` interface and `getLargestAdjustments(date?: Date)` function which queries inventory adjustments for the given month, orders them by the magnitude of change (`unitsDelta`), and returns up to 10 rows with `adjustedBy`, `productName`, `storeName`, `unitsDelta`, and `reason`.
+   - Included aliases (`getLargestInventoryAdjustments`, `getLargestAdjustmentsThisMonth`, `getLargestMonthlyAdjustments`) for caller convenience.
+3. **`src/smoke.ts`**:
+   - Updated smoke test script to invoke and display results for `getLargestAdjustments`.

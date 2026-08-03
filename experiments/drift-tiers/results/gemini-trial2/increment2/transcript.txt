@@ -1,0 +1,4 @@
+I will run `npx ts-node src/smoke.ts` to test running the current smoke script and check database connectivity.
+I will run `npx prisma generate` to regenerate the Prisma client with the updated schema.
+I will build the project using `npm run build` and then run `npx ts-node src/smoke.ts` to verify the new query functionality.
+Added the index `@@index([adjustedBy, adjustedAt])` to `InventoryAdjustment` in `prisma/schema.prisma` and implemented `getAdjustmentsByPerson` with `PersonAdjustmentRow` in `src/queries.ts`.

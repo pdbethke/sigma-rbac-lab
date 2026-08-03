@@ -1,0 +1,7 @@
+Implemented product cost history support:
+
+- Added `@@index([productId, snapshotDate])` to `InventoryDaily`.
+- Added `getProductCostHistory(productId)` in [src/queries.ts](/tmp/claude-drift-tiers/runs/codex-trial3/src/queries.ts), averaging costs across stores per snapshot date in ascending order.
+- Added timeline aliases for convenience.
+
+Prisma validation, client generation, build, and seeded runtime checks all pass.

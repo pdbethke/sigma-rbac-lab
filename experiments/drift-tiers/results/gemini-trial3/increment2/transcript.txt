@@ -1,0 +1,8 @@
+I will generate the updated Prisma client and build the TypeScript files to verify that our queries compile and run correctly.
+I will now run the smoke script to test the database query with sample seeded data.
+I will run `git status` to verify the modified files.
+Added support for the loss-prevention analyst page:
+
+1. **Schema update (`prisma/schema.prisma`)**: Added an index `@@index([adjustedBy])` on the `InventoryAdjustment` model for faster lookup by analyst name.
+2. **Query implementation (`src/queries.ts`)**: Created `getPersonAdjustments` (and exported `PersonAdjustmentRow` and related aliases), which retrieves every inventory adjustment for a given person within a date range across stores and products, returning `storeName`, `productName`, `unitsDelta`, `reason`, and `adjustedAt`.
+3. **Smoke test (`src/smoke.ts`)**: Updated the test runner to exercise `getPersonAdjustments`.
