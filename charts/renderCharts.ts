@@ -690,6 +690,28 @@ function buildTableHtml(document: Document, allRows: DbRow[]): string {
   </table>`;
 }
 
+/**
+ * Table view for the drift grid — required, not decorative. The status amber
+ * fails the contrast check against the light surface, and the skill's rule is
+ * that a contrast WARN obligates visible labels or a table view. Every square in
+ * the grid is color-only, so this table is where the reader who cannot resolve
+ * the colors gets the same information.
+ */
+function buildDriftTableHtml(rows: DriftRow[]): string {
+  const header = ["cell", "task", "model", "arm", "trial", "increment", "outcome"];
+  const body = rows
+    .map((r) => {
+      const cells = [r.cell, r.task, r.model, r.arm, r.trial, r.increment, r.outcome];
+      return `<tr>${cells.map((c) => `<td>${escapeHtml(String(c))}</td>`).join("")}</tr>`;
+    })
+    .join("\n");
+  return `<h3>Drift cells — every session, one row (table view)</h3>
+  <table class="data-table">
+    <thead><tr>${header.map((h) => `<th>${h}</th>`).join("")}</tr></thead>
+    <tbody>${body}</tbody>
+  </table>`;
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -701,6 +723,151 @@ function escapeHtml(s: string): string {
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
+
+// ---- The drift cells (Tasks 15-19) ------------------------------------
+//
+// One square per session, colored by outcome. A square per session rather than
+// a percentage because n varies by cell (24, 24, 12, 8) and every one of them is
+// small; a stacked percentage bar would make 11/12 and 44/48 look identical.
+
+interface DriftRow {
+  cell: string;
+  task: number;
+  model: string;
+  arm: string;
+  trial: number;
+  increment: number;
+  outcome: string;
+}
+
+const DRIFT_STATUS: Record<string, keyof typeof STATUS_COLOR> = {
+  correct: "good",
+  partial: "warning",
+  none: "critical",
+};
+
+/** Narrative order: the three cells that carry the argument, then the replications. */
+const DRIFT_ORDER: { key: string; label: string; caption: string }[] = [
+  { key: "expansion", label: "Indexed baseline", caption: "Task 15 · schema already had indexes" },
+  { key: "stripped", label: "Indexes removed", caption: "Task 16 · same harness, one variable" },
+  { key: "instruction", label: "Removed + one rule", caption: "Task 19 · one CLAUDE.md line" },
+  { key: "tiers/claude", label: "claude-opus-4-8", caption: "Task 18 · removed, no rule" },
+  { key: "tiers/gemini", label: "gemini-3.6-flash", caption: "Task 18 · removed, no rule" },
+  { key: "tiers/codex", label: "Codex", caption: "Task 18 · removed, no rule" },
+  { key: "isolated", label: "Outside the repo", caption: "Task 17 · indexed, contamination check" },
+];
+
+async function loadDrift(): Promise<DriftRow[]> {
+  const instance = await DuckDBInstance.create(DB_PATH);
+  const connection = await instance.connect();
+  const reader = await connection.runAndReadAll(
+    `SELECT cell, task, model, arm, trial, increment, outcome
+     FROM drift ORDER BY cell, model, arm, trial, increment`,
+  );
+  const rows = reader.getRowObjects() as unknown as DriftRow[];
+  connection.closeSync();
+  return rows;
+}
+
+function driftKey(r: DriftRow): string {
+  return r.cell === "tiers" ? `tiers/${r.model}` : r.cell;
+}
+
+function buildDriftGridSvg(document: Document, rows: DriftRow[], mode: Mode): SVGElement {
+  const CELL = 16;
+  const GAP = 2; // the 2px surface gap between adjacent fills
+  const LABEL_W = 150;
+  const ROW_H = 34;
+  const MAX_N = Math.max(...DRIFT_ORDER.map((d) => rows.filter((r) => driftKey(r) === d.key).length));
+  const gridW = MAX_N * (CELL + GAP);
+  // Floor the width on the title: the grid alone was narrower than the heading,
+  // which clipped it at the right edge. Caught by looking at the render, not by
+  // the palette validator — layout is not a color check.
+  const TITLE = "Did the session declare the index its query needed?";
+  const bodyWidth = Math.max(LABEL_W + gridW + 96, Math.ceil(TITLE.length * 8.6));
+  const bodyHeight = DRIFT_ORDER.length * ROW_H + 34;
+
+  const body = el(document, "svg", { width: bodyWidth, height: bodyHeight, overflow: "visible" });
+
+  DRIFT_ORDER.forEach((spec, rowIndex) => {
+    const cellRows = rows.filter((r) => driftKey(r) === spec.key);
+    const y = rowIndex * ROW_H;
+
+    body.appendChild(
+      el(document, "text",
+        { x: 0, y: y + 12, "font-size": 11, "font-weight": 600, fill: INK_PRIMARY[mode] },
+        spec.label),
+    );
+    body.appendChild(
+      el(document, "text",
+        { x: 0, y: y + 25, "font-size": 9, fill: INK_MUTED[mode] },
+        spec.caption),
+    );
+
+    cellRows.forEach((r, i) => {
+      const status = DRIFT_STATUS[r.outcome] ?? "critical";
+      body.appendChild(
+        el(document, "rect", {
+          x: LABEL_W + i * (CELL + GAP),
+          y: y + 4,
+          width: CELL,
+          height: CELL,
+          rx: 4,
+          fill: STATUS_COLOR[status],
+          stroke: SURFACE[mode],
+          "stroke-width": 1,
+        }),
+      );
+    });
+
+    const correct = cellRows.filter((r) => r.outcome === "correct").length;
+    body.appendChild(
+      el(document, "text",
+        {
+          x: LABEL_W + gridW + 10,
+          y: y + 16,
+          "font-size": 11,
+          "font-weight": 600,
+          fill: INK_PRIMARY[mode],
+        },
+        `${correct} of ${cellRows.length}`),
+    );
+  });
+
+  return composeFigure(document, {
+    title: TITLE,
+    subtitle:
+      "Graded against EXPECTED.md, pre-registered before any session ran. Counts are raw; n differs per cell and every n is small. " +
+      "Rows 1-3 are the same harness with one variable changed at a time.",
+    body,
+    bodyWidth,
+    bodyHeight,
+    mode,
+    legend: driftLegend(document, mode),
+    legendHeight: 26,
+  });
+}
+
+function driftLegend(document: Document, mode: Mode): SVGElement {
+  const g = el(document, "g", {});
+  const entries: [keyof typeof STATUS_COLOR, string][] = [
+    ["good", "Correct — exact tuple, right column order"],
+    ["warning", "Partial — right columns, wrong shape"],
+    ["critical", "None"],
+  ];
+  let x = 0;
+  for (const [status, label] of entries) {
+    g.appendChild(
+      el(document, "rect", { x, y: -10, width: 12, height: 12, rx: 3, fill: STATUS_COLOR[status] }),
+    );
+    g.appendChild(
+      el(document, "text",
+        { x: x + 17, y: 0, "font-size": 11, fill: INK_SECONDARY[mode] }, label),
+    );
+    x += 20 + label.length * 6.1;
+  }
+  return g;
+}
 
 async function main(): Promise<void> {
   const allRows = await loadTrials();
@@ -727,10 +894,29 @@ async function main(): Promise<void> {
     }
   }
 
+  const driftRows = await loadDrift();
+  if (driftRows.length !== 104) {
+    throw new Error(
+      `Expected 104 drift sessions in metrics.duckdb, found ${driftRows.length}. ` +
+        `Run experiments/drift/tallyDrift.ts first; refusing to render a chart with ` +
+        `fewer sessions than the runs produced.`,
+    );
+  }
+
   mkdirSync(OUT_DIR, { recursive: true });
 
   const dom = new JSDOM("<!doctype html><html><body></body></html>");
   const document = dom.window.document as unknown as Document;
+
+  // ---- Drift grid ----------------------------------------------------
+  writeFileSync(
+    `${OUT_DIR}drift-grid.svg`,
+    buildDriftGridSvg(document, driftRows, "light").outerHTML,
+  );
+  writeFileSync(
+    `${OUT_DIR}drift-grid-dark.svg`,
+    buildDriftGridSvg(document, driftRows, "dark").outerHTML,
+  );
 
   // ---- Verdict grids -------------------------------------------------
   const crossVerdict = verdictRows(crossRows);
@@ -862,7 +1048,8 @@ async function main(): Promise<void> {
     );
   }
 
-  const tableHtml = buildTableHtml(document, allRows);
+  const tableHtml =
+    buildTableHtml(document, allRows) + buildDriftTableHtml(driftRows);
 
   const html = buildPage({
     verdictGridCrossLight: verdictGridCross.outerHTML,
