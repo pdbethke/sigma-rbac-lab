@@ -404,7 +404,37 @@ PERSONAL DATA + DISCLOSURE FIX 2026-08-03 (user: "remove it", "do all 3"):
      in a report that only lists what it found — the same shape as an absent index reading
      identically to a considered decision. Worth one sentence, aimed at the author.
 
-NEXT AFTER 19: Task 12 charts for expansion/stripped/tiers (user wants charts before article),
+TASK 12 (charts) DONE for the drift cells. New: experiments/drift/gradeDrift.ts (+15 tests),
+  tallyDrift.ts, a `drift` table in metrics.duckdb (104 sessions), charts/out/drift-grid{,-dark}.svg
+  and a drift table view in charts.html. Commit 30f9925.
+  The grader INDEPENDENTLY REPRODUCED every hand-graded number except codex, and the codex
+  disagreement was REAL: the Task 18 runner guards its increment0 capture with `-f` on a path it
+  creates as a DIRECTORY, so the test is false forever and every re-run re-captured increment0 from
+  the then-current dir. Codex trials were re-run, so their increment0 holds the FINISHED schema.
+  Fixed by taking increment 1's baseline from the cell's declared starting state and REPORTING any
+  disagreement. Codex reconciles to 11/12 (8 correct + 3 partial). That anomaly report also caught
+  MY error: I had declared the Task 17 cell as stripped when it re-ran the INDEXED condition.
+  ALSO FIXED: vitest.config.ts excluded experiments/indexing/runs/ but not runs-crossmodel/ or the
+  drift cells, so 4 generated trial files were being collected as this repo's tests. Excluded by
+  shape now. Suite: 5 files, 55 tests, green.
+  CHART FORM: one square per session, not a stacked percentage — n varies per cell and every n is
+  small; 11/12 and 44/48 must not render identically. Status amber FAILS the contrast check, and
+  that WARN is not dismissable, so the drift TABLE VIEW is required relief, not a nicety.
+
+TASK 10 (article) DONE — commit 825f095, docs/posts/indexing.txt. Both bracketed placeholders
+  resolved; 0/24 restated as harness-specific; Task 19 section added; Snowflake claim corrected to
+  Optima; THE TABLES NOBODY WROTE added as its own section (user chose "own section" over folding);
+  provenance paragraph added; hook disclosure written into the article itself.
+  LENGTH: 20,205 chars. Trimmed from 21,313, then STOPPED and asked rather than cutting a section
+  the user had asked for. User accepted 20k; spec ceiling raised to ~20.5k WITH THE REASON RECORDED.
+  Rule that survives: length is chosen, not drifted into.
+  NOT YET DONE for Task 10: Step 4's line-by-line claim-against-source audit. Format and spelling
+  gates pass; the claim audit has not been run.
+
+NEXT: Task 11 closeout (docs/posts/README.md "why it is shaped this way" section + mark the spec
+  built). NOTE the merge decision flagged at the top of this ledger — README.md has UNCOMMITTED user
+  edits in the main checkout, and Task 11 edits it from the committed version.
+OLD NEXT (now done): Task 12 charts for expansion/stripped/tiers (user wants charts before article),
   then Task 10 article rewrite (the "THEN I TOOK THE INDEXES AWAY" section currently states
   0/24 as the headline and must be reworded to the same-harness Task 15 vs 16 comparison),
   then Task 11 closeout.

@@ -198,12 +198,22 @@ The phrase *old school in an age of new school* is the opening line, not the tit
 carry the claim rather than the mood; this piece's stakes are its strongest asset and the title should
 carry them.
 
-Length: article scale. `04` and `05` sit at 11–14k characters. **Ceiling raised to ~15.5k on
-2026-08-03**, deliberately and with the reason recorded: the provenance paragraph and the new
-"THE TABLES NOBODY WROTE" section add roughly 1,800 characters to a draft already at 13,748. The
-piece earned the length by measuring things rather than by padding. Task 10's `wc -c` check compares
-against the new ceiling, not the old one. A connecting post may follow if it earns one; not designed
-here.
+Length: article scale. `04` and `05` sit at 11–14k characters.
+
+**Ceiling raised twice on 2026-08-03, both deliberate, both recorded.** First to ~15.5k, for the
+provenance paragraph and "THE TABLES NOBODY WROTE" against a draft then at 13,748. Then to **~20.5k**,
+approved by the user after the rewrite came in at 20,205.
+
+The second raise is the one that needs justifying, so: the 11–14k band was set from `04` and `05`,
+which argue from reasoning and cite a demo. This piece reports five experiments, 104 graded sessions
+plus 40 creation trials, a measurement error of its own, two engine demonstrations, and a
+disclosure. Task 19 alone earned a section that did not exist when the first ceiling was set. A trim
+pass took it from 21,313 to 20,205; past that the cuts were damaging sentences rather than removing
+padding, and the alternative was dropping a section the user had specifically asked for.
+
+**The rule that survives is the one that mattered — length is chosen, not drifted into.** Task 10's
+`wc -c` check compares against ~20.5k. If a future edit pushes past it, raise it on purpose or cut,
+but do not let it creep. A connecting post may follow if it earns one; not designed here.
 
 ## Accuracy constraints
 
