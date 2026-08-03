@@ -1,0 +1,34 @@
+Done. Here's what I added and what I found along the way.
+
+## What I built
+
+**`src/queries.ts`** — new `getLargestAdjustmentsThisMonth(now = new Date())` (Page 5), following the existing pattern (typed row interface + exported async function):
+- Filters `InventoryAdjustment` to the current calendar month `[monthStart, nextMonthStart)`.
+- Returns who made it (`adjustedBy`), product name, store name, the signed `unitsDelta`, and `reason`.
+- Ranks by **magnitude** of the change (`Math.abs`) and takes the top 10 — a big write-down (`-500` shrink) ranks alongside a big write-up (`+500`), which is what a store-ops manager reviewing "largest adjustments" wants. Prisma/SQLite can't `ORDER BY abs()`, so it sorts in JS and slices — the same in-memory post-processing style as `getRegionalSummary`.
+
+**`prisma/schema.prisma`** — declared the index per your CLAUDE.md rule:
+```prisma
+@@index([adjustedAt])   // on InventoryAdjustment
+```
+The new query's access pattern is a range scan over `adjustedAt` (chain-wide, month-bounded); no existing index served it, so this one does.
+
+Verified: index present, results month-scoped and correctly ranked, `tsc --noEmit` clean.
+
+## ⚠️ Schema drift you should know about
+
+While generating the migration I hit a real inconsistency in this repo. **Three sources disagree about indexes:**
+
+| Source | Secondary indexes |
+|---|---|
+| `schema.prisma` (as I found it) | none declared |
+| `init` migration SQL | ~10 declared — one per existing query (`Store_region_idx`, `InventoryAdjustment_storeId_productId_adjustedAt_idx`, etc.) |
+| actual `dev.db` | none — only `@unique` auto-indexes |
+
+The `init` migration is marked applied (`done=1`), but its `CREATE INDEX` statements were never actually run against `dev.db`. Consequence: `prisma migrate dev` here would generate a migration that **drops every one of those indexes** (it treats the migration as truth), and it also errors because they don't exist to drop. That's why I did **not** run `migrate dev`.
+
+Instead I hand-wrote an additive migration (`20260803005132_add_adjustment_adjustedat_index`) that only does `CREATE INDEX ... adjustedAt` — non-destructive, applied cleanly via `migrate deploy`, and it left the drifted state alone rather than papering over it. (I also cleared a stray failed-migration row from my first attempt; it had failed on its first statement, so nothing was committed.)
+
+I deliberately kept my change scoped to the page you asked for. The broader drift — the existing pages currently run **without** their intended supporting indexes in `dev.db` — is a separate cleanup. If you want, I can either restore the missing `@@index` declarations to `schema.prisma` so it matches the migration's intent (and add a migration that actually creates them), or reconcile the other direction. Your call on which is the intended source of truth.
+
+One note: `git status` reports this directory isn't a git repo, so nothing is under version control here — I'd want that in place before this goes anywhere real.

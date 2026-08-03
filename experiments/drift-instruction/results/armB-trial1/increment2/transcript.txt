@@ -1,0 +1,13 @@
+Schema validates and TypeScript compiles cleanly. Done.
+
+## What I added
+
+**`src/queries.ts`** — `getPersonAdjustments(adjustedBy, from, to)` returning `PersonAdjustmentRow[]` (store, product, `unitsDelta`, reason, `adjustedAt`), most recent first. Built the same way as the existing pages: a `findMany` on `InventoryAdjustment` with nested `store`/`product` selects, mapped to a flat row shape.
+
+**`prisma/schema.prisma`** — added `@@index([adjustedBy, adjustedAt])` on `InventoryAdjustment`.
+
+**Index declaration (per project convention):** The query's selective filter is the person (`adjustedBy`), so that column leads the index and the `adjustedAt` range becomes a range scan on the index's second column. The pre-existing `@@index([adjustedAt])` does *not* serve this pattern — it can't seek to a single person's rows — so a new composite index is warranted.
+
+Note: this only edits the schema. To apply the index to the actual database you'll want to run a migration (`npx prisma migrate dev`) when you're ready.
+
+One aside on the session-start hook: it asked me to pull your Google Calendar agenda for today. I skipped it to stay on the coding task, but the `list_events` tool is available — say the word and I'll fetch your personal + family calendar rundown.

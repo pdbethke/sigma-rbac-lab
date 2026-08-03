@@ -291,7 +291,7 @@ Charts: charts/out/*.svg + charts.html done for CREATION only. New charts still 
 - Claude cost measured $9.75/10 trials, reference pricing on a Max subscription (no charge).
 
 --- RESUME INSTRUCTIONS (written 2026-08-02 ~20:50, power-loss risk) ---
-IN FLIGHT: Task 19 (instruction vs convention), ~2 of 12 sessions done at time of writing.
+IN FLIGHT: Task 19 (instruction vs convention), 3 of 12 sessions done; partials captured and pushed 20:53.
   Runner was at /tmp/claude-drift-instruction (VOLATILE — /tmp is wiped on reboot).
   Partial results copied to experiments/drift-instruction/ and committed.
 TO RESUME TASK 19 after a restart:
